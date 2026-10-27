@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recklyss Studios (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gluten:wght@500;700;800&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens ===== */
+:root{
+  --ink:#2a1a3d;          /* Adventure Time style outline */
+  --plum:#1b0d3a;         /* deep space */
+  --pink:#ff7eb6;         /* nebula pink */
+  --cyan:#4fe3e0;         /* laser cyan */
+  --sun:#ffd166;          /* marquee yellow */
+  --meadow:#7cc66b;       /* Ghibli meadow */
+  --lilac:#b58cff;
+  --paper:#fff6d9;        /* sunlit page */
+  --text:#2a1a3d;
+  --muted:#5b4a73;
+  --card:#ffffff;
+  --display:"Gluten","Chewy","Comic Sans MS",cursive;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#1b0d3a; --text:#fbefff; --muted:#cbb8e8; --card:#2b1854; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{ --paper:#1b0d3a; --text:#fbefff; --muted:#cbb8e8; --card:#2b1854; color-scheme:dark; }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--plum);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--plum)}
+a{color:inherit}
+:focus-visible{outline:4px solid var(--cyan);outline-offset:3px;border-radius:10px}
+
+/* ===== Header ===== */
+.top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) clamp(12px,3vw,28px) 12px;pointer-events:none}
+.top > *{pointer-events:auto}
+.wordmark{font-family:var(--display);font-weight:800;font-size:clamp(20px,2.4vw,28px);color:#fff;text-decoration:none;letter-spacing:.5px;
+  text-shadow:3px 3px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink)}
+.nav{display:flex;align-items:center;gap:6px;background:rgba(27,13,58,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:3px solid var(--ink);border-radius:999px;padding:5px}
+.nav a{font-weight:800;font-size:15px;color:#fff;text-decoration:none;padding:7px 12px;border-radius:999px}
+.nav a:hover{background:rgba(255,255,255,.14)}
+.nav a.play{background:var(--sun);color:var(--ink);box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+@media (max-width:640px){ .nav a.opt{display:none} }
+
+/* ===== Journey stage ===== */
+#journey{position:relative;height:1100vh}
+#stage{position:sticky;top:env(safe-area-inset-top,0px);height:calc(100vh - env(safe-area-inset-top,0px));height:calc(100svh - env(safe-area-inset-top,0px));
+  overflow:hidden;background:var(--plum)}
+#sky{position:absolute;inset:0}
+#stars{position:absolute;inset:0;width:100%;height:100%}
+#world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;transition:opacity .22s}
+#world.fade{opacity:0}
+.obj{position:absolute}
+.obj > svg{display:block;width:100%;height:100%;overflow:visible}
+.clickable{cursor:pointer}
+
+/* billboard face (shared by world + overlay) */
+.bb{position:relative;width:100%;height:100%;container-type:inline-size;overflow:hidden;border-radius:2cqw;
+  background:radial-gradient(120% 90% at 50% 110%,#5b1f8f 0%,#24104b 55%,#12072a 100%);color:#fff;font-family:var(--body)}
+.bb .laser{position:absolute;bottom:-10%;left:50%;width:1.2cqw;height:140%;transform-origin:50% 100%;
+  background:linear-gradient(to top,rgba(79,227,224,.95),rgba(79,227,224,0));filter:blur(.25cqw);animation:sweep 4.5s ease-in-out infinite alternate}
+.bb .laser.l2{background:linear-gradient(to top,rgba(255,126,182,.95),rgba(255,126,182,0));animation-duration:3.7s;animation-direction:alternate-reverse}
+.bb .laser.l3{background:linear-gradient(to top,rgba(255,209,102,.9),rgba(255,209,102,0));animation-duration:5.3s}
+@keyframes sweep{from{transform:translateX(-50%) rotate(-38deg)}to{transform:translateX(-50%) rotate(38deg)}}
+.bb .eq{position:absolute;left:0;right:0;bottom:0;height:20%;display:flex;align-items:flex-end;gap:.6cqw;padding:0 3cqw}
+.bb .eq i{flex:1;background:linear-gradient(to top,var(--pink),var(--sun));border-radius:.6cqw .6cqw 0 0;height:100%;
+  transform-origin:bottom;animation:eq 1s ease-in-out infinite alternate;border:.25cqw solid var(--ink);border-bottom:0}
+@keyframes eq{from{transform:scaleY(.15)}to{transform:scaleY(1)}}
+.bb .dj{position:absolute;right:6cqw;bottom:14%;width:20cqw;height:24cqw}
+.bb .copy{position:absolute;left:6cqw;top:12%;right:34cqw}
+.bb .kicker{font-weight:800;font-size:2.2cqw;color:var(--cyan);margin:0 0 .6cqw}
+.bb h2{font-family:var(--display);font-weight:800;font-size:11.5cqw;line-height:.92;margin:0;color:var(--sun);
+  text-shadow:.5cqw .5cqw 0 var(--ink),-.3cqw -.3cqw 0 var(--ink),.3cqw -.3cqw 0 var(--ink),-.3cqw .3cqw 0 var(--ink),0 0 3cqw rgba(255,126,182,.7)}
+.bb .tag{font-size:2.6cqw;font-weight:600;max-width:42cqw;margin:1.6cqw 0 2.4cqw;line-height:1.35}
+.btn{display:inline-flex;align-items:center;gap:.5em;font-family:var(--display);font-weight:800;text-decoration:none;color:var(--ink);
+  background:var(--sun);border:3px solid var(--ink);border-radius:999px;padding:.5em 1.1em;box-shadow:0 5px 0 var(--ink);transition:transform .12s, box-shadow .12s}
+.btn:hover{transform:translateY(2px);box-shadow:0 3px 0 var(--ink)}
+.btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
+.bb .btn{font-size:3cqw;border-width:.4cqw;box-shadow:0 .7cqw 0 var(--ink)}
+.bb .note{font-size:1.8cqw;opacity:.8;margin-top:1.6cqw}
+
+/* overlay hero (crisp, real HTML on top of the world billboard) */
+#heroOverlay{position:absolute;z-index:5}
+#heroCta{position:absolute;z-index:5;left:16px;right:16px;text-align:center;color:#fff;display:none}
+#heroCta p{margin:0 auto 14px;font-weight:700;font-size:16px;line-height:1.4;max-width:34ch;background:rgba(27,13,58,.72);border-radius:16px;padding:8px 12px}
+#heroCta .btn{font-size:20px}
+#stage.narrow #heroCta{display:block}
+#stage.narrow #heroOverlay .tag,#stage.narrow #heroOverlay .btn,#stage.narrow #heroOverlay .note{display:none}
+#stage.narrow #heroOverlay .copy{right:28cqw}
+
+/* scroll hint */
+#hint{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;
+  font-family:var(--display);font-weight:700;color:#fff;font-size:17px;text-align:center;transition:opacity .3s;pointer-events:none}
+#hint span{display:block;font-size:26px;animation:nudge 1.4s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateY(7px)}}
+
+/* chapter rail */
+#rail{position:absolute;right:clamp(10px,2vw,22px);top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+#rail li{width:14px;height:14px;border-radius:50%;border:3px solid var(--ink);background:rgba(255,255,255,.25);position:relative}
+#rail li.built{background:#fff}
+#rail li.on{background:var(--sun);transform:scale(1.25)}
+#rail li::after{content:attr(data-name);position:absolute;right:22px;top:50%;transform:translateY(-50%);white-space:nowrap;
+  font-weight:800;font-size:13px;color:#fff;background:var(--ink);padding:3px 9px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none}
+#rail li.on::after,#rail li:hover::after{opacity:1}
+@media (max-width:700px){ #rail li.on::after{opacity:0} }
+#chapter{position:absolute;left:clamp(12px,3vw,28px);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:6;color:#fff;
+  font-family:var(--display);font-weight:700;font-size:clamp(15px,1.6vw,19px);text-shadow:2px 2px 0 var(--ink)}
+#chapter small{display:block;font-family:var(--body);font-weight:800;font-size:12px;opacity:.75;text-shadow:none}
+#badge{position:absolute;right:clamp(12px,3vw,28px);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:6;
+  font-weight:800;font-size:12px;color:var(--ink);background:var(--sun);border:3px solid var(--ink);border-radius:999px;padding:4px 10px;transform:rotate(-3deg)}
+@media (max-width:640px){ #badge{bottom:auto;top:calc(64px);right:12px} #chapter small{display:none} }
+
+/* world hints */
+.pin{font-family:var(--display);font-weight:800;color:var(--ink);background:#fff;border:10px solid var(--ink);border-radius:80px;
+  padding:14px 40px;font-size:64px;white-space:nowrap;opacity:0;transform:scale(.6);transition:opacity .3s, transform .3s;pointer-events:none;
+  box-shadow:0 14px 0 var(--ink)}
+#stage.pin-space .pin.for-space, #stage.ch-hills .pin.for-hills{opacity:1;transform:scale(1);animation:pinbob 1.6s ease-in-out infinite}
+@keyframes pinbob{50%{translate:0 -18px}}
+
+/* card */
+#card{position:absolute;z-index:8;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px) scale(.96);opacity:0;pointer-events:none;
+  width:min(440px,calc(100% - 32px));background:var(--card);color:var(--text);border:4px solid var(--ink);border-radius:24px;padding:20px 22px;
+  box-shadow:0 10px 0 var(--ink);transition:opacity .25s, transform .25s}
+#card.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
+#card h3{font-family:var(--display);font-weight:800;font-size:26px;margin:0 0 6px}
+#card p{margin:0 0 14px;line-height:1.5;color:var(--muted)}
+#card .status{display:inline-block;font-weight:800;font-size:13px;background:var(--lilac);color:var(--ink);border:3px solid var(--ink);border-radius:999px;padding:2px 10px;margin-bottom:10px}
+#card .close{position:absolute;top:10px;right:12px;background:none;border:0;font-size:28px;line-height:1;cursor:pointer;color:var(--text)}
+
+/* ===== Animations inside the world ===== */
+.bulb{animation:bulb 1.2s steps(1) infinite}
+@keyframes bulb{0%{fill:#fff7c2}50%{fill:#ff9a3c}}
+.blink{transform-box:fill-box;transform-origin:center;animation:blink 5s infinite}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+.drift{animation:drift 14s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translateX(-40px)}to{transform:translateX(40px)}}
+.tuft{transform-box:fill-box;transform-origin:50% 100%;animation:sway 2.8s ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-6deg)}to{transform:rotate(7deg)}}
+.glow{animation:glow 2.4s ease-in-out infinite alternate}
+@keyframes glow{from{opacity:.55}to{opacity:1}}
+.flap{transform-box:fill-box;transform-origin:50% 50%;animation:flap .35s ease-in-out infinite alternate}
+@keyframes flap{to{transform:scaleY(.3)}}
+
+/* Shigost */
+#shigost{position:absolute;left:0;top:0;width:220px;height:286px;transform-origin:50% 40%}
+#shigost .ghost{position:absolute;inset:0;transform-origin:50% 90%}
+#shigost .chute{position:absolute;left:50%;bottom:62%;width:640px;height:520px;margin-left:-320px;transform-origin:50% 100%;
+  transform:scale(.1,0);opacity:0;transition:transform .55s cubic-bezier(.3,1.6,.5,1), opacity .2s}
+#shigost.st-chute .chute{transform:scale(1);opacity:1}
+#shigost.st-land .chute{transform:translate(260px,330px) rotate(70deg) scale(.9,.2);opacity:0;transition:transform .9s ease-in, opacity .9s ease-in .3s}
+#shigost .gun{display:none}
+#shigost.st-stand .gun{display:inline}
+#shigost .armR,#shigost .armL{transform-box:fill-box}
+#shigost .armL{transform-origin:100% 30%}
+#shigost .armR{transform-origin:0% 30%}
+#shigost.st-chute .armL{transform:rotate(55deg)} #shigost.st-chute .armR{transform:rotate(-55deg)}
+#shigost.st-fall .armL{transform:rotate(80deg)} #shigost.st-fall .armR{transform:rotate(-80deg)}
+#shigost.st-chute .ghost{animation:swing 2.6s ease-in-out infinite alternate}
+@keyframes swing{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+/* idle loops per chapter */
+#stage.idle.ch-space #shigost .ghost{animation:bob 2.2s ease-in-out infinite}
+#stage.idle.ch-space #shigost .armL{animation:wave .5s ease-in-out infinite alternate}
+@keyframes bob{50%{transform:translateY(-14px)}}
+@keyframes wave{from{transform:rotate(10deg)}to{transform:rotate(-40deg)}}
+#stage.idle.ch-fall #shigost .ghost{animation:swing 1.6s ease-in-out infinite alternate}
+#stage.idle.ch-hills #shigost .ghost{animation:hop 1.8s cubic-bezier(.3,0,.5,1) infinite}
+@keyframes hop{0%,40%,100%{transform:translateY(0) scale(1,1)}15%{transform:translateY(-60px) scale(.95,1.06)}32%{transform:translateY(0) scale(1.08,.92)}}
+#stage.idle.ch-hills .brush{animation:paint .7s ease-in-out infinite alternate}
+.brush{transform-box:fill-box;transform-origin:10% 90%}
+@keyframes paint{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
+.butterfly{opacity:0;transition:opacity .6s}
+#stage.ch-hills .butterfly{opacity:1}
+.bfly-path{animation:loop 9s linear infinite}
+@keyframes loop{0%{transform:translate(0,0)}25%{transform:translate(180px,-120px)}50%{transform:translate(360px,0)}75%{transform:translate(180px,90px)}100%{transform:translate(0,0)}}
+
+/* portal */
+#portal{border-radius:50%;transform:scale(0);transition:transform .7s cubic-bezier(.3,1.5,.5,1)}
+#portal.open{transform:scale(1)}
+#portal .ring{position:absolute;inset:0;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,var(--lilac) 0 20deg,var(--cyan) 20deg 40deg,var(--pink) 40deg 60deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 22%,#000 23% 100%);mask:radial-gradient(circle,transparent 0 22%,#000 23% 100%);
+  border:14px solid var(--ink);animation:spin 3s linear infinite}
+#portal .core{position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle,#fff 0,#b8fff9 30%,#3b1d6e 100%);border:14px solid var(--ink)}
+@keyframes spin{to{transform:rotate(360deg)}}
+#beam{height:36px;margin-top:-18px;transform-origin:0 50%;border-radius:18px;background:linear-gradient(90deg,#fff,var(--cyan));
+  box-shadow:0 0 40px var(--cyan);transform:scaleX(0);opacity:0}
+#beam.fire{animation:fire .6s ease-out forwards}
+@keyframes fire{0%{transform:scaleX(0);opacity:1}70%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
+
+/* ===== Content below the journey ===== */
+.below{background:var(--paper);color:var(--text);position:relative}
+.below::before{content:"";position:absolute;left:0;right:0;top:-1px;height:70px;background:#48a85a;
+  -webkit-mask:radial-gradient(60px 40px at 60px 0,#000 98%,transparent) 0 0/120px 70px repeat-x;mask:radial-gradient(60px 40px at 60px 0,#000 98%,transparent) 0 0/120px 70px repeat-x}
+.wrap{max-width:1080px;margin:0 auto;padding:110px clamp(18px,4vw,40px) 70px}
+.below h2{font-family:var(--display);font-weight:800;font-size:clamp(38px,5vw,60px);margin:0 0 10px;line-height:1}
+.lede{font-size:18px;line-height:1.6;max-width:60ch;color:var(--muted);margin:0 0 36px}
+.carts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:28px}
+.cart{background:var(--card);border:4px solid var(--ink);border-radius:22px 22px 10px 10px;box-shadow:8px 8px 0 var(--ink);padding:0 0 18px;overflow:hidden;
+  transform:rotate(var(--tilt,0deg))}
+.cart .art{height:150px;border-bottom:4px solid var(--ink);position:relative}
+.cart .art svg{width:100%;height:100%;display:block}
+.cart h3{font-family:var(--display);font-weight:800;font-size:28px;margin:14px 18px 4px}
+.cart p{margin:0 18px 14px;line-height:1.5;color:var(--muted)}
+.cart .state{position:absolute;top:12px;left:12px;font-weight:800;font-size:13px;border:3px solid var(--ink);border-radius:999px;padding:2px 10px;background:#fff;color:var(--ink)}
+.cart .btn{margin:0 18px;font-size:17px}
+.cart .soon{margin:0 18px;font-weight:800;color:var(--muted)}
+.about{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center}
+.about p{font-size:18px;line-height:1.65;max-width:58ch}
+.draft{display:inline-block;font-weight:800;font-size:13px;background:var(--pink);color:var(--ink);border:3px solid var(--ink);border-radius:999px;padding:2px 10px;margin-bottom:12px}
+@media (max-width:760px){ .about{grid-template-columns:1fr} }
+.join{background:var(--plum);color:#fff;border:4px solid var(--ink);border-radius:30px;padding:clamp(24px,4vw,44px);box-shadow:10px 10px 0 var(--ink)}
+.join h2{color:var(--sun)}
+.join form{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.join input{flex:1 1 240px;font:inherit;font-size:17px;padding:14px 18px;border-radius:999px;border:3px solid var(--ink);background:#fff;color:var(--ink)}
+.join button.btn{font-size:18px;cursor:pointer}
+.join .msg{margin:14px 0 0;font-weight:700;color:var(--cyan);min-height:1.4em}
+footer{text-align:center;padding:30px 20px 50px;color:var(--muted);font-weight:600}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+  #world{transition:opacity .2s !important}
+}
+</style>
+</head>
+<body>
+
+<!-- reusable ghost symbol (for small appearances) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ghostSym" viewBox="0 0 200 260">
+    <path d="M100 20C160 20 180 70 180 130L182 220Q168 240 154 222Q140 244 124 224Q110 246 96 226Q82 246 68 224Q52 242 38 222Q24 238 18 218L20 130C20 70 40 20 100 20Z" fill="#fff" stroke="#2a1a3d" stroke-width="8"/>
+    <ellipse cx="74" cy="108" rx="15" ry="25" fill="#1a0f2a"/><ellipse cx="126" cy="108" rx="15" ry="25" fill="#1a0f2a"/>
+    <circle cx="79" cy="98" r="5" fill="#fff"/><circle cx="131" cy="98" r="5" fill="#fff"/>
+  </symbol>
+</svg>
+
+<header class="top">
+  <a class="wordmark" href="#journey">Recklyss Studios</a>
+  <nav class="nav" aria-label="Main">
+    <a class="opt" href="#games">Games</a>
+    <a class="opt" href="#about">About</a>
+    <a class="opt" href="#join">Join</a>
+    <a class="play" href="https://play.recklyss.com" target="_blank" rel="noopener">Play Vibe Booth</a>
+  </nav>
+</header>
+
+<main>
+<section id="journey" aria-label="Scroll journey with Shigost">
+  <div id="stage">
+    <div id="sky"></div>
+    <canvas id="stars" aria-hidden="true"></canvas>
+    <div id="world" aria-hidden="false"></div>
+
+    <div id="heroOverlay"></div>
+    <div id="heroCta">
+      <p>A whimsical 3D DJ booth starring Shigost. Mix, play, and light up the show.</p>
+      <a class="btn" href="https://play.recklyss.com" target="_blank" rel="noopener">▶ Play Vibe Booth</a>
+    </div>
+
+    <div id="hint">Scroll to explore<span>↓</span></div>
+    <ol id="rail" aria-label="Chapters">
+      <li data-name="Outer space" class="built"></li>
+      <li data-name="Grassy hills" class="built"></li>
+      <li data-name="Jungle (coming soon)"></li>
+      <li data-name="Sand dunes (coming soon)"></li>
+      <li data-name="Beach (coming soon)"></li>
+      <li data-name="Reef (coming soon)"></li>
+      <li data-name="Deep ocean (coming soon)"></li>
+      <li data-name="The island (coming soon)"></li>
+    </ol>
+    <div id="chapter" aria-live="polite">Outer space<small>Chapter 1 of 8</small></div>
+    <div id="badge">Prototype: placeholder art</div>
+
+    <div id="card" role="dialog" aria-modal="false" aria-labelledby="cardTitle">
+      <button class="close" aria-label="Close">×</button>
+      <span class="status" id="cardStatus"></span>
+      <h3 id="cardTitle"></h3>
+      <p id="cardText"></p>
+      <a class="btn" id="cardBtn" href="#games">See all games</a>
+    </div>
+  </div>
+</section>
+
+<div class="below">
+  <section class="wrap" id="games">
+    <h2>Games</h2>
+    <p class="lede">Every Recklyss game stars Shigost, a small ghost with a big appetite for adventure. Here’s what’s playable now and what’s on the way.</p>
+    <div class="carts">
+      <article class="cart" style="--tilt:-1.2deg">
+        <div class="art" style="background:radial-gradient(120% 100% at 50% 110%,#5b1f8f,#12072a)">
+          <span class="state" style="background:var(--sun)">Playable now</span>
+          <svg viewBox="0 0 300 150" aria-hidden="true"><g stroke="#2a1a3d" stroke-width="4"><rect x="60" y="92" width="180" height="40" rx="10" fill="#ff7eb6"/><circle cx="105" cy="112" r="13" fill="#4fe3e0"/><circle cx="195" cy="112" r="13" fill="#4fe3e0"/></g><use href="#ghostSym" x="118" y="22" width="64" height="84"/></svg>
+        </div>
+        <h3>Vibe Booth</h3>
+        <p>A whimsical 3D DJ booth with real-feeling gear, lasers, and flames. Works on phone and desktop.</p>
+        <a class="btn" href="https://play.recklyss.com" target="_blank" rel="noopener">▶ Play now</a>
+      </article>
+      <article class="cart" style="--tilt:1deg">
+        <div class="art" style="background:linear-gradient(#bdf2ff,#fff3c4)">
+          <span class="state">Prototype</span>
+          <svg viewBox="0 0 300 150" aria-hidden="true"><g stroke="#2a1a3d" stroke-width="4" fill="#f4b183"><ellipse cx="150" cy="96" rx="58" ry="34"/><circle cx="196" cy="70" r="26"/><path d="M182 48l-6-22 18 14z"/><path d="M206 50l8-20 4 22z"/></g><circle cx="203" cy="66" r="4" fill="#2a1a3d"/></svg>
+        </div>
+        <h3>Dedog</h3>
+        <p>A playable prototype built in Figma. Link coming soon.</p>
+        <span class="soon">Prototype link coming soon</span>
+      </article>
+      <article class="cart" style="--tilt:-.6deg">
+        <div class="art" style="background:linear-gradient(#7fd0ff,#c7f59a)">
+          <span class="state" style="background:var(--pink)">Coming soon</span>
+          <svg viewBox="0 0 300 150" aria-hidden="true"><path d="M0 120Q75 90 150 118T300 110V150H0Z" fill="#48a85a" stroke="#2a1a3d" stroke-width="4"/><use href="#ghostSym" x="122" y="40" width="56" height="74"/></svg>
+        </div>
+        <h3>Shigost</h3>
+        <p>The big one. A full Shigost adventure, in production now.</p>
+        <span class="soon">Join the list for early access</span>
+      </article>
+      <article class="cart" style="--tilt:1.4deg">
+        <div class="art" style="background:radial-gradient(circle at 70% 30%,#3b1d6e,#0b0628)">
+          <span class="state" style="background:var(--lilac)">Concept</span>
+          <svg viewBox="0 0 300 150" aria-hidden="true"><circle cx="220" cy="62" r="34" fill="#ff7eb6" stroke="#2a1a3d" stroke-width="4"/><ellipse cx="220" cy="62" rx="58" ry="12" fill="none" stroke="#ffd166" stroke-width="5"/><use href="#ghostSym" x="70" y="40" width="56" height="74"/></svg>
+        </div>
+        <h3>Shigost Space Explorer</h3>
+        <p>Shigost with a portal gun and a whole galaxy to poke at. Still a concept.</p>
+        <span class="soon">Concept stage</span>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap" id="about">
+    <div class="about">
+      <div>
+        <span class="draft">Draft copy</span>
+        <h2>About the studio</h2>
+        <p>Recklyss Studios is an independent creative studio making games, interactive worlds, and digital art. Everything here is drawn by hand, built with care, and a little bit weird on purpose.</p>
+        <p>Founded by Alyssa Stills.</p>
+      </div>
+      <svg viewBox="0 0 300 260" aria-hidden="true" style="max-width:320px;justify-self:center"><circle cx="150" cy="140" r="110" fill="#ffd166" stroke="#2a1a3d" stroke-width="6"/><use href="#ghostSym" x="90" y="50" width="120" height="156"/></svg>
+    </div>
+  </section>
+
+  <section class="wrap" id="join">
+    <div class="join">
+      <h2>Get early access</h2>
+      <p class="lede" style="color:#e9dcff;margin:0">Be first to play new games and see new art. No spam, just Shigost news.</p>
+      <form id="joinForm">
+        <label for="email" style="position:absolute;left:-9999px">Email address</label>
+        <input id="email" type="email" required placeholder="you@email.com" autocomplete="email">
+        <button class="btn" type="submit">Join the list</button>
+      </form>
+      <p class="msg" id="joinMsg" role="status"></p>
+    </div>
+  </section>
+  <footer>© 2026 Recklyss Studios LLC</footer>
+</div>
+</main>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), world = $('#world'), sky = $('#sky'), canvas = $('#stars');
+const journey = $('#journey'), hint = $('#hint'), overlay = $('#heroOverlay'), heroCta = $('#heroCta');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ---------- helpers ---------- */
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const lerp = (a,b,t) => a + (b-a)*t;
+const ease = t => t*t*(3-2*t);
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function crPath(pts){ // closed Catmull-Rom spline
+  const n = pts.length; let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i=0;i<n;i++){
+    const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+    d += `C${(p1[0]+(p2[0]-p0[0])/6).toFixed(1)} ${(p1[1]+(p2[1]-p0[1])/6).toFixed(1)} ${(p2[0]-(p3[0]-p1[0])/6).toFixed(1)} ${(p2[1]-(p3[1]-p1[1])/6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  return d + 'Z';
+}
+const objs = [];
+function place(html, x, y, w, h, o = {}){
+  const el = document.createElement(o.tag || 'div');
+  el.className = 'obj ' + (o.cls || '');
+  el.style.cssText = `left:${x-w/2}px;top:${y-h/2}px;width:${w}px;height:${h}px;` + (o.z != null ? `z-index:${o.z};` : '');
+  el.innerHTML = html;
+  if (o.id) el.id = o.id;
+  world.appendChild(el);
+  if (o.k) objs.push({ el, x, y, k: o.k });
+  return el;
+}
+const svgBox = (x,y,w,h,inner) => `<svg viewBox="${x-w/2} ${y-h/2} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+const INK = '#2a1a3d';
+
+/* ---------- billboard face markup (shared) ---------- */
+const eqBars = Array.from({length:18},(_,i)=>`<i style="animation-delay:${(-(i*137)%1000)/1000}s;animation-duration:${(0.6+((i*53)%50)/100).toFixed(2)}s"></i>`).join('');
+const faceHTML = (interactive) => `
+<div class="bb">
+  <div class="laser"></div><div class="laser l2"></div><div class="laser l3"></div>
+  <div class="eq">${eqBars}</div>
+  <svg class="dj" viewBox="0 0 200 240" aria-hidden="true">
+    <use href="#ghostSym" x="40" y="0" width="120" height="156"/>
+    <rect x="10" y="150" width="180" height="70" rx="14" fill="#ff7eb6" stroke="${INK}" stroke-width="8"/>
+    <circle cx="60" cy="185" r="20" fill="#4fe3e0" stroke="${INK}" stroke-width="6"/><circle cx="140" cy="185" r="20" fill="#4fe3e0" stroke="${INK}" stroke-width="6"/>
+  </svg>
+  <div class="copy">
+    <p class="kicker">Recklyss Studios presents</p>
+    <h2>Vibe Booth</h2>
+    <p class="tag">A whimsical 3D DJ booth starring Shigost. Mix, play, and light up the show.</p>
+    <a class="btn" href="https://play.recklyss.com" target="_blank" rel="noopener" ${interactive ? '' : 'tabindex="-1"'}>▶ Play Vibe Booth</a>
+    <p class="note">Playable now on phone and desktop</p>
+  </div>
+</div>`;
+overlay.innerHTML = faceHTML(true);
+
+/* ---------- WORLD: outer space ---------- */
+const R = rng(7);
+// nebula blobs + planets (far, slow)
+place(svgBox(0,0,2600,1600,`<defs><radialGradient id="neb1"><stop offset="0" stop-color="#ff7eb6" stop-opacity=".55"/><stop offset="1" stop-color="#ff7eb6" stop-opacity="0"/></radialGradient></defs><ellipse cx="0" cy="0" rx="1300" ry="800" fill="url(#neb1)"/>`), -2600,-1400,2600,1600,{k:.75});
+place(svgBox(0,0,2400,1500,`<defs><radialGradient id="neb2"><stop offset="0" stop-color="#4fe3e0" stop-opacity=".35"/><stop offset="1" stop-color="#4fe3e0" stop-opacity="0"/></radialGradient></defs><ellipse cx="0" cy="0" rx="1200" ry="750" fill="url(#neb2)"/>`), 2900,200,2400,1500,{k:.7});
+place(svgBox(0,0,1300,800,`<ellipse cx="0" cy="0" rx="620" ry="120" fill="none" stroke="#ffd166" stroke-width="40" opacity=".9"/><circle r="300" fill="#ff7eb6" stroke="${INK}" stroke-width="20"/><path d="M-280 -60Q0 -120 280 -40" stroke="#ffb3d4" stroke-width="40" fill="none" opacity=".7"/><path d="M-260 90Q0 40 270 110" stroke="#e15a9b" stroke-width="40" fill="none" opacity=".6"/><path d="M-620 0A620 120 0 0 0 620 0" fill="none" stroke="#ffd166" stroke-width="40"/>`), -2700,-2000,1300,800,{k:.6});
+place(svgBox(0,0,520,520,`<circle r="240" fill="#b58cff" stroke="${INK}" stroke-width="18"/><path d="M-120 -150q40 60 -10 120t60 140" stroke="#8e64e6" stroke-width="34" fill="none" stroke-linecap="round"/><circle cx="90" cy="-60" r="40" fill="#8e64e6"/>`), 3000,-1800,520,520,{k:.55});
+
+// asteroid
+const astPts = []; const AN = 26;
+for (let i=0;i<AN;i++){ const a = i/AN*Math.PI*2; const r = 1 + (R()-.5)*.13; astPts.push([Math.cos(a)*1500*r, 40 + Math.sin(a)*430*r]); }
+function astTop(x){ // top surface y at x from polygon
+  let best = Infinity;
+  for (let i=0;i<AN;i++){ const a=astPts[i], b=astPts[(i+1)%AN];
+    if ((a[0]-x)*(b[0]-x) <= 0 && a[0]!==b[0]){ const y = a[1] + (b[1]-a[1])*(x-a[0])/(b[0]-a[0]); if (y < best) best = y; } }
+  return best;
+}
+let ast = `<defs><linearGradient id="astG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a68ee0"/><stop offset=".55" stop-color="#6a4fa8"/><stop offset="1" stop-color="#3d2870"/></linearGradient>
+<clipPath id="astClip"><path d="${crPath(astPts)}"/></clipPath></defs>
+<path d="${crPath(astPts)}" fill="url(#astG)" stroke="${INK}" stroke-width="20"/>
+<g clip-path="url(#astClip)"><ellipse cx="0" cy="430" rx="1700" ry="300" fill="#2e1d57" opacity=".55"/></g>`;
+[[-900,120,150,48],[-300,210,90,30],[500,150,170,52],[1050,250,100,32],[-1180,250,80,26],[150,330,120,36]].forEach(([x,y,rx,ry])=>{
+  ast += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#4b3486" stroke="${INK}" stroke-width="10"/><ellipse cx="${x+rx*.15}" cy="${y-ry*.25}" rx="${rx*.6}" ry="${ry*.45}" fill="#3a2670"/>`;
+});
+// glowing mushrooms + curly sprouts on the surface
+[[-1250,'#4fe3e0'],[-1120,'#ff7eb6'],[-640,'#ffd166'],[640,'#4fe3e0'],[1220,'#ff7eb6'],[1320,'#b58cff']].forEach(([x,c],i)=>{
+  const y = astTop(x) + 18, h = 70 + (i%3)*30;
+  ast += `<g><path d="M${x} ${y}q-10 ${-h/2} 0 ${-h}" stroke="#f3e6ff" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <ellipse class="glow" cx="${x}" cy="${y-h}" rx="${46+i%2*16}" ry="30" fill="${c}" stroke="${INK}" stroke-width="10" style="animation-delay:${-i*.4}s"/></g>`;
+});
+[[-380],[260],[980]].forEach(([x],i)=>{
+  const y = astTop(x) + 14;
+  ast += `<path d="M${x} ${y}c-40 -80 60 -120 20 -200c-20 -40 -80 -20 -60 20c14 26 50 10 40 -10" stroke="#7cc66b" stroke-width="18" fill="none" stroke-linecap="round"/>`;
+});
+place(svgBox(0,40,3400,1300,ast), 0,40,3400,1300);
+
+// billboard structure
+const BBx = 0, BBy = -1150, FW = 1440, FH = 810;
+let bbs = '';
+[-430,430].forEach(x=>{
+  const yb = astTop(x) + 30;
+  bbs += `<rect x="${x-34}" y="-760" width="68" height="${yb+760}" rx="14" fill="#8a5a8f" stroke="${INK}" stroke-width="14"/>
+  <path d="M${x-34} -620h68M${x-34} -480h68" stroke="${INK}" stroke-width="10"/>`;
+});
+bbs += `<path d="M-430 -600L430 -480M430 -600L-430 -480" stroke="${INK}" stroke-width="16"/>
+<rect x="${-FW/2-50}" y="${BBy-FH/2-50}" width="${FW+100}" height="${FH+100}" rx="46" fill="#ffd166" stroke="${INK}" stroke-width="18"/>`;
+const per = 2*(FW+FH+160); const NB = 40;
+for (let i=0;i<NB;i++){
+  let d = i/NB*per, x, y; const L = -FW/2-25, T = BBy-FH/2-25, W = FW+50, H = FH+50;
+  if (d < W){x=L+d;y=T} else if ((d-=W) < H){x=L+W;y=T+d} else if ((d-=H) < W){x=L+W-d;y=T+H} else {d-=W;x=L;y=T+H-d}
+  bbs += `<circle class="bulb" cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="13" stroke="${INK}" stroke-width="5" style="animation-delay:${(i%2)*-.6}s"/>`;
+}
+bbs += `<path d="M0 ${BBy-FH/2-50}c-20 -90 70 -110 40 -190c-14 -40 -70 -26 -54 10" stroke="${INK}" stroke-width="16" fill="none" stroke-linecap="round"/>
+<path d="M-14 ${BBy-FH/2-300}l18 -46 18 46 48 4 -38 30 14 46 -42 -26 -42 26 14 -46 -38 -30z" fill="#ffd166" stroke="${INK}" stroke-width="10" class="glow"/>`;
+place(svgBox(0,-900,1800,2000,bbs), 0,-900,1800,2000);
+const face = place(faceHTML(false), BBx, BBy, FW, FH, {cls:'clickable'});
+face.addEventListener('click', e => { if (!e.target.closest('a')) window.open('https://play.recklyss.com','_blank','noopener'); });
+
+// portal (hidden until fired)
+const PORTAL = {x:2150, y:-1100};
+place('<div class="ring"></div><div class="core"></div>', PORTAL.x, PORTAL.y, 820, 820, {id:'portal', cls:'clickable', z:3});
+const beam = place('', 0, 0, 10, 36, {id:'beam', z:3});
+
+/* ---------- WORLD: atmosphere ---------- */
+function cloudSVG(w, h, seed){
+  const r = rng(seed); const id = 'c' + seed; const n = 4 + Math.floor(r()*3); let shapes = '';
+  shapes += `<rect x="${-w/2+h*.25}" y="${h*.05}" width="${w-h*.5}" height="${h*.3}" rx="${h*.15}"/>`;
+  for (let i=0;i<n;i++){ const t = (i+.5)/n; const cx = -w/2 + w*.12 + t*w*.76; const cr = h*(.28 + r()*.22) * (1 - Math.abs(t-.5)*.6); shapes += `<circle cx="${cx.toFixed(0)}" cy="${(h*.25 - cr*.55).toFixed(0)}" r="${cr.toFixed(0)}"/>`; }
+  return `<svg viewBox="${-w/2} ${-h/2} ${w} ${h}"><defs><clipPath id="${id}">${shapes}</clipPath></defs>
+  <g fill="#fff" stroke="#6b5aa8" stroke-width="16" stroke-opacity=".55">${shapes}</g><g fill="#fff">${shapes}</g>
+  <g clip-path="url(#${id})"><ellipse cx="0" cy="${h*.42}" rx="${w*.6}" ry="${h*.22}" fill="#d9ccff" opacity=".8"/></g></svg>`;
+}
+const CR = rng(42);
+for (let i=0;i<26;i++){
+  const y = 4200 + CR()*9800, x = -3400 + CR()*6800, w = 700 + CR()*1100, front = CR() < .2;
+  const el = place(cloudSVG(w, w*.45, 100+i), x, y, w, w*.45, {k: front ? -.35 : .2 + CR()*.45, z: front ? 6 : 1});
+  el.firstChild.classList.add('drift'); el.firstChild.style.animationDelay = (-CR()*14).toFixed(1)+'s';
+  if (front) el.style.opacity = .8;
+}
+// birds
+let birds = '';
+for (let i=0;i<7;i++){ const bx = (i%4)*130 - 200 + (i>3?60:0), by = Math.floor(i/4)*90 + (i%2)*30;
+  birds += `<path class="flap" style="animation-delay:${-i*.13}s" d="M${bx-36} ${by}q18 -26 36 0q18 -26 36 0" stroke="${INK}" stroke-width="10" fill="none" stroke-linecap="round"/>`; }
+place(svgBox(0,0,700,320,birds), -1400, 12200, 700, 320, {k:.3});
+
+/* ---------- WORLD: grassy hills ---------- */
+const GROUND = 15800;
+const frontTop = x => GROUND + 70*Math.sin(x*.0011 + .6) + 34*Math.sin(x*.0031 + 1.7);
+function hillPath(fn, x0, x1, bottom){ let d = `M${x0} ${bottom}`; for (let x=x0; x<=x1; x+=60) d += `L${x} ${fn(x).toFixed(1)}`; return d + `L${x1} ${bottom}Z`; }
+const farFn = x => GROUND - 520 + 120*Math.sin(x*.0007 + 2.1) + 60*Math.sin(x*.0019);
+const midFn = x => GROUND - 260 + 90*Math.sin(x*.0012 + 4) + 40*Math.sin(x*.0027 + 1);
+// sun
+place(svgBox(0,0,900,900,`<circle r="300" fill="#fff3a6" opacity=".55"/><circle r="200" fill="#ffe27a" stroke="${INK}" stroke-width="14"/>`), 1700, GROUND-2100, 900, 900, {k:.6});
+for (let i=0;i<4;i++){ const w = 900 + i*180; place(cloudSVG(w, w*.45, 300+i), [-2000,-500,900,2300][i], GROUND - 1700 - (i%2)*400, w, w*.45, {k:.5}).firstChild.classList.add('drift'); }
+place(svgBox(0,GROUND,9000,2800,`<path d="${hillPath(farFn,-4500,4500,GROUND+1400)}" fill="#a9d8a0" stroke="#5f8f6a" stroke-width="12" stroke-opacity=".5"/>`), 0, GROUND, 9000, 2800, {k:.35});
+// mid hills + spiral lollipop trees
+let mid = `<path d="${hillPath(midFn,-4500,4500,GROUND+1400)}" fill="#74c476" stroke="${INK}" stroke-width="12" stroke-opacity=".7"/>`;
+[[-2300,'#ff7eb6'],[-1700,'#ffd166'],[-350,'#b58cff'],[1900,'#ff7eb6'],[2600,'#4fe3e0']].forEach(([x,c],i)=>{
+  const y = midFn(x) + 20, h = 420 + (i%3)*110;
+  mid += `<path d="M${x} ${y}c${40+i*6} ${-h*.3} ${-50} ${-h*.6} 0 ${-h}" stroke="#f7e8d0" stroke-width="30" fill="none" stroke-linecap="round"/>
+  <path d="M${x} ${y}c${40+i*6} ${-h*.3} ${-50} ${-h*.6} 0 ${-h}" stroke="${INK}" stroke-width="6" stroke-dasharray="24 30" fill="none"/>
+  <circle cx="${x}" cy="${y-h-90}" r="110" fill="${c}" stroke="${INK}" stroke-width="12"/>
+  <path d="M${x} ${y-h-90}m0 -12a12 12 0 1 1 -12 12a28 28 0 1 1 30 28a48 48 0 1 1 -52 -50a70 70 0 1 1 74 74" fill="none" stroke="${INK}" stroke-width="9" stroke-linecap="round" opacity=".6"/>`;
+});
+place(svgBox(0,GROUND,9000,2800,mid), 0, GROUND, 9000, 2800, {k:.15});
+
+// front hill with grass and flowers
+let front = `<path d="${hillPath(frontTop,-4500,4500,GROUND+1400)}" fill="#48a85a" stroke="${INK}" stroke-width="14"/>
+<path d="${hillPath(x=>frontTop(x)+70,-4500,4500,GROUND+1400)}" fill="#3e9750" opacity=".6"/>`;
+const GR = rng(9);
+for (let i=0;i<90;i++){
+  const x = -3200 + i*72 + GR()*30, y = frontTop(x) + 8, h = 50 + GR()*60;
+  front += `<path class="tuft" style="animation-delay:${(-GR()*2.8).toFixed(2)}s" d="M${x-16} ${y}q4 ${-h*.6} -10 ${-h}q22 ${h*.4} 18 ${h}q6 ${-h*.7} 24 ${-h*1.1}q-4 ${h*.6} 2 ${h*1.1}z" fill="#62c46f" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>`;
+  if (i % 7 === 3) front += `<g class="tuft" style="animation-delay:${(-GR()*2.8).toFixed(2)}s"><path d="M${x+30} ${y}v-70" stroke="${INK}" stroke-width="7"/><circle cx="${x+30}" cy="${y-80}" r="20" fill="${['#ff7eb6','#ffd166','#b58cff','#fff'][i%4]}" stroke="${INK}" stroke-width="7"/></g>`;
+}
+place(svgBox(0,GROUND,9000,2800,front), 0, GROUND, 9000, 2800, {z:2});
+
+// painter + easel (doorway to art)
+const PX = -1000, PY = frontTop(-1000);
+const painterSVG = svgBox(0,0,700,700,`
+  <g stroke="${INK}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M110 330L60 -40M190 330L240 -40M150 330V-20" fill="none" stroke="#8a5a2b" stroke-width="22"/>
+    <rect x="20" y="-250" width="260" height="300" rx="14" fill="#fff"/>
+    <g stroke-width="0"><circle cx="100" cy="-160" r="54" fill="#ff7eb6"/><path d="M40 20Q120 -110 260 -60V30H40Z" fill="#4fe3e0"/><circle cx="210" cy="-170" r="34" fill="#ffd166"/><path d="M60 -60q40 -40 90 0t90 0" stroke="#b58cff" stroke-width="18" fill="none"/></g>
+    <rect x="20" y="-250" width="260" height="300" rx="14" fill="none"/>
+    <path d="M-170 340c-110 0 -130 -120 -110 -210c20 -110 160 -130 210 -40c40 70 20 250 -100 250z" fill="#f6a5c0"/>
+    <path d="M-250 120c-30 -60 0 -110 70 -120c-20 40 10 60 50 70" fill="#f6a5c0"/>
+    <path d="M-250 40q70 -120 160 -30q-40 -40 -160 30z" fill="#b58cff"/><circle cx="-160" cy="-30" r="16" fill="#b58cff"/>
+    <circle cx="-150" cy="110" r="12" fill="${INK}"/><circle cx="-100" cy="105" r="12" fill="${INK}"/>
+    <path d="M-150 160q25 20 50 0" fill="none"/>
+    <g class="brush"><path d="M-60 210L60 60" stroke-width="16"/><path d="M60 60l20 -26" stroke="#ff7eb6" stroke-width="22"/></g>
+  </g>`);
+const painter = place(painterSVG, PX, PY - 290, 700, 700, {cls:'clickable', z:3});
+place('<div class="pin for-hills">See the art!</div>', PX + 40, PY - 820, 520, 140, {z:7});
+painter.addEventListener('click', () => showCard('Art gallery','Coming soon','Shigost’s painter friend will open the doors to digital art, EDM visual loops, and the sketchbook archive.','Back to games','#games'));
+
+// signpost to the next chapter
+const SX = 1350, SY = frontTop(1350);
+place(svgBox(0,0,520,620,`<g stroke="${INK}" stroke-width="12" stroke-linejoin="round">
+  <rect x="-22" y="-120" width="44" height="420" rx="10" fill="#a8743f"/>
+  <path d="M-200 -220h330l70 60 -70 60h-330z" fill="#ffd166"/>
+  <path d="M200 -40h-330l-70 60 70 60h330z" fill="#ff7eb6"/></g>
+  <text x="-20" y="-145" text-anchor="middle" font-family="Gluten, cursive" font-weight="800" font-size="62" fill="${INK}">Jungle</text>
+  <text x="40" y="38" text-anchor="middle" font-family="Gluten, cursive" font-weight="800" font-size="52" fill="${INK}">Coming soon</text>`), SX, SY - 270, 520, 620, {cls:'clickable', z:3})
+  .addEventListener('click', () => showCard('The jungle','Next chapter','Keep scrolling past the hills soon. Shigost’s trip continues through the jungle, the dunes, the beach, the reef, the deep ocean, and the island.','See the games','#games'));
+
+// butterflies
+for (let i=0;i<3;i++){
+  const el = place(`<div class="bfly-path" style="animation-delay:${-i*3}s;width:100%;height:100%"><svg viewBox="-40 -30 80 60"><g class="flap" style="animation-delay:${-i*.1}s"><ellipse cx="-18" cy="0" rx="20" ry="24" fill="${['#ff7eb6','#ffd166','#4fe3e0'][i]}" stroke="${INK}" stroke-width="5"/><ellipse cx="18" cy="0" rx="20" ry="24" fill="${['#ff7eb6','#ffd166','#4fe3e0'][i]}" stroke="${INK}" stroke-width="5"/></g><rect x="-4" y="-18" width="8" height="36" rx="4" fill="${INK}"/></svg></div>`,
+    -700 + i*900, GROUND - 450 - i*120, 90, 70, {cls:'butterfly', z:4});
+}
+
+/* ---------- Shigost ---------- */
+const sh = document.createElement('div'); sh.id = 'shigost'; sh.className = 'st-stand';
+sh.innerHTML = `
+<svg class="chute" viewBox="0 0 640 520" aria-hidden="true">
+  <defs><clipPath id="dome"><path d="M40 260C40 60 600 60 600 260Z"/></clipPath></defs>
+  <g stroke="${INK}" stroke-width="5" fill="none"><path d="M40 262L285 515M180 266L300 515M320 268L320 515M460 266L340 515M600 262L355 515"/></g>
+  <g clip-path="url(#dome)">${['#ff7eb6','#ffd166','#4fe3e0','#b58cff','#ff7eb6','#ffd166','#4fe3e0'].map((c,i)=>`<rect x="${i*92}" y="0" width="92" height="300" fill="${c}"/>`).join('')}</g>
+  <path d="M40 260C40 60 600 60 600 260q-35 30 -70 0q-35 30 -70 0q-35 30 -70 0q-35 30 -70 0q-35 30 -70 0q-35 30 -70 0q-35 30 -70 0q-35 30 -70 0" fill="none" stroke="${INK}" stroke-width="12" stroke-linejoin="round"/>
+</svg>
+<svg class="ghost" viewBox="-30 0 260 260" aria-hidden="true">
+  <defs><clipPath id="gbody"><path d="M100 20C160 20 180 70 180 130L182 220Q168 240 154 222Q140 244 124 224Q110 246 96 226Q82 246 68 224Q52 242 38 222Q24 238 18 218L20 130C20 70 40 20 100 20Z"/></clipPath></defs>
+  <path class="armL" d="M24 140Q-8 150 -14 176Q-4 186 26 168" fill="#fff" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>
+  <g class="armR"><path d="M176 140Q208 150 214 176Q204 186 174 168" fill="#fff" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>
+    <g class="gun" transform="translate(196 152)"><rect x="-6" y="-16" width="62" height="30" rx="12" fill="#b58cff" stroke="${INK}" stroke-width="7"/><rect x="50" y="-10" width="18" height="18" rx="4" fill="#4fe3e0" stroke="${INK}" stroke-width="6"/><path d="M8 12l-8 24h18l6 -22" fill="#8e64e6" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/></g></g>
+  <path d="M100 20C160 20 180 70 180 130L182 220Q168 240 154 222Q140 244 124 224Q110 246 96 226Q82 246 68 224Q52 242 38 222Q24 238 18 218L20 130C20 70 40 20 100 20Z" fill="#fff"/>
+  <g clip-path="url(#gbody)"><ellipse cx="150" cy="200" rx="90" ry="110" fill="#e6dcff"/></g>
+  <path d="M100 20C160 20 180 70 180 130L182 220Q168 240 154 222Q140 244 124 224Q110 246 96 226Q82 246 68 224Q52 242 38 222Q24 238 18 218L20 130C20 70 40 20 100 20Z" fill="none" stroke="${INK}" stroke-width="8"/>
+  <g class="blink"><ellipse cx="74" cy="108" rx="15" ry="25" fill="#1a0f2a"/><ellipse cx="126" cy="108" rx="15" ry="25" fill="#1a0f2a"/><circle cx="79" cy="98" r="5" fill="#fff"/><circle cx="131" cy="98" r="5" fill="#fff"/></g>
+  <ellipse cx="56" cy="142" rx="12" ry="7" fill="#ff9ec7" opacity=".8"/><ellipse cx="144" cy="142" rx="12" ry="7" fill="#ff9ec7" opacity=".8"/>
+</svg>`;
+sh.style.zIndex = 5; sh.classList.add('clickable');
+world.appendChild(sh);
+const shPin = place('<div class="pin for-space">Click Shigost!</div>', 0, 0, 560, 140, {z:7});
+
+const STAND = { x: 820, y: astTop(820) - 112 };
+const LAND_X = 220;
+const LAND = { x: LAND_X, y: frontTop(LAND_X) - 118 };
+function shigostAt(p){
+  if (p < .35) return { x:STAND.x, y:STAND.y, r:0, s:'st-stand' };
+  if (p < .42){ const t=(p-.35)/.07; return { x:lerp(STAND.x,1150,t), y:STAND.y - 540*Math.sin(t*Math.PI*.62), r:t*25, s:'st-jump' }; }
+  if (p < .46){ const t=(p-.42)/.04; return { x:lerp(1150,1200,t), y:lerp(STAND.y-500,900,t*t), r:25-t*25, s: t > .55 ? 'st-chute' : 'st-fall' }; }
+  if (p < .88){ const t=(p-.46)/.42; return { x:lerp(1200,LAND_X,t) + 280*Math.sin(t*Math.PI*5)*(1-t), y:lerp(900,LAND.y-260,t), r:8*Math.cos(t*Math.PI*5)*(1-t), s:'st-chute' }; }
+  if (p < .93){ const t=(p-.88)/.05; return { x:LAND_X, y:lerp(LAND.y-260,LAND.y,ease(t)), r:0, s: t > .85 ? 'st-land' : 'st-chute' }; }
+  return { x:LAND.x, y:LAND.y, r:0, s:'st-land' };
+}
+
+/* ---------- camera ---------- */
+function camAt(p, vw, vh){
+  const zHero = Math.min(vw*.92/FW, vh*.78/FH);
+  const zWide = Math.min(vw/3700, vh/2700);
+  const zFall = Math.min(vw/1700, vh/2300);
+  const zLand = Math.min(vw/3000, vh/2300);
+  const landY = GROUND - .2*(vh/zLand);
+  const stops = [
+    [0,    {x:0, y:BBy, z:zHero}],
+    [.06,  {x:0, y:BBy, z:zHero}],
+    [.26,  {x:250, y:-560, z:zWide}],
+    [.30,  {x:300, y:-540, z:zWide}],
+    [.36,  {x:620, y:-560, z:zWide*2}],
+    [.42,  {x:900, y:-800, z:zWide*1.7}],
+  ];
+  for (let q=.46; q<=.865; q+=.015){ const s = shigostAt(q); stops.push([q, {x:s.x*.6, y:s.y+120, z:zFall}]); }
+  stops.push([.93, {x:175, y:landY, z:zLand}], [1, {x:175, y:landY, z:zLand}]);
+  if (p <= 0) return stops[0][1];
+  for (let i=1;i<stops.length;i++){
+    if (p <= stops[i][0]){ const [pa,a]=stops[i-1], [pb,b]=stops[i]; let t=(p-pa)/(pb-pa); if (pa < .45 || pa > .86) t = ease(t);
+      return { x:lerp(a.x,b.x,t), y:lerp(a.y,b.y,t), z: Math.exp(lerp(Math.log(a.z),Math.log(b.z),t)) }; }
+  }
+  return stops[stops.length-1][1];
+}
+
+/* ---------- sky color ---------- */
+const SKY = [[-1500,'#090523','#1d0b45'],[1500,'#170a3f','#3c1a6e'],[5000,'#3d2a8a','#c86fb8'],[8000,'#5aa9e6','#ffc1d9'],[12000,'#7fd0ff','#fff0c2'],[16000,'#8edbff','#fff6d6']];
+const hex = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mix = (a,b,t) => { const A=hex(a),B=hex(b); return `rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],t))).join(',')})`; };
+function skyAt(y){
+  if (y <= SKY[0][0]) return [SKY[0][1],SKY[0][2]];
+  for (let i=1;i<SKY.length;i++) if (y <= SKY[i][0]){ const t=(y-SKY[i-1][0])/(SKY[i][0]-SKY[i-1][0]); return [mix(SKY[i-1][1],SKY[i][1],t), mix(SKY[i-1][2],SKY[i][2],t)]; }
+  const l = SKY[SKY.length-1]; return [l[1],l[2]];
+}
+
+/* ---------- stars ---------- */
+const ctx = canvas.getContext('2d'); const SR = rng(3);
+const stars = Array.from({length:240},()=>({x:SR(),y:SR(),r:.6+SR()*1.8,ph:SR()*6.28,d:.2+SR()*.8,c:SR()<.15?'#ffd166':SR()<.2?'#4fe3e0':'#ffffff'}));
+let shooting = null;
+function drawStars(cam, vw, vh, time, alpha){
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  if (canvas.width !== Math.round(vw*dpr)){ canvas.width = Math.round(vw*dpr); canvas.height = Math.round(vh*dpr); }
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,vw,vh);
+  if (alpha <= 0) return;
+  for (const s of stars){
+    const x = ((s.x*vw - cam.x*cam.z*.04*s.d) % vw + vw) % vw, y = ((s.y*vh - cam.y*cam.z*.04*s.d) % vh + vh) % vh;
+    const tw = reduce.matches ? 1 : .55 + .45*Math.sin(time*.002*s.d + s.ph);
+    ctx.globalAlpha = alpha*tw; ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(x,y,s.r,0,6.283); ctx.fill();
+  }
+  if (!reduce.matches && stage.classList.contains('ch-space')){
+    if (!shooting && Math.random() < .006) shooting = {x:Math.random()*vw*.6, y:Math.random()*vh*.4, t:0};
+    if (shooting){ shooting.t += 1; const L = shooting.t*14; ctx.globalAlpha = alpha*Math.max(0,1-shooting.t/40);
+      const g = ctx.createLinearGradient(shooting.x, shooting.y, shooting.x+L, shooting.y+L*.45); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(1,'#fff');
+      ctx.strokeStyle = g; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(shooting.x,shooting.y); ctx.lineTo(shooting.x+L,shooting.y+L*.45); ctx.stroke();
+      if (shooting.t > 40) shooting = null; }
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- chapters ---------- */
+const CHAPTERS = [
+  {until:.42, cls:'ch-space', name:'Outer space', n:1, rest:.30},
+  {until:.88, cls:'ch-fall',  name:'The long way down', n:1, rest:.65},
+  {until:2,   cls:'ch-hills', name:'Grassy hills', n:2, rest:1},
+];
+const chapterOf = p => CHAPTERS.find(c => p < c.until);
+const railItems = [...document.querySelectorAll('#rail li')];
+let curCh = null;
+
+/* ---------- card ---------- */
+const card = $('#card');
+function showCard(title, status, text, btn, href){
+  $('#cardTitle').textContent = title; $('#cardStatus').textContent = status; $('#cardText').textContent = text;
+  const b = $('#cardBtn'); b.textContent = btn; b.href = href; card.classList.add('show');
+}
+card.querySelector('.close').addEventListener('click', () => card.classList.remove('show'));
+$('#cardBtn').addEventListener('click', () => card.classList.remove('show'));
+
+// portal gun
+let firing = false;
+sh.addEventListener('click', () => {
+  if (!stage.classList.contains('ch-space') || firing) return;
+  firing = true;
+  const gx = STAND.x + 150, gy = STAND.y + 12;
+  const dx = PORTAL.x - gx, dy = PORTAL.y - gy, len = Math.hypot(dx,dy);
+  beam.style.left = gx+'px'; beam.style.top = gy+'px'; beam.style.width = len+'px'; beam.style.transform = `rotate(${Math.atan2(dy,dx)}rad)`;
+  beam.classList.remove('fire'); void beam.offsetWidth; beam.classList.add('fire');
+  setTimeout(() => $('#portal').classList.add('open'), 350);
+  setTimeout(() => { showCard('Shigost Space Explorer','Concept game','A portal-hopping space adventure where Shigost explores weird little planets. It’s still a concept, so join the list to follow along.','Get early access','#join'); firing = false; }, 1000);
+});
+$('#portal').addEventListener('click', () => showCard('Shigost Space Explorer','Concept game','A portal-hopping space adventure where Shigost explores weird little planets. It’s still a concept, so join the list to follow along.','Get early access','#join'));
+
+/* ---------- main loop ---------- */
+let target = 0, cur = 0, lastScroll = performance.now(), lastDrawn = '';
+function readScroll(){
+  const total = journey.offsetHeight - stage.offsetHeight;
+  target = clamp(-journey.getBoundingClientRect().top / total, 0, 1);
+  lastScroll = performance.now();
+}
+addEventListener('scroll', readScroll, {passive:true});
+addEventListener('resize', readScroll);
+readScroll(); cur = target;
+
+let shownP = null;
+function frame(time){
+  const vw = stage.clientWidth, vh = stage.clientHeight;
+  let p;
+  if (reduce.matches){
+    const c = chapterOf(target); p = c.rest;
+    if (shownP !== null && p !== shownP){ world.classList.add('fade'); setTimeout(()=>world.classList.remove('fade'), 220); }
+    shownP = p;
+  } else {
+    cur += (target - cur) * .1; if (Math.abs(target-cur) < .00005) cur = target; p = cur;
+  }
+
+  // chapter state
+  const ch = chapterOf(p);
+  if (ch !== curCh){
+    if (curCh) stage.classList.remove(curCh.cls);
+    stage.classList.add(ch.cls); curCh = ch;
+    $('#chapter').innerHTML = `${ch.name}<small>Chapter ${ch.n} of 8</small>`;
+    railItems.forEach((li,i)=>li.classList.toggle('on', i === ch.n-1));
+    if (ch.cls !== 'ch-space'){ $('#portal').classList.remove('open'); }
+  }
+  const idle = performance.now() - lastScroll > 380 && Math.abs(target - cur) < .0005;
+  stage.classList.toggle('idle', idle);
+  stage.classList.toggle('narrow', vw < 700);
+  stage.classList.toggle('pin-space', p > .18 && p < .35 && !firing);
+
+  // camera
+  const cam = camAt(p, vw, vh);
+  world.style.transform = `translate(${vw/2}px,${vh/2}px) scale(${cam.z}) translate(${-cam.x}px,${-cam.y}px)`;
+  for (const o of objs) o.el.style.translate = `${((cam.x-o.x)*o.k).toFixed(1)}px ${((cam.y-o.y)*o.k).toFixed(1)}px`;
+
+  // Shigost
+  const s = shigostAt(p);
+  sh.style.transform = `translate(${s.x-110}px,${s.y-143}px) rotate(${s.r}deg)`;
+  if (sh.dataset.s !== s.s){ sh.className = s.s + ' clickable'; sh.dataset.s = s.s; }
+  shPin.style.left = (STAND.x - 280) + 'px'; shPin.style.top = (STAND.y - 330) + 'px';
+
+  // sky + stars
+  const [top, bot] = skyAt(cam.y);
+  const key = top + bot; if (key !== lastDrawn){ sky.style.background = `linear-gradient(${top}, ${bot})`; lastDrawn = key; }
+  drawStars(cam, vw, vh, time, clamp(1 - (cam.y - 1200)/4500, 0, 1));
+
+  // hero overlay sits exactly on the billboard face, then fades as we zoom out
+  const fx = vw/2 + (BBx - FW/2 - cam.x)*cam.z, fy = vh/2 + (BBy - FH/2 - cam.y)*cam.z;
+  const heroA = clamp(1 - (p - .015)/.05, 0, 1);
+  overlay.style.cssText = `left:${fx}px;top:${fy}px;width:${FW*cam.z}px;height:${FH*cam.z}px;opacity:${heroA};visibility:${heroA>0?'visible':'hidden'}`;
+  heroCta.style.top = (fy + FH*cam.z + 22) + 'px'; heroCta.style.opacity = heroA; heroCta.style.visibility = heroA>0?'visible':'hidden';
+  hint.style.opacity = clamp(1 - p/.03, 0, 1);
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- signup (prototype) ---------- */
+$('#joinForm').addEventListener('submit', e => {
+  e.preventDefault();
+  $('#joinMsg').textContent = 'Prototype only: signups get connected to a real mailing list in a later step.';
+});
+})();
+</script>
+</body>
+</html>
