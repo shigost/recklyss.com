@@ -50,12 +50,13 @@ a{color:inherit}
 
 /* header */
 .top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:calc(env(safe-area-inset-top,0px) + 14px) clamp(14px,3vw,30px) 12px;pointer-events:none}
+  padding:calc(var(--sat) + 8px) calc(clamp(14px,3vw,30px) + var(--sar)) 8px calc(clamp(14px,3vw,30px) + var(--sal));pointer-events:none;transition:background .25s}
+.top.solid{background:rgba(20,11,43,.92)}
 .top > *{pointer-events:auto}
 .wordmark{font-weight:800;font-stretch:80%;font-size:clamp(19px,2vw,24px);letter-spacing:-.01em;color:#fff;text-decoration:none;text-shadow:0 2px 14px rgba(20,11,43,.55)}
 .nav{display:flex;align-items:center;gap:2px;background:rgba(20,11,43,.42);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:4px}
-.nav a{font-weight:600;font-size:14px;color:#fff;text-decoration:none;padding:7px 13px;border-radius:999px}
+.nav a{font-weight:600;font-size:15px;color:#fff;text-decoration:none;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px}
 .nav a:hover{background:rgba(255,255,255,.12)}
 .nav a.play{background:var(--gold);color:var(--ink);font-weight:700}
 @media (max-width:640px){ .nav a.opt{display:none} }
@@ -77,6 +78,9 @@ a{color:inherit}
 .obj{position:absolute}
 .obj > svg{display:block;width:100%;height:100%;overflow:visible}
 .clickable{cursor:pointer}
+.hit{-webkit-tap-highlight-color:transparent}
+#shigost .hit{position:absolute;inset:-40%}
+#shigost:not(.st-stand) .hit{display:none}
 
 /* billboard face */
 .bb{position:relative;width:100%;height:100%;container-type:inline-size;overflow:hidden;border-radius:1.4cqw;
@@ -96,19 +100,22 @@ a{color:inherit}
 .bb h2{font-weight:800;font-stretch:75%;font-size:12.5cqw;line-height:.86;letter-spacing:-.02em;margin:0;color:#fff4d6;
   text-shadow:0 0 1.2cqw rgba(246,200,106,.55),0 0 4cqw rgba(233,139,181,.55)}
 .bb .tag{font-size:2.4cqw;font-weight:500;max-width:40cqw;margin:2cqw 0 2.6cqw;line-height:1.4;color:rgba(255,255,255,.86)}
-.btn{display:inline-flex;align-items:center;gap:.5em;font-family:var(--font);font-weight:700;text-decoration:none;color:var(--ink);
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;gap:.5em;font-family:var(--font);font-weight:700;text-decoration:none;color:var(--ink);
   background:var(--gold);border:0;border-radius:999px;padding:.62em 1.2em;box-shadow:0 .25em 0 #b88a2c;transition:transform .12s, box-shadow .12s}
 .btn:hover{transform:translateY(1px);box-shadow:0 .15em 0 #b88a2c}
 .btn:active{transform:translateY(.25em);box-shadow:0 0 0 #b88a2c}
-.bb .btn{font-size:2.6cqw}
+.bb .btn{font-size:2.6cqw;min-height:0}
 .bb .note{font-size:1.7cqw;color:rgba(255,255,255,.6);margin-top:1.8cqw}
 #heroOverlay{position:absolute;z-index:5}
-#heroCta{position:absolute;z-index:5;left:16px;right:16px;text-align:center;color:#fff;display:none}
-#heroCta p{margin:0 auto 14px;font-weight:500;font-size:16px;line-height:1.45;max-width:32ch;background:rgba(20,11,43,.7);border-radius:14px;padding:9px 13px}
+#heroCta{position:absolute;z-index:5;left:0;top:0;text-align:center;color:#fff;display:none}
+#heroCta p{margin:0 auto 12px;font-weight:500;font-size:16px;line-height:1.45;max-width:32ch;background:rgba(20,11,43,.7);border-radius:14px;padding:9px 13px}
 #heroCta .btn{font-size:18px}
-#stage.narrow #heroCta{display:block}
-#stage.narrow #heroOverlay .tag,#stage.narrow #heroOverlay .btn,#stage.narrow #heroOverlay .note{display:none}
-#stage.narrow #heroOverlay .copy{right:30cqw}
+/* compact hero: the billboard shows only the title, the call to action sits below it (stack) or beside it (side) */
+#stage.compact #heroCta{display:block}
+#stage.side #heroCta{text-align:left}
+#stage.side #heroCta p{margin:0 0 12px}
+#stage.compact #heroOverlay .kicker,#stage.compact #heroOverlay .tag,#stage.compact #heroOverlay .btn,#stage.compact #heroOverlay .note{display:none}
+#stage.compact #heroOverlay .copy{right:30cqw;top:50%;transform:translateY(-50%)}
 
 /* HUD */
 #hint{position:absolute;left:50%;bottom:var(--hud-b);transform:translateX(-50%);z-index:6;
@@ -119,18 +126,18 @@ a{color:inherit}
   font-weight:600;font-size:14px;color:#fff;background:rgba(20,11,43,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:7px 14px;transition:opacity .35s, transform .35s;pointer-events:none;white-space:nowrap}
 #tip.show{opacity:1;transform:translate(-50%,0)}
-#rail{position:absolute;right:clamp(10px,2vw,22px);top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;gap:9px;margin:0;padding:0;list-style:none}
+#rail{position:absolute;right:calc(clamp(10px,2vw,22px) + var(--sar));pointer-events:none;top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;gap:9px;margin:0;padding:0;list-style:none}
 #rail li{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.28);position:relative;transition:transform .2s, background .2s}
 #rail li.built{background:rgba(255,255,255,.75)}
 #rail li.on{background:var(--gold);transform:scale(1.5)}
 #rail li::after{content:attr(data-name);position:absolute;right:18px;top:50%;transform:translateY(-50%);white-space:nowrap;
   font-weight:600;font-size:12px;color:#fff;background:rgba(20,11,43,.75);padding:3px 9px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none}
 #rail li:hover::after{opacity:1}
-#chapter{position:absolute;left:clamp(14px,3vw,30px);bottom:var(--hud-b);z-index:6;color:#fff;
+#chapter{position:absolute;left:calc(clamp(14px,3vw,30px) + var(--sal));bottom:var(--hud-b);z-index:6;color:#fff;
   font-weight:700;font-stretch:85%;font-size:clamp(15px,1.5vw,18px);text-shadow:0 1px 10px rgba(0,0,0,.45)}
 #chapter small{display:block;font-weight:500;font-size:12px;opacity:.7;font-stretch:100%}
-#badge{position:absolute;right:clamp(14px,3vw,30px);bottom:var(--hud-b);z-index:6;
-  font-weight:600;font-size:11px;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px 9px}
+#badge{position:absolute;right:calc(clamp(14px,3vw,30px) + var(--sar));bottom:var(--hud-b);z-index:6;
+  font-weight:600;font-size:12px;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px 9px}
 @media (max-width:640px){ #badge{display:none} #chapter small{display:none} #tip{bottom:calc(var(--hud-b) + 34px)} }
 
 /* halos mark clickable things */
@@ -143,13 +150,13 @@ a{color:inherit}
 
 /* card */
 #card{position:absolute;z-index:8;left:50%;bottom:calc(var(--hud-b) + 50px);transform:translate(-50%,24px);opacity:0;pointer-events:none;
-  width:min(420px,calc(100% - 32px));background:var(--card);color:var(--text);border-radius:22px;padding:20px 22px;
+  width:min(420px,calc(100% - 32px - var(--sal) - var(--sar)));max-height:calc(100% - var(--hud-b) - 130px);overflow:auto;background:var(--card);color:var(--text);border-radius:22px;padding:20px 22px;
   box-shadow:0 18px 50px rgba(20,11,43,.45);transition:opacity .25s, transform .25s}
 #card.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 #card h3{font-weight:800;font-stretch:85%;font-size:24px;margin:0 0 6px;letter-spacing:-.01em}
 #card p{margin:0 0 14px;line-height:1.55;color:var(--muted)}
 #card .status{display:inline-block;font-weight:700;font-size:12px;background:var(--lilac);color:var(--ink);border-radius:999px;padding:3px 10px;margin-bottom:10px}
-#card .close{position:absolute;top:10px;right:12px;background:none;border:0;font-size:26px;line-height:1;cursor:pointer;color:var(--text)}
+#card .close{position:absolute;top:4px;right:4px;width:44px;height:44px;background:none;border:0;font-size:26px;line-height:1;cursor:pointer;color:var(--text)}
 
 /* world animations */
 .bulb{animation:bulb 1.4s steps(1) infinite}
@@ -264,7 +271,7 @@ a{color:inherit}
 
 /* content below */
 .below{background:var(--paper);color:var(--text);position:relative}
-.wrap{max-width:1080px;margin:0 auto;padding:100px clamp(18px,4vw,40px) 60px}
+.wrap{max-width:1080px;margin:0 auto;padding:100px calc(clamp(18px,4vw,40px) + var(--sar)) 60px calc(clamp(18px,4vw,40px) + var(--sal))}
 .below h2{font-weight:800;font-stretch:80%;font-size:clamp(40px,5.4vw,66px);margin:0 0 12px;line-height:.95;letter-spacing:-.02em}
 .lede{font-size:18px;line-height:1.6;max-width:58ch;color:var(--muted);margin:0 0 36px}
 .carts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:24px}
@@ -286,7 +293,7 @@ a{color:inherit}
 .join input{flex:1 1 240px;font:inherit;font-size:17px;padding:14px 18px;border-radius:999px;border:0;background:#fff;color:var(--ink)}
 .join button.btn{font-size:17px;cursor:pointer}
 .join .msg{margin:14px 0 0;font-weight:600;color:var(--teal);min-height:1.4em}
-footer{text-align:center;padding:30px 20px 50px;color:var(--muted);font-weight:500}
+footer{text-align:center;padding:30px 20px calc(50px + var(--sab));color:var(--muted);font-weight:500}
 
 /* lite mode (touch devices): no full-screen blending, no backdrop blur, no filters, fewer repaints inside big layers */
 .lite #stage::after{display:none}
@@ -495,6 +502,8 @@ function place(html, x, y, w, h, o = {}){
   objs.push(ob); group.items.push(ob);
   return el;
 }
+// invisible tap area, so small things stay at least 44 px wide when the camera is zoomed out
+function hit(x, y, w, h, fn){ const el = place('', x, y, w, h, {cls:'hit clickable', z:7}); el.addEventListener('click', fn); return el; }
 const halo = (x, y, d, ch) => place(`<svg class="spin" viewBox="-60 -60 120 120"><circle r="50" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.9" stroke-dasharray="5 4"/></svg><svg class="ping" viewBox="-60 -60 120 120"><circle r="58" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.3"/></svg>`, x, y, d, d, {cls:'halo for-' + ch, z:6});
 const svgBox = (x,y,w,h,inner) => `<svg viewBox="${x-w/2} ${y-h/2} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
 const INK = '#24163a';
@@ -593,7 +602,9 @@ const snail = place(`<svg viewBox="0 0 300 220"><defs><radialGradient id="shellG
 <g class="eyes"><path d="M60 175C55 140 48 118 40 100M78 172C80 140 86 120 92 104" stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="38" cy="96" r="13" fill="#fff" stroke="${INK}" stroke-width="6"/><circle cx="94" cy="100" r="13" fill="#fff" stroke="${INK}" stroke-width="6"/><circle cx="36" cy="97" r="5" fill="${INK}"/><circle cx="92" cy="101" r="5" fill="${INK}"/></g>
 <g class="shell"><circle cx="185" cy="118" r="70" fill="url(#shellG)" stroke="${INK}" stroke-width="7"/><path d="M185 118m0 -8a8 8 0 1 1 -8 8a22 22 0 1 1 24 22a40 40 0 1 1 -44 -40a58 58 0 1 1 62 62" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round" opacity=".7"/><circle cx="160" cy="88" r="10" fill="#fff" opacity=".7"/></g></svg>`,
   SNX, SNY - 88, 300, 220, {cls:'clickable', id:'snail', z:4});
-snail.addEventListener('click', () => { snail.classList.add('hide'); clearTimeout(snail._t); snail._t = setTimeout(()=>snail.classList.remove('hide'), 2200); });
+const hideSnail = () => { snail.classList.add('hide'); clearTimeout(snail._t); snail._t = setTimeout(()=>snail.classList.remove('hide'), 2200); };
+snail.addEventListener('click', hideSnail);
+hit(SNX, SNY - 90, 480, 480, hideSnail);
 halo(SNX, SNY - 90, 380, 'space');
 
 // portal
@@ -704,7 +715,8 @@ function puffSheep(flip){
 [[-2050,false],[1950,true],[2600,false]].forEach(([x,flip],i)=>{
   const s = place(puffSheep(flip), x, frontTop(x) - 96, 250, 200, {cls:'clickable', z:3});
   s.firstChild.style.animationDelay = (-i*.8)+'s';
-  s.addEventListener('click', () => { s.classList.remove('boing'); void s.offsetWidth; s.classList.add('boing'); });
+  const boing = () => { s.classList.remove('boing'); void s.offsetWidth; s.classList.add('boing'); };
+  s.addEventListener('click', boing); hit(x, frontTop(x) - 96, 440, 440, boing);
 });
 
 // signpost to the jungle
@@ -712,7 +724,7 @@ const SX = 3350, SY = frontTop(3350);
 place(svgBox(0,0,520,620,`<g stroke="${INK}" stroke-width="9" stroke-linejoin="round">
   <rect x="-18" y="-120" width="36" height="420" rx="8" fill="#8a5a3a"/>
   <path d="M-180 -200h300l60 52 -60 52h-300z" fill="#f3e3c2"/></g>
-  <text x="-20" y="-133" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="62" fill="${INK}">Jungle</text>`), SX, SY - 270, 520, 620, {z:3});
+  <text x="-20" y="-133" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="62" fill="${INK}">Jungle</text>`), SX, SY - 420, 780, 930, {z:3});
 
 for (let i=0;i<3;i++){
   place(`<div class="bfly-path" style="animation-delay:${-i*3}s;width:100%;height:100%"><svg viewBox="-40 -30 80 60"><g class="flap" style="animation-delay:${-i*.1}s"><ellipse cx="-18" cy="0" rx="20" ry="24" fill="${['#e9a6b8','#f6c86a','#9fd8c9'][i]}" stroke="${INK}" stroke-width="4"/><ellipse cx="18" cy="0" rx="20" ry="24" fill="${['#e9a6b8','#f6c86a','#9fd8c9'][i]}" stroke="${INK}" stroke-width="4"/></g><rect x="-4" y="-18" width="8" height="36" rx="4" fill="${INK}"/></svg></div>`,
@@ -810,7 +822,7 @@ NOTES.forEach((f,i)=>{
     leaves += `<path class="vleaf" d="M${sx} ${y}q${dir*40} -26 ${dir*62} 6q${dir*-34} 24 ${dir*-62} -6z" fill="#7fcf6a" stroke="${INK}" stroke-width="4" stroke-opacity=".6"/>`; }
   const v = place(`<svg viewBox="0 0 80 ${len+70}"><path d="${d}" stroke="#2f6b44" stroke-width="18" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#58a85a" stroke-width="8" fill="none" stroke-linecap="round"/>${leaves}
     <circle class="glow" cx="${(40 + Math.sin(len*.012 + i)*16).toFixed(1)}" cy="${len+24}" r="24" fill="${['#e98bb5','#f6c86a','#5fd3c8','#b6a4f2'][i%4]}" stroke="${INK}" stroke-width="5"/></svg>`,
-    x, 14250 + (len+70)/2, 80, len+70, {cls:'vine', z:5});
+    x, 14250 + (len+70)/2, 130, len+70, {cls:'vine', z:5});
   v.dataset.freq = f; vines.push(v);
 });
 halo(7540, 15500, 520, 'jungle');
@@ -839,12 +851,12 @@ addEventListener('pointerup', () => { strumming = false; lastVine = null; });
 addEventListener('pointercancel', () => { strumming = false; lastVine = null; });
 
 // next-chapter sign
-const NX = 8640;
+const NX = 8800;
 place(svgBox(0,0,560,620,`<g stroke="${INK}" stroke-width="9" stroke-linejoin="round">
   <rect x="-18" y="-120" width="36" height="420" rx="8" fill="#8a5a3a"/>
   <path d="M-200 -210h320l60 52 -60 52h-320z" fill="#f3e3c2"/><path d="M-180 -40h300l-50 46 50 46h-300z" fill="#e9c27a"/></g>
   <text x="-30" y="-143" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="56" fill="${INK}">Sand dunes</text>
-  <text x="-30" y="22" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="700" font-size="40" fill="${INK}">coming soon</text>`), NX, jFloor(NX) - 270, 560, 620, {cls:'clickable', z:5})
+  <text x="-30" y="22" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="700" font-size="40" fill="${INK}">coming soon</text>`), NX, jFloor(NX) - 420, 840, 930, {cls:'clickable', z:5})
   .addEventListener('click', () => showCard('The sand dunes','Next chapter','Shigost’s trip keeps going: through the dunes, onto the beach, down through the reef and the deep ocean, and finally to the island.','See the games','#games'));
 
 // foreground leaves (pass in front of the camera)
@@ -906,6 +918,7 @@ sh.innerHTML = `
     <ellipse cx="220" cy="120" rx="160" ry="60" fill="#fff" opacity=".25"/><rect x="0" y="200" width="640" height="80" fill="#24163a" opacity=".12"/></g>
   <path d="M40 260C40 60 600 60 600 260q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0" fill="none" stroke="${INK}" stroke-width="9" stroke-linejoin="round"/>
 </svg>
+<div class="hit"></div>
 <svg class="ghost" viewBox="-45 -64 290 377" aria-hidden="true">
   <defs>${hw.defs}<radialGradient id="aura"><stop offset="0" stop-color="#e1d6ff" stop-opacity=".5"/><stop offset="1" stop-color="#e1d6ff" stop-opacity="0"/></radialGradient></defs>
   <ellipse class="aura" cx="100" cy="150" rx="150" ry="175" fill="url(#aura)"/>
@@ -948,27 +961,69 @@ function shigostAt(p){
 }
 
 /* ================= CAMERA ================= */
-function camAt(p, vw, vh){
-  const zHero = Math.min(vw*.92/FW, vh*.78/FH);
-  const zWide = Math.min(vw/3700, vh/2700);
-  const zFall = Math.min(vw/1700, vh/2300);
-  const zLand = Math.min(vw/3000, vh/2300);
-  const zWalk = Math.min(vw/2600, vh/2200);
-  const zJ = Math.max(Math.min(vw/3300, vh/2300), vh/5200);
-  const landY = GROUND - .2*(vh/zLand);
+// Framing comes from the viewport's shape, not device names. Each camera stop names a world box that must
+// stay in view; fit() picks the zoom and center inside the safe frame (below the header, above the HUD,
+// inside notches and home indicators). Recomputed whenever the viewport changes size (rotate, fold, resize).
+const JBOX = { arrive:{x0:5800, x1:8050, y0:14650, y1:16050}, harp:{x0:7020, x1:8060, y0:15050, y1:16000},
+  edge:{x0:8000, x1:9300, y0:14950, y1:16050}, all:{x0:5800, x1:9300, y0:14650, y1:16050} };
+const VINE_Z = .34; // zoom where neighbouring vines are 44 px apart
+function frameRect(vw, vh){
+  const cs = getComputedStyle(probe), n = k => parseFloat(cs[k]) || 0;
+  const t = Math.max($('.top').offsetHeight, n('paddingTop')) + 4;
+  const l = n('paddingLeft') + 12, r = vw - n('paddingRight') - (vw < 500 ? 22 : 34), b = vh - n('paddingBottom') - 68;
+  return { l, t, r, b, w: r - l, h: b - t, cx: (l + r)/2, cy: (t + b)/2 };
+}
+function relayout(vw, vh){
+  const F = frameRect(vw, vh);
+  const at = (x, y, z) => ({ x: x - (F.cx - vw/2)/z, y: y - (F.cy - vh/2)/z, z }); // world (x, y) at the frame center
+  const zFit = (w, h) => Math.min(F.w/w, F.h/h);
+  const fit = (b, o = {}) => {
+    const bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+    let z = zFit(bw, bh) * .94;
+    if (o.minZ) z = Math.max(z, o.minZ);
+    if (o.maxZ) z = Math.min(z, o.maxZ);
+    const y = o.bottom && bh*z > F.h ? b.y1 - F.h/2/z : (b.y0 + b.y1)/2; // when cropped, keep the ground in view
+    return at((b.x0 + b.x1)/2, y, z);
+  };
+  // hero billboard; BW and BH include its lightbulb frame
+  let hero;
+  const BW = FW + 140, BH = FH + 140;
+  const zFull = Math.min(F.w/BW, F.h/BH, 1240/BW);
+  if (FW*zFull >= 700) hero = { mode:'full', cam: at(BBx, BBy, zFull) };
+  else if (F.w/F.h > 1.45){
+    const cw = Math.min(300, F.w*.4), z = Math.min((F.w - cw - 16)/BW, F.h/BH);
+    const sx = F.cx - (BW*z + 16 + cw)/2 + BW*z/2;
+    hero = { mode:'side', cw, gap: 16 + 70*z, cam: at(BBx - (sx - F.cx)/z, BBy, z) };
+  } else {
+    stage.classList.add('compact'); heroCta.style.width = F.w + 'px';
+    const ctaH = (heroCta.offsetHeight || 150) + 12, z = Math.min(F.w/BW, (F.h - ctaH)/BH);
+    const sy = F.cy - (BH*z + ctaH)/2 + BH*z/2;
+    hero = { mode:'stack', cw: F.w, gap: 12 + 70*z, cam: at(BBx, BBy - (sy - F.cy)/z, z) };
+  }
+  const play = fit({x0:-1300, x1:1200, y0:-950, y1:-150});
+  const zFall = zFit(1700, 2300), zWalk = zFit(2000, 1500);
   const stops = [
-    [0,     {x:0, y:BBy, z:zHero}],
-    [.06*S, {x:0, y:BBy, z:zHero}],
-    [.26*S, {x:250, y:-560, z:zWide}],
-    [.30*S, {x:300, y:-540, z:zWide}],
-    [.36*S, {x:620, y:-560, z:zWide*2}],
-    [.42*S, {x:900, y:-800, z:zWide*1.7}],
+    [0, hero.cam], [.06*S, hero.cam],
+    [.20*S, fit({x0:-1750, x1:1750, y0:-1700, y1:520})],
+    [.26*S, play], [.33*S, play],
+    [.38*S, fit({x0:350, x1:1300, y0:-850, y1:-150}, {maxZ: play.z*2.2})],
+    [.42*S, fit({x0:500, x1:1700, y0:-1300, y1:-150})],
   ];
-  for (let q=.46; q<=.865; q+=.015){ const s = shigostAt(q*S); stops.push([q*S, {x:s.x*.6, y:s.y+120, z:zFall}, 1]); }
-  stops.push([.93*S, {x:175, y:landY, z:zLand}], [S + .015, {x:175, y:landY, z:zLand}]);
-  for (let q = S + .03; q <= S + .185; q += .01){ const s = shigostAt(q); stops.push([q, {x:s.x + 300, y:s.y - .1*(vh/zWalk), z:zWalk}, 1]); }
-  const jY = JG - .2*(vh/zJ);
-  stops.push([S + .215, {x:7150, y:jY, z:zJ}], [1, {x:7150, y:jY, z:zJ}]);
+  for (let q=.46; q<=.865; q+=.015){ const s = shigostAt(q*S); stops.push([q*S, at(s.x*.6, s.y+120, zFall), 1]); }
+  const hills = fit(F.w/F.h > 1.3 ? {x0:-2250, x1:2150, y0:GROUND-950, y1:GROUND+200} : {x0:-2250, x1:450, y0:GROUND-950, y1:GROUND+200}, {bottom:true});
+  stops.push([.93*S, hills], [S + .015, hills]);
+  for (let q = S + .03; q <= S + .185; q += .01){ const s = shigostAt(q); stops.push([q, at(s.x + 250, s.y - .12*F.h/zWalk, zWalk), 1]); }
+  // jungle: one wide shot when the vines are big enough to play, otherwise pan overview, harp, sign
+  const all = fit(JBOX.all, {bottom:true}), seq = all.z < VINE_Z;
+  if (seq){ const harp = fit(JBOX.harp, {minZ:VINE_Z, bottom:true}), edge = fit(JBOX.edge, {bottom:true});
+    stops.push([S + .215, fit(JBOX.arrive, {bottom:true})], [S + .235, harp], [S + .265, harp], [S + .29, edge], [1, edge]); }
+  else stops.push([S + .215, all], [1, all]);
+  const focus = fit({x0:STAND.x - 300, x1:PORTAL.x + 450, y0:PORTAL.y - 450, y1:STAND.y + 220});
+  return { vw, vh, F, hero, stops, seq, focus };
+}
+let LY = null;
+function camAt(p){
+  const stops = LY.stops;
   if (p <= 0) return stops[0][1];
   for (let i=1;i<stops.length;i++){
     if (p <= stops[i][0]){ const [pa,a,la]=stops[i-1], [pb,b,lb]=stops[i]; let t=(p-pa)/(pb-pa); if (!(la && lb)) t = ease(t);
@@ -976,6 +1031,8 @@ function camAt(p, vw, vh){
   }
   return stops[stops.length-1][1];
 }
+// after firing the portal gun the camera eases out to show the portal, until the visitor scrolls again
+const focus = { on:false, a:0, p:0 };
 
 /* ================= SKY ================= */
 const SKY = [[-1500,'#080418','#1a0b3c'],[1500,'#120838','#36176a'],[5000,'#3b2a84','#c46fa8'],[8000,'#6aa6dc','#f6c3cf'],[12000,'#86cde9','#fbe6c6'],[16000,'#8fd3ee','#fdeccb']];
@@ -1019,6 +1076,7 @@ const CHAPTERS = [
   {until:.42*S, cls:'ch-space', name:'Outer space', n:1, rest:.30*S},
   {until:.88*S, cls:'ch-fall', name:'The long way down', n:1, rest:.65*S},
   {until:S+.105, cls:'ch-hills', name:'Grassy hills', n:2, rest:S},
+  {until:S+.277, cls:'ch-jungle', name:'The jungle', n:3, rest:S+.25},
   {until:2, cls:'ch-jungle', name:'The jungle', n:3, rest:1},
 ];
 const chapterOf = p => CHAPTERS.find(c => p < c.until);
@@ -1038,7 +1096,7 @@ let firing = false;
 const spaceCard = () => showCard('Shigost Space Explorer','Concept game','A portal-hopping space adventure where Shigost explores weird little planets. It’s still a concept, so join the list to follow along.','Get early access','#join');
 sh.addEventListener('click', () => {
   if (!stage.classList.contains('ch-space') || firing) return;
-  firing = true;
+  firing = true; focus.on = true; focus.p = target;
   const gx = STAND.x + 130, gy = STAND.y - 9, dx = PORTAL.x - gx, dy = PORTAL.y - gy;
   beam.style.left = px(gx); beam.style.top = px(gy); beam.style.width = px(Math.hypot(dx,dy)); beam.style.transform = `rotate(${Math.atan2(dy,dx)}rad)`;
   beam.classList.remove('fire'); void beam.offsetWidth; beam.classList.add('fire');
@@ -1055,7 +1113,9 @@ function readScroll(){
   lastScroll = performance.now();
 }
 addEventListener('scroll', readScroll, {passive:true});
-addEventListener('resize', () => { measure(); readScroll(); });
+addEventListener('resize', () => { measure(); LY = null; readScroll(); });
+if (document.fonts) document.fonts.ready.then(() => { LY = null; });
+const topBar = $('.top');
 readScroll(); cur = target;
 
 const TIPS = { 'h-space':'Tap Shigost, or the little snail', 'h-hills':'Tap the painter or the sheep', 'h-jungle':'Drag across the vines to play them' };
@@ -1080,6 +1140,7 @@ function measure(){ vpH = parseFloat(getComputedStyle(probe).height) || innerHei
 measure();
 function frame(time){
   const vw = stage.clientWidth, vh = Math.min(stage.clientHeight, vpH || stage.clientHeight);
+  if (!LY || LY.vw !== vw || LY.vh !== vh){ LY = relayout(vw, vh); stage.classList.toggle('compact', LY.hero.mode !== 'full'); stage.classList.toggle('side', LY.hero.mode === 'side'); }
   let p;
   if (reduce.matches){
     const c = chapterOf(target); p = c.rest;
@@ -1097,12 +1158,16 @@ function frame(time){
   }
   const idle = performance.now() - lastScroll > 380 && Math.abs(target - cur) < .0005;
   stage.classList.toggle('idle', idle);
-  stage.classList.toggle('narrow', vw < 700);
-  const hk = (p > .18*S && p < .35*S && !firing) ? 'h-space' : (ch.cls === 'ch-hills' && p > .95*S && p < S + .02) ? 'h-hills' : (ch.cls === 'ch-jungle' && p > S + .2) ? 'h-jungle' : '';
+  const harpOn = LY.seq ? (p > S + .228 && p < S + .272) : p > S + .2;
+  const hk = (p > .235*S && p < .345*S && !firing) ? 'h-space' : (ch.cls === 'ch-hills' && p > .95*S && p < S + .02) ? 'h-hills' : (ch.cls === 'ch-jungle' && harpOn) ? 'h-jungle' : '';
   ['h-space','h-hills','h-jungle'].forEach(k => stage.classList.toggle(k, k === hk));
   if (hk !== tipKey){ tipKey = hk; if (hk){ tip.textContent = TIPS[hk]; } tip.classList.toggle('show', !!hk); }
 
-  const cam = camAt(p, vw, vh);
+  let cam = camAt(p);
+  if (focus.on && (Math.abs(target - focus.p) > .006 || ch.cls !== 'ch-space')) focus.on = false;
+  focus.a += ((focus.on ? 1 : 0) - focus.a) * .06;
+  if (focus.a > .001){ const k = ease(clamp(focus.a, 0, 1)), fc = LY.focus;
+    cam = { x: lerp(cam.x, fc.x, k), y: lerp(cam.y, fc.y, k), z: Math.exp(lerp(Math.log(cam.z), Math.log(fc.z), k)) }; }
   world.style.transform = `translate(${vw/2}px,${vh/2}px) scale(${(cam.z/U).toFixed(5)}) translate(${px(-cam.x)},${px(-cam.y)})`;
   cull(cam, vw, vh);
 
@@ -1117,7 +1182,14 @@ function frame(time){
   const fx = vw/2 + (BBx - FW/2 - cam.x)*cam.z, fy = vh/2 + (BBy - FH/2 - cam.y)*cam.z;
   const heroA = clamp(1 - (p - .012)/.04, 0, 1);
   overlay.style.cssText = `left:${fx}px;top:${fy}px;width:${FW*cam.z}px;height:${FH*cam.z}px;opacity:${heroA};visibility:${heroA>0?'visible':'hidden'}`;
-  heroCta.style.top = (fy + FH*cam.z + 22) + 'px'; heroCta.style.opacity = heroA; heroCta.style.visibility = heroA>0?'visible':'hidden';
+  if (LY.hero.mode !== 'full'){
+    const side = LY.hero.mode === 'side', ch2 = heroCta.offsetHeight;
+    heroCta.style.cssText = side
+      ? `left:${fx + FW*cam.z + LY.hero.gap}px;top:${fy + FH*cam.z/2 - ch2/2}px;width:${LY.hero.cw}px`
+      : `left:${LY.F.l}px;top:${fy + FH*cam.z + LY.hero.gap}px;width:${LY.hero.cw}px`;
+  }
+  heroCta.style.opacity = heroA; heroCta.style.visibility = heroA>0?'visible':'hidden';
+  topBar.classList.toggle('solid', journey.getBoundingClientRect().bottom < topBar.offsetHeight);
   hint.style.opacity = clamp(1 - p/.025, 0, 1);
 
   requestAnimationFrame(frame);
