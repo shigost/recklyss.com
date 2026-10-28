@@ -6,6 +6,11 @@
 <title>Recklyss Studios (prototype)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta name="theme-color" content="#140b2b">
+<script>
+// phones and tablets get a lighter render path (see .lite rules)
+if (navigator.maxTouchPoints > 0 || matchMedia('(pointer: coarse)').matches || (navigator.deviceMemory && navigator.deviceMemory <= 4)) document.documentElement.classList.add('lite');
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -21,19 +26,25 @@
   --muted:#5d4f72;
   --card:#ffffff;
   --font:"Bricolage Grotesque",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* world units are drawn at --u CSS px each, so no layer is ever more than ~1800 CSS px across */
+  --u:.2;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  /* gap between the large and small viewport (iOS toolbar), so the HUD stays above it */
+  --bar:0px;
+  --hud-b:calc(var(--bar) + var(--sab) + 18px);
   color-scheme:light;
   box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;
 }
+@supports (height:100lvh){ :root{ --bar:calc(100lvh - 100svh); } }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){ --paper:#160d2c; --text:#f6eefc; --muted:#c7b9de; --card:#24173f; color-scheme:dark; }
 }
 :root[data-theme="dark"]{ --paper:#160d2c; --text:#f6eefc; --muted:#c7b9de; --card:#24173f; color-scheme:dark; }
 *,*::before,*::after{box-sizing:inherit}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:calc(var(--sat) + 64px)}
 body{margin:0;background:var(--plum);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--plum)}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:8px}
 
@@ -50,8 +61,11 @@ a{color:inherit}
 @media (max-width:640px){ .nav a.opt{display:none} }
 
 /* stage */
-#journey{position:relative;height:1500vh}
-#stage{position:sticky;top:env(safe-area-inset-top,0px);height:calc(100vh - env(safe-area-inset-top,0px));height:calc(100svh - env(safe-area-inset-top,0px));overflow:hidden;background:var(--plum)}
+/* lvh and svh never change while the iOS toolbar slides, so nothing jumps */
+#journey{position:relative;height:1500vh;height:1500lvh}
+#stage{position:sticky;top:0;height:100vh;height:100lvh;overflow:hidden;background:var(--plum)}
+#vprobe{position:fixed;left:0;top:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none;
+  padding:var(--sat) var(--sar) var(--sab) var(--sal)}
 #stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;opacity:.16;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
 #vignette{position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(20,11,43,.38) 100%)}
@@ -59,6 +73,7 @@ a{color:inherit}
 #stars{position:absolute;inset:0;width:100%;height:100%}
 #world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;transition:opacity .22s}
 #world.fade{opacity:0}
+.chap.off,.obj.off{display:none}
 .obj{position:absolute}
 .obj > svg{display:block;width:100%;height:100%;overflow:visible}
 .clickable{cursor:pointer}
@@ -96,11 +111,11 @@ a{color:inherit}
 #stage.narrow #heroOverlay .copy{right:30cqw}
 
 /* HUD */
-#hint{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;
+#hint{position:absolute;left:50%;bottom:var(--hud-b);transform:translateX(-50%);z-index:6;
   font-weight:600;color:#fff;font-size:15px;text-align:center;transition:opacity .3s;pointer-events:none;text-shadow:0 1px 10px rgba(0,0,0,.5)}
 #hint span{display:block;font-size:22px;animation:nudge 1.6s ease-in-out infinite}
 @keyframes nudge{50%{transform:translateY(6px)}}
-#tip{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);z-index:6;opacity:0;
+#tip{position:absolute;left:50%;bottom:var(--hud-b);transform:translate(-50%,8px);z-index:6;opacity:0;
   font-weight:600;font-size:14px;color:#fff;background:rgba(20,11,43,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:7px 14px;transition:opacity .35s, transform .35s;pointer-events:none;white-space:nowrap}
 #tip.show{opacity:1;transform:translate(-50%,0)}
@@ -111,21 +126,23 @@ a{color:inherit}
 #rail li::after{content:attr(data-name);position:absolute;right:18px;top:50%;transform:translateY(-50%);white-space:nowrap;
   font-weight:600;font-size:12px;color:#fff;background:rgba(20,11,43,.75);padding:3px 9px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none}
 #rail li:hover::after{opacity:1}
-#chapter{position:absolute;left:clamp(14px,3vw,30px);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:6;color:#fff;
+#chapter{position:absolute;left:clamp(14px,3vw,30px);bottom:var(--hud-b);z-index:6;color:#fff;
   font-weight:700;font-stretch:85%;font-size:clamp(15px,1.5vw,18px);text-shadow:0 1px 10px rgba(0,0,0,.45)}
 #chapter small{display:block;font-weight:500;font-size:12px;opacity:.7;font-stretch:100%}
-#badge{position:absolute;right:clamp(14px,3vw,30px);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:6;
+#badge{position:absolute;right:clamp(14px,3vw,30px);bottom:var(--hud-b);z-index:6;
   font-weight:600;font-size:11px;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px 9px}
-@media (max-width:640px){ #badge{display:none} #chapter small{display:none} #tip{bottom:calc(54px + env(safe-area-inset-bottom,0px))} }
+@media (max-width:640px){ #badge{display:none} #chapter small{display:none} #tip{bottom:calc(var(--hud-b) + 34px)} }
 
 /* halos mark clickable things */
-.halo{border-radius:50%;border:6px dashed rgba(255,255,255,.75);opacity:0;transition:opacity .4s;pointer-events:none;animation:spin 14s linear infinite}
-.halo::after{content:"";position:absolute;inset:-26px;border-radius:50%;border:4px solid rgba(255,255,255,.35);animation:ping 2s ease-out infinite}
+.halo{opacity:0;transition:opacity .4s;pointer-events:none}
+.halo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.halo .spin{animation:spin 14s linear infinite}
+.halo .ping{animation:ping 2s ease-out infinite}
 @keyframes ping{from{transform:scale(.85);opacity:1}to{transform:scale(1.12);opacity:0}}
 #stage.h-space .halo.for-space,#stage.h-hills .halo.for-hills,#stage.h-jungle .halo.for-jungle{opacity:1}
 
 /* card */
-#card{position:absolute;z-index:8;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translate(-50%,24px);opacity:0;pointer-events:none;
+#card{position:absolute;z-index:8;left:50%;bottom:calc(var(--hud-b) + 50px);transform:translate(-50%,24px);opacity:0;pointer-events:none;
   width:min(420px,calc(100% - 32px));background:var(--card);color:var(--text);border-radius:22px;padding:20px 22px;
   box-shadow:0 18px 50px rgba(20,11,43,.45);transition:opacity .25s, transform .25s}
 #card.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
@@ -140,7 +157,7 @@ a{color:inherit}
 .blink{transform-box:fill-box;transform-origin:center;animation:blink 5.5s infinite}
 @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
 .drift{animation:drift 16s ease-in-out infinite alternate}
-@keyframes drift{from{transform:translateX(-50px)}to{transform:translateX(50px)}}
+@keyframes drift{from{transform:translateX(calc(var(--u) * -50px))}to{transform:translateX(calc(var(--u) * 50px))}}
 .slowdrift{animation:slowdrift 60s ease-in-out infinite alternate}
 @keyframes slowdrift{from{transform:translateX(-200px)}to{transform:translateX(200px)}}
 .tuft{transform-box:fill-box;transform-origin:50% 100%;animation:sway 3.2s ease-in-out infinite alternate}
@@ -152,23 +169,23 @@ a{color:inherit}
 .chew{transform-box:fill-box;transform-origin:30% 20%;animation:chew 2.4s ease-in-out infinite}
 @keyframes chew{0%,60%,100%{transform:rotate(0)}70%,90%{transform:rotate(9deg)}80%{transform:rotate(4deg)}}
 .boing{animation:boing .7s cubic-bezier(.3,1.6,.5,1)}
-@keyframes boing{30%{transform:translateY(-80px) scale(.95,1.08)}60%{transform:translateY(0) scale(1.08,.92)}}
+@keyframes boing{30%{transform:translateY(-40%) scale(.95,1.08)}60%{transform:translateY(0) scale(1.08,.92)}}
 .tilt{transform-box:fill-box;transform-origin:50% 80%;animation:tilt 4s ease-in-out infinite}
 @keyframes tilt{0%,40%,100%{transform:rotate(0)}50%,80%{transform:rotate(-14deg)}}
 .firefly{border-radius:50%;background:radial-gradient(circle,#fffbd0 0,#f6e27a 35%,rgba(246,226,122,0) 70%);animation:float 6s ease-in-out infinite alternate}
-@keyframes float{0%{transform:translate(0,0);opacity:.3}50%{opacity:1}100%{transform:translate(60px,-90px);opacity:.4}}
+@keyframes float{0%{transform:translate(0,0);opacity:.3}50%{opacity:1}100%{transform:translate(130%,-195%);opacity:.4}}
 .rays{mix-blend-mode:screen;animation:rays 7s ease-in-out infinite alternate}
 @keyframes rays{from{opacity:.55}to{opacity:1}}
 .mist{animation:mist 22s ease-in-out infinite alternate}
-@keyframes mist{from{transform:translateX(-160px)}to{transform:translateX(160px)}}
+@keyframes mist{from{transform:translateX(-2%)}to{transform:translateX(2%)}}
 
 /* Shigost */
-#shigost{position:absolute;left:0;top:0;width:220px;height:286px;transform-origin:50% 40%}
+#shigost{position:absolute;left:0;top:0;width:calc(var(--u) * 220px);height:calc(var(--u) * 286px);transform-origin:50% 40%}
 #shigost .ghost{position:absolute;inset:0;transform-origin:50% 90%}
-#shigost .chute{position:absolute;left:50%;bottom:64%;width:640px;height:520px;margin-left:-320px;transform-origin:50% 100%;
+#shigost .chute{position:absolute;left:50%;bottom:64%;width:290.9%;height:181.8%;margin-left:-145.45%;transform-origin:50% 100%;
   transform:scale(.1,0);opacity:0;transition:transform .55s cubic-bezier(.3,1.5,.5,1), opacity .2s}
 #shigost.st-chute .chute{transform:scale(1);opacity:1}
-#shigost.st-land .chute{transform:translate(260px,330px) rotate(70deg) scale(.9,.2);opacity:0;transition:transform .9s ease-in, opacity .9s ease-in .3s}
+#shigost.st-land .chute{transform:translate(40.6%,63.5%) rotate(70deg) scale(.9,.2);opacity:0;transition:transform .9s ease-in, opacity .9s ease-in .3s}
 #shigost.st-walk .chute{opacity:0;transition:none}
 #shigost .gun{display:none}
 #shigost.st-stand .gun{display:inline}
@@ -183,11 +200,11 @@ a{color:inherit}
 @keyframes swing{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
 #stage.idle.ch-space #shigost .ghost{animation:bob 2.4s ease-in-out infinite}
 #stage.idle.ch-space #shigost .armL{animation:wave .5s ease-in-out infinite alternate}
-@keyframes bob{50%{transform:translateY(-14px)}}
+@keyframes bob{50%{transform:translateY(-4.9%)}}
 @keyframes wave{from{transform:rotate(10deg)}to{transform:rotate(-40deg)}}
 #stage.idle.ch-fall #shigost .ghost{animation:swing 1.8s ease-in-out infinite alternate}
 #stage.idle.ch-hills #shigost .ghost,#stage.idle.ch-jungle #shigost .ghost{animation:hop 2s cubic-bezier(.3,0,.5,1) infinite}
-@keyframes hop{0%,40%,100%{transform:translateY(0) scale(1,1)}15%{transform:translateY(-50px) scale(.96,1.05)}32%{transform:translateY(0) scale(1.07,.93)}}
+@keyframes hop{0%,40%,100%{transform:translateY(0) scale(1,1)}15%{transform:translateY(-17.5%) scale(.96,1.05)}32%{transform:translateY(0) scale(1.07,.93)}}
 .brush{transform-box:fill-box;transform-origin:0% 100%}
 #stage.ch-hills .brush{animation:paint 1.4s ease-in-out infinite alternate}
 #stage.idle.ch-hills .brush{animation-duration:.6s}
@@ -195,7 +212,7 @@ a{color:inherit}
 .butterfly,.jungle-only{opacity:0;transition:opacity .6s}
 #stage.ch-hills .butterfly,#stage.ch-jungle .jungle-only{opacity:1}
 .bfly-path{animation:loop 10s linear infinite}
-@keyframes loop{0%{transform:translate(0,0)}25%{transform:translate(180px,-120px)}50%{transform:translate(360px,0)}75%{transform:translate(180px,90px)}100%{transform:translate(0,0)}}
+@keyframes loop{0%{transform:translate(0,0)}25%{transform:translate(225%,-200%)}50%{transform:translate(450%,0)}75%{transform:translate(225%,150%)}100%{transform:translate(0,0)}}
 
 /* critters */
 #snail .eyes{transform-box:fill-box;transform-origin:50% 100%;transition:transform .35s}
@@ -222,11 +239,11 @@ a{color:inherit}
 #portal .ring{position:absolute;inset:0;border-radius:50%;
   background:repeating-conic-gradient(from 0deg,#b6a4f2 0 18deg,#5fd3c8 18deg 36deg,#e98bb5 36deg 54deg);
   -webkit-mask:radial-gradient(circle,transparent 0 24%,#000 25% 100%);mask:radial-gradient(circle,transparent 0 24%,#000 25% 100%);
-  animation:spin 3s linear infinite;filter:blur(1px)}
-#portal .core{position:absolute;inset:24%;border-radius:50%;background:radial-gradient(circle,#fff 0,#c9fff8 30%,#3b1d6e 100%);box-shadow:0 0 120px 30px rgba(95,211,200,.6)}
+  animation:spin 3s linear infinite}
+#portal .core{position:absolute;inset:24%;border-radius:50%;background:radial-gradient(circle,#fff 0,#c9fff8 30%,#3b1d6e 100%);box-shadow:0 0 calc(var(--u) * 120px) calc(var(--u) * 30px) rgba(95,211,200,.6)}
 @keyframes spin{to{transform:rotate(360deg)}}
-#beam{height:30px;margin-top:-15px;transform-origin:0 50%;border-radius:15px;background:linear-gradient(90deg,#fff,var(--teal));
-  box-shadow:0 0 40px var(--teal);transform:scaleX(0);opacity:0}
+#beam{height:calc(var(--u) * 30px);margin-top:calc(var(--u) * -15px);transform-origin:0 50%;border-radius:99px;background:linear-gradient(90deg,#fff,var(--teal));
+  box-shadow:0 0 calc(var(--u) * 40px) var(--teal);transform:scaleX(0);opacity:0}
 #beam.fire{animation:fire .6s ease-out forwards}
 @keyframes fire{0%{transform:scaleX(0);opacity:1}70%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
 
@@ -256,6 +273,16 @@ a{color:inherit}
 .join .msg{margin:14px 0 0;font-weight:600;color:var(--teal);min-height:1.4em}
 footer{text-align:center;padding:30px 20px 50px;color:var(--muted);font-weight:500}
 
+/* lite mode (touch devices): no full-screen blending, no backdrop blur, no filters, fewer repaints inside big layers */
+.lite #stage::after{display:none}
+.lite .nav,.lite #tip{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(20,11,43,.8)}
+.lite .bb .laser{filter:none;mix-blend-mode:normal;opacity:.55}
+.lite .rays{mix-blend-mode:normal;animation:none;opacity:.6}
+.lite .big .tuft,.lite .big .glow{animation:none}
+.lite #world .bb .laser,.lite #world .bb .eq i{animation:none}
+.lite #world .bb .eq i{transform:scaleY(.45)}
+.lite #world .bb .eq i:nth-child(3n){transform:scaleY(.75)}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important;transition:none !important}
   #world{transition:opacity .2s !important}
@@ -263,6 +290,7 @@ footer{text-align:center;padding:30px 20px 50px;color:var(--muted);font-weight:5
 </style>
 </head>
 <body>
+<div id="vprobe" aria-hidden="true"></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="ghostFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e4dcfb"/></linearGradient>
@@ -410,6 +438,8 @@ const $ = s => document.querySelector(s);
 const stage = $('#stage'), world = $('#world'), sky = $('#sky'), canvas = $('#stars');
 const journey = $('#journey'), hint = $('#hint'), tip = $('#tip'), overlay = $('#heroOverlay'), heroCta = $('#heroCta');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const LITE = document.documentElement.classList.contains('lite');
+const probe = $('#vprobe');
 
 /* ---------- helpers ---------- */
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
@@ -425,17 +455,26 @@ function crPath(pts, closed = true){
   }
   return d + (closed ? 'Z' : '');
 }
-const objs = [];
+const U = .2; // CSS px per world unit (matches --u)
+const px = v => (v*U).toFixed(2) + 'px';
+const objs = [], groups = [];
+let group = null;
+function chapterGroup(name){
+  const el = document.createElement('div'); el.className = 'chap'; el.dataset.ch = name;
+  world.appendChild(el); group = { el, name, items: [], on: true }; groups.push(group);
+}
 function place(html, x, y, w, h, o = {}){
   const el = document.createElement('div');
   el.className = 'obj ' + (o.cls || '');
-  el.style.cssText = `left:${x-w/2}px;top:${y-h/2}px;width:${w}px;height:${h}px;` + (o.z != null ? `z-index:${o.z};` : '');
+  el.style.cssText = `left:${px(x-w/2)};top:${px(y-h/2)};width:${px(w)};height:${px(h)};` + (o.z != null ? `z-index:${o.z};` : '');
   el.innerHTML = html;
   if (o.id) el.id = o.id;
-  world.appendChild(el);
-  if (o.k || o.kx || o.ky) objs.push({ el, x, y, kx: o.kx ?? o.k ?? 0, ky: o.ky ?? o.k ?? 0 });
+  group.el.appendChild(el);
+  const ob = { el, x, y, w, h, kx: o.kx ?? o.k ?? 0, ky: o.ky ?? o.k ?? 0, keep: !!o.keep, on: true };
+  objs.push(ob); group.items.push(ob);
   return el;
 }
+const halo = (x, y, d, ch) => place(`<svg class="spin" viewBox="-60 -60 120 120"><circle r="50" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.9" stroke-dasharray="5 4"/></svg><svg class="ping" viewBox="-60 -60 120 120"><circle r="58" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.3"/></svg>`, x, y, d, d, {cls:'halo for-' + ch, z:6});
 const svgBox = (x,y,w,h,inner) => `<svg viewBox="${x-w/2} ${y-h/2} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
 const INK = '#24163a';
 let uid = 0; const gid = p => `${p}${++uid}`;
@@ -465,6 +504,7 @@ const faceHTML = (interactive) => `
 overlay.innerHTML = faceHTML(true);
 
 /* ================= OUTER SPACE ================= */
+chapterGroup('space');
 const R = rng(7);
 // nebulae
 place(svgBox(0,0,3000,1800,`<defs><radialGradient id="neb1"><stop offset="0" stop-color="#c25b98" stop-opacity=".42"/><stop offset=".6" stop-color="#7a3a8f" stop-opacity=".18"/><stop offset="1" stop-color="#7a3a8f" stop-opacity="0"/></radialGradient></defs><ellipse rx="1500" ry="900" fill="url(#neb1)"/>`), -2500,-1300,3000,1800,{k:.78});
@@ -505,7 +545,7 @@ ast += `</g><path d="${crPath(astPts)}" fill="none" stroke="${INK}" stroke-width
 });
 [[-380],[260],[980]].forEach(([x])=>{ const y = astTop(x) + 12;
   ast += `<path d="M${x} ${y}c-34 -70 52 -104 18 -176c-18 -36 -70 -18 -52 18c12 22 44 8 34 -8" stroke="#86c97a" stroke-width="13" fill="none" stroke-linecap="round"/>`; });
-place(svgBox(0,40,3400,1300,ast), 0,40,3400,1300);
+place(svgBox(0,40,3400,1300,ast), 0,40,3400,1300, {cls:'big'});
 
 // billboard
 const BBx = 0, BBy = -1150, FW = 1440, FH = 810;
@@ -533,14 +573,15 @@ const snail = place(`<svg viewBox="0 0 300 220"><defs><radialGradient id="shellG
 <g class="shell"><circle cx="185" cy="118" r="70" fill="url(#shellG)" stroke="${INK}" stroke-width="7"/><path d="M185 118m0 -8a8 8 0 1 1 -8 8a22 22 0 1 1 24 22a40 40 0 1 1 -44 -40a58 58 0 1 1 62 62" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round" opacity=".7"/><circle cx="160" cy="88" r="10" fill="#fff" opacity=".7"/></g></svg>`,
   SNX, SNY - 88, 300, 220, {cls:'clickable', id:'snail', z:4});
 snail.addEventListener('click', () => { snail.classList.add('hide'); clearTimeout(snail._t); snail._t = setTimeout(()=>snail.classList.remove('hide'), 2200); });
-place('', SNX, SNY - 90, 380, 380, {cls:'halo for-space', z:6});
+halo(SNX, SNY - 90, 380, 'space');
 
 // portal
 const PORTAL = {x:2150, y:-1100};
 place('<div class="ring"></div><div class="core"></div>', PORTAL.x, PORTAL.y, 820, 820, {id:'portal', cls:'clickable', z:3});
-const beam = place('', 0, 0, 10, 30, {id:'beam', z:3});
+const beam = place('', 0, 0, 10, 30, {id:'beam', z:3, keep:true});
 
 /* ================= ATMOSPHERE ================= */
+chapterGroup('sky');
 function cloudSVG(w, h, seed, tint = '#e2d8fb'){
   const r = rng(seed), id = gid('c'), g = gid('cg'); const n = 4 + Math.floor(r()*3); let shapes = '';
   shapes += `<rect x="${-w/2+h*.25}" y="${h*.02}" width="${w-h*.5}" height="${h*.32}" rx="${h*.16}"/>`;
@@ -563,6 +604,7 @@ for (let i=0;i<7;i++){ const bx=(i%4)*130-200+(i>3?60:0), by=Math.floor(i/4)*90+
 place(svgBox(0,0,700,320,birds), -1400, 12200, 700, 320, {k:.3});
 
 /* ================= GRASSY HILLS ================= */
+chapterGroup('hills');
 const GROUND = 15800;
 const frontTop = x => GROUND + 70*Math.sin(x*.0011 + .6) + 34*Math.sin(x*.0031 + 1.7);
 const farFn = x => GROUND - 520 + 120*Math.sin(x*.0007 + 2.1) + 60*Math.sin(x*.0019);
@@ -597,7 +639,7 @@ for (let i=0;i<110;i++){
   front += `<path class="tuft" style="animation-delay:${(-GR()*3).toFixed(2)}s" d="M${x-14} ${y}q4 ${-h*.6} -9 ${-h}q20 ${h*.4} 16 ${h}q6 ${-h*.7} 22 ${-h*1.05}q-4 ${h*.6} 2 ${h*1.05}z" fill="${GR()<.5?'#5fb867':'#79c777'}" stroke="${INK}" stroke-width="4" stroke-opacity=".7" stroke-linejoin="round"/>`;
   if (i % 6 === 2) front += `<g class="tuft" style="animation-delay:${(-GR()*3).toFixed(2)}s"><path d="M${x+28} ${y}v-56" stroke="#3b6b3c" stroke-width="5"/><circle cx="${x+28}" cy="${y-62}" r="13" fill="${['#fff7e6','#f6c86a','#e9a6b8','#c9bdf5'][i%4]}" stroke="${INK}" stroke-width="4" stroke-opacity=".7"/><circle cx="${x+28}" cy="${y-62}" r="4" fill="#f29a52"/></g>`;
 }
-place(svgBox(0,GROUND,9000,2800,front), 0, GROUND, 9000, 2800, {z:2});
+place(svgBox(0,GROUND,9000,2800,front), 0, GROUND, 9000, 2800, {z:2, cls:'big'});
 place(svgBox(0,19000,9000,4800,`<rect x="-4500" y="16600" width="9000" height="4800" fill="#3b7f47"/>`), 0, 19000, 9000, 4800, {z:2});
 
 // the painter (lanky feathered creature, inspired by Alyssa's character studies)
@@ -627,7 +669,7 @@ const painterSVG = `<svg viewBox="0 0 800 1000"><defs><linearGradient id="pBody"
 </g></svg>`;
 const painter = place(painterSVG, PX, PY - 340, 560, 700, {cls:'clickable', z:3});
 painter.addEventListener('click', () => showCard('Art gallery','Coming soon','Shigost’s painter friend will open the door to digital art, EDM visual loops, and the sketchbook archive.','Back to games','#games'));
-place('', PX + 130, PY - 470, 300, 300, {cls:'halo for-hills', z:6});
+halo(PX + 130, PY - 470, 300, 'hills');
 
 // puffsheep critters
 function puffSheep(flip){
@@ -657,6 +699,7 @@ for (let i=0;i<3;i++){
 }
 
 /* ================= JUNGLE ================= */
+chapterGroup('jungle');
 const JX0 = 4250, JX1 = 12500, JG = 15900;
 const jFloor = x => JG + 26*Math.sin(x*.0021 + 1) + 14*Math.sin(x*.0057);
 // misty back wall
@@ -704,7 +747,7 @@ let fl = `<defs><linearGradient id="jf" x1="0" y1="0" x2="0" y2="1"><stop offset
 for (let i=0;i<40;i++){ const x = 4300 + i*205 + CRb()*60, y = jFloor(x) + 6;
   fl += `<path d="M${x} ${y}c-10 -60 30 -110 70 -100c30 8 24 44 0 40c-14 -2 -12 -18 0 -16" stroke="#6fbf63" stroke-width="9" fill="none" stroke-linecap="round" class="tuft" style="animation-delay:${(-CRb()*3).toFixed(2)}s"/>`;
   if (i % 5 === 1) fl += `<g class="glow" style="animation-delay:${-i*.2}s"><path d="M${x+60} ${y}v-40" stroke="#f3e9d8" stroke-width="10" stroke-linecap="round"/><path d="M${x+30} ${y-36}q30 -44 60 0z" fill="${['#e98bb5','#5fd3c8','#f6c86a'][i%3]}" stroke="${INK}" stroke-width="5"/></g>`; }
-place(svgBox(8300,16800,8400,2000,fl), 8300, 16800, 8400, 2000, {z:4});
+place(svgBox(8300,16800,8400,2000,fl), 8300, 16800, 8400, 2000, {z:4, cls:'big'});
 place(svgBox(8300,19500,8400,3800,`<rect x="4100" y="17600" width="8400" height="3800" fill="#2a4f30"/>`), 8300, 19500, 8400, 3800, {z:4});
 // fireflies
 for (let i=0;i<16;i++){ const fx = 5000 + CRb()*4600, fy = JG - 200 - CRb()*1300;
@@ -724,7 +767,7 @@ const lemur = place(`<svg viewBox="0 0 360 760"><path d="M-40 70C80 40 240 90 40
 <g class="blink"><circle cx="152" cy="632" r="14" fill="${INK}"/><circle cx="212" cy="632" r="14" fill="${INK}"/></g><circle cx="146" cy="624" r="5" fill="#fff"/><circle cx="206" cy="624" r="5" fill="#fff"/>
 <path d="M170 668q10 8 20 0" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/></g></svg>`, LX, 14700 + 380, 360, 760, {cls:'clickable', id:'lemur', z:5});
 lemur.addEventListener('click', () => { lemur.classList.remove('wave'); void lemur.offsetWidth; lemur.classList.add('wave'); });
-place('', LX, 14700 + 620, 340, 340, {cls:'halo for-jungle', z:6});
+halo(LX, 14700 + 620, 340, 'jungle');
 
 // parrot with a curly crest
 const PRX = 8280, PRY = 15180;
@@ -749,7 +792,7 @@ NOTES.forEach((f,i)=>{
     x, 14250 + (len+70)/2, 80, len+70, {cls:'vine', z:5});
   v.dataset.freq = f; vines.push(v);
 });
-place('', 7540, 15500, 520, 520, {cls:'halo for-jungle', z:6});
+halo(7540, 15500, 520, 'jungle');
 let actx = null;
 function pluck(v){
   v.classList.remove('pluck'); void v.offsetWidth; v.classList.add('pluck');
@@ -799,8 +842,9 @@ sh.innerHTML = `
     <ellipse cx="220" cy="120" rx="160" ry="60" fill="#fff" opacity=".25"/><rect x="0" y="200" width="640" height="80" fill="#24163a" opacity=".12"/></g>
   <path d="M40 260C40 60 600 60 600 260q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0" fill="none" stroke="${INK}" stroke-width="9" stroke-linejoin="round"/>
 </svg>
-<svg class="ghost" viewBox="-30 0 260 260" aria-hidden="true" style="filter:drop-shadow(0 0 22px rgba(225,214,255,.45))">
-  <defs><clipPath id="gbody"><path d="${GHOST_PATH}"/></clipPath><linearGradient id="gFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6defc"/></linearGradient></defs>
+<svg class="ghost" viewBox="-30 0 260 260" aria-hidden="true">
+  <defs><radialGradient id="aura"><stop offset="0" stop-color="#e1d6ff" stop-opacity=".5"/><stop offset="1" stop-color="#e1d6ff" stop-opacity="0"/></radialGradient><clipPath id="gbody"><path d="${GHOST_PATH}"/></clipPath><linearGradient id="gFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6defc"/></linearGradient></defs>
+  <ellipse class="aura" cx="100" cy="140" rx="150" ry="160" fill="url(#aura)"/>
   <path class="armL" d="M26 136Q-6 146 -12 172Q-2 182 28 164" fill="#fff" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>
   <g class="armR"><path d="M174 136Q206 146 212 172Q202 182 172 164" fill="#fff" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>
     <g class="gun" transform="translate(194 148)"><rect x="-6" y="-15" width="60" height="28" rx="12" fill="#b6a4f2" stroke="${INK}" stroke-width="6"/><rect x="48" y="-9" width="16" height="16" rx="4" fill="#5fd3c8" stroke="${INK}" stroke-width="5"/><path d="M8 12l-8 22h17l6 -20" fill="#8f7cc9" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/></g></g>
@@ -813,14 +857,14 @@ sh.innerHTML = `
 </svg>`;
 sh.style.zIndex = 5;
 world.appendChild(sh);
-place('', 0, 0, 1, 1); // spacer
-const shHalo = place('', 0, 0, 380, 380, {cls:'halo for-space', z:6});
+group = groups[0];
 
 /* ================= TIMELINE ================= */
 const S = .70; // the space + hills part of the journey uses the first 70% of the scroll
 const STAND = { x: 820, y: astTop(820) - 112 };
 const LAND_X = 220, LAND = { x: LAND_X, y: frontTop(LAND_X) - 118 };
 const WALK_X = 3800, JUNGLE_IN = 5050, REST_X = 6550;
+halo(STAND.x, STAND.y, 380, 'space');
 function shigostAt(p){
   if (p <= S){
     const q = p / S;
@@ -883,12 +927,14 @@ function skyAt(y){
 const ctx = canvas.getContext('2d'); const SR = rng(3);
 const STAR_COLORS = ['#ffffff','#ffffff','#ffffff','#9fc0ff','#9dffb0','#e2b8f0','#ffc2d1','#ffe08a'];
 const stars = Array.from({length:240},()=>({x:SR(),y:SR(),r:.5+SR()*1.6,ph:SR()*6.28,d:.2+SR()*.8,c:STAR_COLORS[Math.floor(SR()*STAR_COLORS.length)]}));
-let shooting = null;
+let shooting = null, starsBlank = false;
 function drawStars(cam, vw, vh, time, alpha){
-  const dpr = Math.min(2, devicePixelRatio || 1);
+  const dpr = Math.min(LITE ? 1.5 : 2, devicePixelRatio || 1);
   if (canvas.width !== Math.round(vw*dpr) || canvas.height !== Math.round(vh*dpr)){ canvas.width = Math.round(vw*dpr); canvas.height = Math.round(vh*dpr); }
+  if (alpha <= 0 && starsBlank) return;
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,vw,vh);
-  if (alpha <= 0) return;
+  starsBlank = alpha <= 0;
+  if (starsBlank) return;
   for (const s of stars){
     const x = ((s.x*vw - cam.x*cam.z*.04*s.d) % vw + vw) % vw, y = ((s.y*vh - cam.y*cam.z*.04*s.d) % vh + vh) % vh;
     const tw = reduce.matches ? 1 : .5 + .5*Math.sin(time*.002*s.d + s.ph);
@@ -930,7 +976,7 @@ sh.addEventListener('click', () => {
   if (!stage.classList.contains('ch-space') || firing) return;
   firing = true;
   const gx = STAND.x + 150, gy = STAND.y + 12, dx = PORTAL.x - gx, dy = PORTAL.y - gy;
-  beam.style.left = gx+'px'; beam.style.top = gy+'px'; beam.style.width = Math.hypot(dx,dy)+'px'; beam.style.transform = `rotate(${Math.atan2(dy,dx)}rad)`;
+  beam.style.left = px(gx); beam.style.top = px(gy); beam.style.width = px(Math.hypot(dx,dy)); beam.style.transform = `rotate(${Math.atan2(dy,dx)}rad)`;
   beam.classList.remove('fire'); void beam.offsetWidth; beam.classList.add('fire');
   setTimeout(() => $('#portal').classList.add('open'), 350);
   setTimeout(() => { spaceCard(); firing = false; }, 1000);
@@ -945,13 +991,31 @@ function readScroll(){
   lastScroll = performance.now();
 }
 addEventListener('scroll', readScroll, {passive:true});
-addEventListener('resize', readScroll);
+addEventListener('resize', () => { measure(); readScroll(); });
 readScroll(); cur = target;
 
 const TIPS = { 'h-space':'Tap Shigost, or the little snail', 'h-hills':'Tap the painter or the sheep', 'h-jungle':'Drag across the vines to play them' };
 let shownP = null, tipKey = '';
+/* only chapters (and objects) near the camera are rendered; the rest are display:none */
+function cull(cam, vw, vh){
+  const hw = vw/2/cam.z, hh = vh/2/cam.z, m = 300 + .35*Math.max(hw, hh);
+  const L = cam.x - hw - m, R = cam.x + hw + m, T = cam.y - hh - m, B = cam.y + hh + m;
+  for (const g of groups){
+    let any = false;
+    for (const o of g.items){
+      const ex = o.x + (cam.x - o.x)*o.kx, ey = o.y + (cam.y - o.y)*o.ky;
+      const on = o.keep || (ex + o.w/2 > L && ex - o.w/2 < R && ey + o.h/2 > T && ey - o.h/2 < B);
+      if (on !== o.on){ o.on = on; o.el.classList.toggle('off', !on); }
+      if (on){ any = true; if (o.kx || o.ky) o.el.style.translate = `${px((cam.x-o.x)*o.kx)} ${px((cam.y-o.y)*o.ky)}`; }
+    }
+    if (any !== g.on){ g.on = any; g.el.classList.toggle('off', !any); }
+  }
+}
+let vpH = 0;
+function measure(){ vpH = parseFloat(getComputedStyle(probe).height) || innerHeight; }
+measure();
 function frame(time){
-  const vw = stage.clientWidth, vh = stage.clientHeight;
+  const vw = stage.clientWidth, vh = Math.min(stage.clientHeight, vpH || stage.clientHeight);
   let p;
   if (reduce.matches){
     const c = chapterOf(target); p = c.rest;
@@ -975,13 +1039,12 @@ function frame(time){
   if (hk !== tipKey){ tipKey = hk; if (hk){ tip.textContent = TIPS[hk]; } tip.classList.toggle('show', !!hk); }
 
   const cam = camAt(p, vw, vh);
-  world.style.transform = `translate(${vw/2}px,${vh/2}px) scale(${cam.z}) translate(${-cam.x}px,${-cam.y}px)`;
-  for (const o of objs) o.el.style.translate = `${((cam.x-o.x)*o.kx).toFixed(1)}px ${((cam.y-o.y)*o.ky).toFixed(1)}px`;
+  world.style.transform = `translate(${vw/2}px,${vh/2}px) scale(${(cam.z/U).toFixed(5)}) translate(${px(-cam.x)},${px(-cam.y)})`;
+  cull(cam, vw, vh);
 
   const s = shigostAt(p);
-  sh.style.transform = `translate(${s.x-110}px,${s.y-143}px) rotate(${s.r}deg)`;
+  sh.style.transform = `translate(${px(s.x-110)},${px(s.y-143)}) rotate(${s.r}deg)`;
   if (sh.dataset.s !== s.s){ sh.className = s.s + ' clickable'; sh.dataset.s = s.s; }
-  shHalo.style.left = (STAND.x - 190) + 'px'; shHalo.style.top = (STAND.y - 190) + 'px';
 
   const [top, bot] = skyAt(cam.y);
   if (top + bot !== lastSky){ sky.style.background = `linear-gradient(${top}, ${bot})`; lastSky = top + bot; }
