@@ -18,16 +18,17 @@ The site’s one job is **the studio’s creative work**. Client services belong
 
 ## Files
 
-- `index.html` is the whole site in one self-contained file (HTML, CSS, and JavaScript inline). No build step, no frameworks.
+- `index.html` is the whole site: HTML, CSS, and JavaScript inline. No build step, no bundler.
+- `assets/shigost.glb` and `assets/shigost.jpg`: Shigost's rigged 3D model and texture, copied unchanged from the vibe-booth repo.
 - Old code from the Universe site is archived on Alyssa’s computer, **not** in this repo, because the repo is public. Don’t add archive files here.
 
 ## The vision
 
-A scroll-driven, clickable journey through a 2.5D world. As visitors scroll, the camera follows Shigost through eight chapters:
+A scroll-driven, clickable journey through a world that is becoming **real 3D, one chapter at a time**. As visitors scroll, the camera follows Shigost through eight chapters:
 
-1. **Outer space** (built): hero billboard advertising Vibe Booth sits on an asteroid. Scrolling zooms out, Shigost jumps off and parachutes down.
-2. **Grassy hills** (built): she lands, then walks right toward the jungle.
-3. **Jungle** (built): she hops into a misty jungle and rests by the vine harp.
+1. **Outer space** (built in 3D): hero billboard advertising Vibe Booth sits on a floating asteroid. Scrolling pulls back, Shigost fires her portal gun if tapped, jumps off, and parachutes down. The 3D view hands off to the 2D world inside a cloud during the fall.
+2. **Grassy hills** (built, still 2D): she lands, then walks right toward the jungle.
+3. **Jungle** (built, still 2D): she hops into a misty jungle and rests by the vine harp.
 4. Sand dunes (next)
 5. Beach
 6. Reef
@@ -38,8 +39,9 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 
 ## Art direction
 
-- Alyssa’s cartoon style blends **Studio Ghibli, Dr. Seuss, and Adventure Time**: soft painterly skies and haze, curly whimsical shapes, and confident dark outlines on foreground objects.
-- Everything currently drawn is **placeholder art** made from SVG. Alyssa will draw the real art in layers, which will replace the placeholders piece by piece. Keep each visual element a separate layer so it can be swapped easily.
+- **The site is moving to real 3D, chapter by chapter, matching Vibe Booth's look**: soft stylized lighting, gradients, depth, glow, and shadows. Cartoony and whimsical, but elevated. No flat fills and no bold outlines; 3D that keeps the charm of a 2D cartoon. Outer space is done; the hills and jungle are still 2D until their turn.
+- **The old plan of hand-drawn 2D layers replacing SVG placeholders is retired.** The remaining SVG art (hills, jungle, the 2D space fallback, and the small `#gostSym` Shigost in cards) is placeholder until each chapter moves to 3D.
+- The spirit is still **Studio Ghibli, Dr. Seuss, and Adventure Time**: soft skies and haze, curly whimsical shapes.
 - Avoid anything that looks cheesy or clip-art: no bubbly fonts, no “Click me!” speech bubbles, no flat candy colors. Clickable things are marked with a soft dashed halo plus a small hint at the bottom of the screen.
 - Font: Bricolage Grotesque (Google Fonts), often condensed.
 - Shigost is referred to as **she**.
@@ -57,9 +59,20 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 - **Vibe Booth** (play.recklyss.com) is the playable teaser for the music side of the game: Shigost on her first tiny island. It will get a new name later and become an island in the full game.
 - **The game’s other islands are private and not live.** Describe the kinds of worlds in general terms only. Never name, show, or link an individual island.
 
+## 3D: assets, setup, and loading
+
+- **Assets come from Alyssa's game, but only from the public vibe-booth repo** (github.com/shigost/vibe-booth). **Never use anything from the unreleased game islands.** Right now that means only `assets/shigost.glb` and `assets/shigost.jpg`.
+- **three.js r128** from cdnjs (`https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`) and **GLTFLoader 0.128.0** from jsDelivr (`https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js`), exactly the versions Vibe Booth loads. Don't upgrade casually; r128 APIs (`sRGBEncoding`, `convertSRGBToLinear`) are assumed. They are injected after the page loads (`loadScript`), so the HTML hero never waits on them.
+- **Colors**: as in Vibe Booth, every material, light, and vertex color goes through `C(hex)`, which is `new THREE.Color(hex).convertSRGBToLinear()`. Raw `ShaderMaterial`s (the sky gradient, stars, and portal) write sRGB straight out and use plain `THREE.Color`. Output is `sRGBEncoding` with ACES filmic tone mapping.
+- **Shigost's model**: fetch `assets/shigost.glb`, parse with `GLTFLoader().parse`, put the scene in a body group scaled by `K` (3.2 here; Vibe Booth uses 0.04) and lifted `41.4*K` so her soles sit on the wrapper's origin. Texture: `flipY = false`, `encoding = sRGBEncoding`, applied to every mesh with white color, roughness 0.96, and metalness 0. She faces +z. Bones: `body`, `body_top0`, `neck`, `arm_left_*`/`arm_right_*` (`top`, `bot`, `hand`), `leg_left_top`, and `leg_right_top`. Clips are `sit`, `dance`, and `jump`; the site poses her procedurally with Vibe Booth's two-bone IK (`ik2`). Her left hand (screen right when she faces the camera) holds the portal gun.
+- **How 3D lines up with the rest of the site**: `build3D()` makes a perspective camera that reads the same camera keyframes as the 2D world (`camAt`, `relayout`). World (x, y) is 3D (x, -y, 0) and the camera looks straight down -z, so anything on the z = 0 plane lands exactly where the 2D layer expects it. That's why the HTML hero, halos, and `hit()` tap areas still work over the 3D scene, and why framing adapts to every screen shape. Background objects sit at negative z.
+- **The 2D-to-3D handoff**: `HANDOFF` (0.56 of the space-and-hills span) is where the 3D view stops and the 2D world takes over, during the parachute fall. A tall 2D cloud is placed exactly on her path there so the swap is hidden. The 3D sky shader uses the same `skyAt()` colors as the 2D `#sky`, and both star fields fade with `starAlpha()`, so nothing pops.
+- **Fallbacks**: the 2D space art (`art2d` class) shows until 3D is ready, and stays if WebGL is missing or the context is lost. Stage classes: `s3d-ready` (hide 2D space art), `s3d` (3D is rendering), and `s3d-sg` (3D Shigost replaces the 2D one).
+- The billboard screen is a canvas texture laid out from the HTML hero's own text positions (`measureFace`), so the two match while the hero fades.
+
 ## Characters and interactions
 
-- **Shigost**: see “Who Shigost is” above. In space she has a portal gun; tapping her fires it, the camera eases out, and a portal opens teasing the Space Explorer game. Her poses are separate arm layers (arms down, arms up for jump, fall, and parachute with the lines in her hands, and the gun arm), sneakers that step while walking, and idle loops per chapter. The small reusable version (`#gostSym`) is built from the same parts for cards, About, and the billboard DJ.
+- **Shigost**: see “Who Shigost is” above. In space she is the 3D model from Vibe Booth: she holds the portal gun and waves when idle, and tapping her fires the gun, eases the camera out, opens the portal, and shows the Space Explorer concept card. She jumps with her arms up and hangs from the parachute cords by her hands. After the handoff, the 2D Shigost (separate SVG arm layers, stepping sneakers, idle loops) takes over in the hills and jungle. The small `#gostSym` version is used in cards, About, and the billboard DJ.
 - **Moon snail** on the asteroid hides in its shell when tapped. A **star whale** drifts in the background.
 - **The painter** in the hills: a lanky, feathered lavender creature (inspired by Alyssa’s own character studies). Tapping opens the future art gallery.
 - **Puffsheep** in the hills bounce when tapped.
@@ -97,6 +110,17 @@ Mobile Safari ran out of graphics memory and reloaded when the world was built f
 - Touch devices get the `lite` class: no full-screen blend modes, backdrop blur, CSS filters, or sway animations inside big layers, and the star canvas is capped at 1.5x. Don’t add `filter`, `mix-blend-mode`, `backdrop-filter`, or `will-change` to world objects.
 - The stage uses `lvh` and the camera frames to `svh`, so the iOS address bar never causes jumps.
 - **Test on an iPhone 14 in Safari**: scroll from the top to the newest chapter and back up, three times in a row, with no crash and smooth motion. Before that, a Playwright pass with WebKit and iPhone 14 emulation at every size below is a good first check.
+
+## Performance rules for 3D
+
+- Same crash test as above: a real iPhone 14 in Safari, top to the newest chapter and back, three times, no crash.
+- Pixel ratio capped at 1.5 on phones and tablets (the `lite` class) and 2 on desktop, as in Vibe Booth.
+- Keep geometry and textures modest: a few thousand vertices per object, `InstancedMesh` for repeats (the bulbs), canvas textures at most 1024 wide (768 on phones). No shadow maps; use the soft `contact()` blob shadows.
+- Fake bloom with additive glow sprites (`glow()`), never post-processing.
+- **Stop rendering when the 3D scene isn't on screen**: `s3.update` hides the canvas and skips `render()` once past `HANDOFF` or when the journey is scrolled away. The billboard screen texture only redraws while the HTML hero isn't covering it (20 fps on phones, 30 on desktop).
+- The hero stays real HTML, so it shows instantly while three.js loads. The 2D space chapter is the fallback, so never delete it.
+- Reduced motion: no camera flying. It jumps between calm rest views (the hero, the asteroid, the parachute in 3D, and then each chapter), and 3D idle motion, lasers, bulbs, and shooting stars hold still.
+- Testing locally: the model loads with `fetch`, so open the site through a local server (Live Server, or any static server), not by double-clicking the file.
 
 ## Must keep working
 
