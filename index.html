@@ -72,6 +72,11 @@ a{color:inherit}
 #vignette{position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(20,11,43,.38) 100%)}
 #sky{position:absolute;inset:0}
 #stars{position:absolute;inset:0;width:100%;height:100%}
+/* 3D outer space sits between the stars and the 2D world; while it runs, the 2D space art steps aside */
+#space3d{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+#stage.s3d-ready .art2d,#stage.s3d #beam,#stage.s3d #stars{display:none}
+#stage.s3d #portal{opacity:0}
+#stage.s3d-sg #shigost > svg{visibility:hidden}
 #world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;transition:opacity .22s}
 #world.fade{opacity:0}
 .chap.off,.obj.off{display:none}
@@ -534,8 +539,8 @@ overlay.innerHTML = faceHTML(true);
 chapterGroup('space');
 const R = rng(7);
 // nebulae
-place(svgBox(0,0,3000,1800,`<defs><radialGradient id="neb1"><stop offset="0" stop-color="#c25b98" stop-opacity=".42"/><stop offset=".6" stop-color="#7a3a8f" stop-opacity=".18"/><stop offset="1" stop-color="#7a3a8f" stop-opacity="0"/></radialGradient></defs><ellipse rx="1500" ry="900" fill="url(#neb1)"/>`), -2500,-1300,3000,1800,{k:.78});
-place(svgBox(0,0,2600,1600,`<defs><radialGradient id="neb2"><stop offset="0" stop-color="#3fa7a7" stop-opacity=".3"/><stop offset="1" stop-color="#3fa7a7" stop-opacity="0"/></radialGradient></defs><ellipse rx="1300" ry="800" fill="url(#neb2)"/>`), 2900,100,2600,1600,{k:.72});
+place(svgBox(0,0,3000,1800,`<defs><radialGradient id="neb1"><stop offset="0" stop-color="#c25b98" stop-opacity=".42"/><stop offset=".6" stop-color="#7a3a8f" stop-opacity=".18"/><stop offset="1" stop-color="#7a3a8f" stop-opacity="0"/></radialGradient></defs><ellipse rx="1500" ry="900" fill="url(#neb1)"/>`), -2500,-1300,3000,1800,{k:.78, cls:'art2d'});
+place(svgBox(0,0,2600,1600,`<defs><radialGradient id="neb2"><stop offset="0" stop-color="#3fa7a7" stop-opacity=".3"/><stop offset="1" stop-color="#3fa7a7" stop-opacity="0"/></radialGradient></defs><ellipse rx="1300" ry="800" fill="url(#neb2)"/>`), 2900,100,2600,1600,{k:.72, cls:'art2d'});
 // star whale, drifting far behind (Ghibli-style wonder)
 let whale = `<defs><linearGradient id="whG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdbff7" stop-opacity=".55"/><stop offset="1" stop-color="#6f5bb5" stop-opacity=".25"/></linearGradient></defs>
 <g class="slowdrift"><path d="M-700 0C-560 -220 -120 -260 220 -170C420 -120 560 -60 640 -150C700 -230 790 -200 760 -120C740 -60 690 -20 700 30C720 100 790 140 760 200C730 250 660 200 630 120C560 160 420 200 160 200C-200 200 -560 160 -700 0Z" fill="url(#whG)" stroke="#e9e1ff" stroke-opacity=".35" stroke-width="8"/>
@@ -543,13 +548,13 @@ let whale = `<defs><linearGradient id="whG" x1="0" y1="0" x2="0" y2="1"><stop of
 <circle cx="-520" cy="-30" r="16" fill="#fff" opacity=".8"/>`;
 [[-380,-120],[-150,-160],[90,-140],[300,-60],[520,-20],[-260,60],[40,80],[260,120]].forEach(([x,y],i)=>{ whale += `<circle class="glow" style="animation-delay:${-i*.3}s" cx="${x}" cy="${y}" r="${7+i%3*3}" fill="#fff6c9"/>`; });
 whale += `<path d="M-380 -120L-150 -160L90 -140L300 -60L520 -20M-260 60L40 80L260 120" stroke="#fff6c9" stroke-opacity=".3" stroke-width="4" fill="none"/></g>`;
-place(svgBox(0,0,1700,700,whale), -1500,-2650,1700,700,{k:.7});
+place(svgBox(0,0,1700,700,whale), -1500,-2650,1700,700,{k:.7, cls:'art2d'});
 // ringed planet with shading
 place(svgBox(0,0,1300,800,`<defs><radialGradient id="pl1" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#f7b6cf"/><stop offset=".6" stop-color="#c46a9b"/><stop offset="1" stop-color="#5b2a5f"/></radialGradient></defs>
 <path d="M-620 0A620 120 0 0 1 620 0" fill="none" stroke="#e9c27a" stroke-opacity=".75" stroke-width="34"/>
 <circle r="300" fill="url(#pl1)"/><path d="M-260 -70Q0 -130 270 -50" stroke="#ffd6e6" stroke-opacity=".35" stroke-width="34" fill="none"/><path d="M-250 80Q0 30 260 100" stroke="#8d3c74" stroke-opacity=".45" stroke-width="34" fill="none"/>
-<path d="M-620 0A620 120 0 0 0 620 0" fill="none" stroke="#f3d690" stroke-width="34"/>`), -2700,-2050,1300,800,{k:.6});
-place(svgBox(0,0,520,520,`<defs><radialGradient id="pl2" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#d7ccff"/><stop offset=".7" stop-color="#8a74d6"/><stop offset="1" stop-color="#3b2a76"/></radialGradient></defs><circle r="230" fill="url(#pl2)"/><circle cx="70" cy="-40" r="40" fill="#6d58b8" opacity=".6"/><circle cx="-60" cy="80" r="26" fill="#6d58b8" opacity=".5"/>`), 3050,-1850,520,520,{k:.55});
+<path d="M-620 0A620 120 0 0 0 620 0" fill="none" stroke="#f3d690" stroke-width="34"/>`), -2700,-2050,1300,800,{k:.6, cls:'art2d'});
+place(svgBox(0,0,520,520,`<defs><radialGradient id="pl2" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#d7ccff"/><stop offset=".7" stop-color="#8a74d6"/><stop offset="1" stop-color="#3b2a76"/></radialGradient></defs><circle r="230" fill="url(#pl2)"/><circle cx="70" cy="-40" r="40" fill="#6d58b8" opacity=".6"/><circle cx="-60" cy="80" r="26" fill="#6d58b8" opacity=".5"/>`), 3050,-1850,520,520,{k:.55, cls:'art2d'});
 
 // asteroid
 const astPts = []; const AN = 28;
@@ -572,7 +577,7 @@ ast += `</g><path d="${crPath(astPts)}" fill="none" stroke="${INK}" stroke-width
 });
 [[-380],[260],[980]].forEach(([x])=>{ const y = astTop(x) + 12;
   ast += `<path d="M${x} ${y}c-34 -70 52 -104 18 -176c-18 -36 -70 -18 -52 18c12 22 44 8 34 -8" stroke="#86c97a" stroke-width="13" fill="none" stroke-linecap="round"/>`; });
-place(svgBox(0,40,3400,1300,ast), 0,40,3400,1300, {cls:'big'});
+place(svgBox(0,40,3400,1300,ast), 0,40,3400,1300, {cls:'big art2d'});
 
 // billboard
 const BBx = 0, BBy = -1150, FW = 1440, FH = 810;
@@ -587,9 +592,9 @@ for (let i=0;i<NB;i++){ let d = i/NB*per, x, y; const L=-FW/2-38, T=BBy-FH/2-38,
   if (d < W){x=L+d;y=T} else if ((d-=W) < H){x=L+W;y=T+d} else if ((d-=H) < W){x=L+W-d;y=T+H} else {d-=W;x=L;y=T+H-d}
   bbs += `<circle class="bulb" cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="9" style="animation-delay:${(i%2)*-.7}s"/>`; }
 bbs += `<rect x="${-FW/2-60}" y="${BBy-FH/2-60}" width="${FW+120}" height="${FH+120}" rx="40" fill="none" stroke="#e98bb5" stroke-opacity=".14" stroke-width="40"/>`;
-place(svgBox(0,-900,1800,2000,bbs), 0,-900,1800,2000);
-const face = place(faceHTML(false), BBx, BBy, FW, FH, {cls:'clickable'});
-face.addEventListener('click', e => { if (!e.target.closest('a')) window.open('https://play.recklyss.com','_blank','noopener'); });
+place(svgBox(0,-900,1800,2000,bbs), 0,-900,1800,2000, {cls:'art2d'});
+place(faceHTML(false), BBx, BBy, FW, FH, {cls:'art2d'});
+hit(BBx, BBy, FW, FH, () => window.open('https://play.recklyss.com','_blank','noopener'));
 
 // moon snail critter (click: hides in shell)
 const SNX = -980, SNY = astTop(-980);
@@ -598,7 +603,7 @@ const snail = place(`<svg viewBox="0 0 300 220"><defs><radialGradient id="shellG
 <path d="M30 205C40 170 90 165 130 170L250 172C275 172 285 190 270 205Z" fill="#f2b8d2" stroke="${INK}" stroke-width="7"/>
 <g class="eyes"><path d="M60 175C55 140 48 118 40 100M78 172C80 140 86 120 92 104" stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="38" cy="96" r="13" fill="#fff" stroke="${INK}" stroke-width="6"/><circle cx="94" cy="100" r="13" fill="#fff" stroke="${INK}" stroke-width="6"/><circle cx="36" cy="97" r="5" fill="${INK}"/><circle cx="92" cy="101" r="5" fill="${INK}"/></g>
 <g class="shell"><circle cx="185" cy="118" r="70" fill="url(#shellG)" stroke="${INK}" stroke-width="7"/><path d="M185 118m0 -8a8 8 0 1 1 -8 8a22 22 0 1 1 24 22a40 40 0 1 1 -44 -40a58 58 0 1 1 62 62" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round" opacity=".7"/><circle cx="160" cy="88" r="10" fill="#fff" opacity=".7"/></g></svg>`,
-  SNX, SNY - 88, 300, 220, {cls:'clickable', id:'snail', z:4});
+  SNX, SNY - 88, 300, 220, {cls:'clickable art2d', id:'snail', z:4});
 const hideSnail = () => { snail.classList.add('hide'); clearTimeout(snail._t); snail._t = setTimeout(()=>snail.classList.remove('hide'), 2200); };
 snail.addEventListener('click', hideSnail);
 hit(SNX, SNY - 90, 480, 480, hideSnail);
@@ -1071,6 +1076,7 @@ function drawStars(cam, vw, vh, time, alpha){
 /* ================= CHAPTERS ================= */
 const CHAPTERS = [
   {until:.42*S, cls:'ch-space', name:'Outer space', n:1, rest:.30*S},
+  {until:.56*S, cls:'ch-fall', name:'The long way down', n:1, rest:.5*S},
   {until:.88*S, cls:'ch-fall', name:'The long way down', n:1, rest:.65*S},
   {until:S+.105, cls:'ch-hills', name:'Grassy hills', n:2, rest:S},
   {until:S+.277, cls:'ch-jungle', name:'The jungle', n:3, rest:S+.25},
@@ -1093,7 +1099,7 @@ let firing = false;
 const spaceCard = () => showCard('Shigost Space Explorer','Concept game','A portal-hopping space adventure where Shigost explores weird little planets. It’s still a concept, so join the list to follow along.','Get early access','#join');
 sh.addEventListener('click', () => {
   if (!stage.classList.contains('ch-space') || firing) return;
-  firing = true; focus.on = true; focus.p = target;
+  firing = true; focus.on = true; focus.p = target; s3.fireAt = performance.now();
   const gx = STAND.x + 130, gy = STAND.y - 9, dx = PORTAL.x - gx, dy = PORTAL.y - gy;
   beam.style.left = px(gx); beam.style.top = px(gy); beam.style.width = px(Math.hypot(dx,dy)); beam.style.transform = `rotate(${Math.atan2(dy,dx)}rad)`;
   beam.classList.remove('fire'); void beam.offsetWidth; beam.classList.add('fire');
@@ -1101,6 +1107,406 @@ sh.addEventListener('click', () => {
   setTimeout(() => { spaceCard(); firing = false; }, 1000);
 });
 $('#portal').addEventListener('click', spaceCard);
+
+/* ================= 3D OUTER SPACE ================= */
+// The space chapter is real 3D (three.js r128 and GLTFLoader 0.128.0, the same builds Vibe Booth loads).
+// The 3D camera reads the same camera keyframes as the 2D world: world (x, y) is 3D (x, -y, 0) and the camera
+// looks straight down -z, so anything on the z = 0 plane lines up exactly with the 2D layer (the HTML hero,
+// halos, and tap areas). The 2D space art stays visible until the 3D scene is ready, and stays as the
+// fallback when WebGL is missing or lost. During the parachute fall, at HANDOFF, the 3D view hands over to
+// the 2D world inside a cloud that hides Shigost, with matching sky colors and the same camera.
+const HANDOFF = .56*S;
+const SG_FOOT = 122; // world units from Shigost's center (s.y) down to her soles
+const s3 = { ready:false, sg:false, on:false, fireAt:-1e9, update:() => false };
+const starAlpha = cy => clamp(1 - (cy - 1200)/2800, 0, 1); // shared by the 2D and 3D star fields, gone before HANDOFF
+{ // the cover cloud for the handoff, in the 2D sky layer above both Shigosts
+  const h = shigostAt(HANDOFF); group = groups.find(g => g.name === 'sky');
+  place(cloudSVG(3000, 1400, 77, '#e9b6d6'), h.x - 60, h.y - 330, 3000, 1400, {z:6}); // tall enough to hide her and the canopy
+  group = groups[0];
+}
+function loadScript(src){ return new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); }); }
+function webglOK(){
+  try { const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return false; const lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext(); return true; } catch (e) { return false; }
+}
+if (webglOK()) loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js')
+  .then(() => loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'))
+  .then(build3D).catch(e => console.warn('3D space unavailable, keeping the 2D version', e));
+
+function build3D(){
+  const T = THREE, C = h => new T.Color(h).convertSRGBToLinear(), V = (x, y, z) => new T.Vector3(x, y, z); // colors are sRGB, as in Vibe Booth
+  const canvas = document.createElement('canvas'); canvas.id = 'space3d'; canvas.setAttribute('aria-hidden', 'true');
+  let renderer;
+  try { renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
+  catch (e) { console.warn('WebGL renderer failed, keeping 2D space', e); return; }
+  stage.insertBefore(canvas, world);
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, LITE ? 1.5 : 2));
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); s3.ready = s3.sg = false; canvas.style.display = 'none'; }, false);
+  const scene = new T.Scene();
+  const camera = new T.PerspectiveCamera(30, 1, 10, 100000), TAN = Math.tan(15*Math.PI/180);
+  const W3 = (x, y, z = 0) => V(x, -y, z); // 2D world point to 3D
+
+  /* ---- shared textures and helpers ---- */
+  const cvTex = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new T.CanvasTexture(cv); t.encoding = T.sRGBEncoding; return t; };
+  const glowTex = cvTex(64, 64, (g, w) => { const r = g.createRadialGradient(32,32,0,32,32,32); r.addColorStop(0,'rgba(255,255,255,1)'); r.addColorStop(.35,'rgba(255,255,255,.55)'); r.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0,0,w,w); });
+  const shadowTex = cvTex(64, 32, (g, w, h) => { g.translate(32,16); g.scale(1,.5); const r = g.createRadialGradient(0,0,0,0,0,32); r.addColorStop(0,'rgba(10,4,30,.55)'); r.addColorStop(1,'rgba(10,4,30,0)'); g.fillStyle = r; g.fillRect(-32,-32,64,64); });
+  const glow = (color, size, opacity = .6) => { const s = new T.Sprite(new T.SpriteMaterial({ map: glowTex, color: C(color), transparent: true, opacity, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false })); s.scale.set(size, size, 1); s.userData.o = opacity; return s; };
+  const std = (hex, o) => new T.MeshStandardMaterial(Object.assign({ color: C(hex), roughness: .78, metalness: 0 }, o || {}));
+  const contact = (w, h) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, toneMapped: false })); return m; };
+  const rod = (a, b, r, mat, seg = 8) => { const d = b.clone().sub(a), m = new T.Mesh(new T.CylinderGeometry(r, r, d.length(), seg), mat); m.position.copy(a).addScaledVector(d, .5); m.quaternion.setFromUnitVectors(V(0,1,0), d.normalize()); return m; };
+
+  /* ---- lighting: soft key, gentle fill, two rims so shapes pop against space ---- */
+  scene.add(new T.HemisphereLight(C('#efe6ff'), C('#3b2a6e'), .8));
+  scene.add(new T.AmbientLight(C('#4a3a7a'), .3));
+  const key = new T.DirectionalLight(C('#fff0f4'), 1.05); key.position.set(-1, 1.25, 1.5); scene.add(key);
+  const rimA = new T.DirectionalLight(C('#8fe6ff'), .9); rimA.position.set(1.3, .5, -1.4); scene.add(rimA);
+  const rimB = new T.DirectionalLight(C('#ff9ad5'), .55); rimB.position.set(-1.5, -.3, -1); scene.add(rimB);
+
+  /* ---- sky: same two colors as the 2D #sky gradient, written straight out so they match exactly ---- */
+  const skyU = { top: { value: new T.Color('#080418') }, bot: { value: new T.Color('#1a0b3c') } }; // raw sRGB, no conversion
+  const skyQ = new T.Mesh(new T.PlaneGeometry(2, 2), new T.ShaderMaterial({ uniforms: skyU, depthWrite: false, depthTest: false,
+    vertexShader: 'varying float v; void main(){ v = uv.y; gl_Position = vec4(position.xy, 1.0, 1.0); }',
+    fragmentShader: 'uniform vec3 top; uniform vec3 bot; varying float v; void main(){ gl_FragColor = vec4(mix(bot, top, v), 1.0); }' }));
+  skyQ.frustumCulled = false; skyQ.renderOrder = -10; scene.add(skyQ);
+
+  /* ---- deep space: twinkling stars, nebulae, shooting stars (they all fade with starAlpha) ---- */
+  const deep = []; // materials that fade out on the way down
+  const NST = LITE ? 900 : 1600, SR3 = rng(11), sp = new Float32Array(NST*3), sc = new Float32Array(NST*3), stw = new Float32Array(NST*2);
+  const SCOL = ['#ffffff','#ffffff','#ffffff','#bcd2ff','#b8ffd0','#ecc8f6','#ffd0dc'].map(h => new T.Color(h));
+  for (let i = 0; i < NST; i++){
+    sp.set([(SR3()-.5)*44000, (SR3()-.5)*26000 - 1500, -8000 - SR3()*16000], i*3);
+    const c = SCOL[Math.floor(SR3()*SCOL.length)]; sc.set([c.r, c.g, c.b], i*3); stw.set([SR3()*SR3(), SR3()], i*2);
+  }
+  const stG = new T.BufferGeometry(); stG.setAttribute('position', new T.BufferAttribute(sp, 3)); stG.setAttribute('scol', new T.BufferAttribute(sc, 3)); stG.setAttribute('tw', new T.BufferAttribute(stw, 2));
+  const starU = { time: { value: 0 }, alpha: { value: 1 }, px: { value: 2.2*renderer.getPixelRatio() } };
+  const stars = new T.Points(stG, new T.ShaderMaterial({ uniforms: starU, transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+    vertexShader: 'attribute vec3 scol; attribute vec2 tw; uniform float time, alpha, px; varying vec3 vC; varying float vA; void main(){ gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); gl_PointSize = px*(1.0 + tw.x*2.4); vC = scol; vA = alpha*(0.5 + 0.5*sin(time*(0.7 + tw.y*2.0) + tw.y*40.0)); }',
+    fragmentShader: 'varying vec3 vC; varying float vA; void main(){ float r = length(gl_PointCoord - 0.5); gl_FragColor = vec4(vC, vA*smoothstep(0.5, 0.0, r)); }' }));
+  stars.frustumCulled = false; scene.add(stars);
+  const neb1 = glow('#c25b98', 16000, .38), neb2 = glow('#3fa7a7', 13000, .28), neb3 = glow('#7a3a8f', 11000, .3);
+  neb1.position.set(-6000, 4200, -14000); neb2.position.set(7500, -600, -14000); neb3.position.set(1500, 7000, -15000);
+  [neb1, neb2, neb3].forEach(n => { scene.add(n); deep.push(n.material); });
+  const shootTex = cvTex(128, 8, (g, w, h) => { const r = g.createLinearGradient(0,0,w,0); r.addColorStop(0,'rgba(255,255,255,0)'); r.addColorStop(1,'rgba(255,255,255,1)'); g.fillStyle = r; g.fillRect(0,0,w,h); });
+  const shoot = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: shootTex, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  shoot.visible = false; scene.add(shoot); let shootT = 0;
+
+  // place a background object so it sits where the 2D version had it, as seen from the reveal shot
+  const DREF = 5200, RX = 250, RY = -600;
+  const deepAt = (x, y, kp, z) => { x += (RX - x)*kp; y += (RY - y)*kp; const k = (DREF - z)/DREF; return { p: W3(RX + (x - RX)*k, RY + (y - RY)*k, z), k }; }; // kp: the 2D parallax
+
+  /* ---- planets ---- */
+  const bandSphere = (r, cols, seed) => { const g = new T.SphereGeometry(r, 40, 28), pos = g.attributes.position, col = new Float32Array(pos.count*3), rr = rng(seed);
+    const cs = cols.map(C), bumps = Array.from({length: 7}, () => [rr()*2-1, rr()*2-1, rr()*2-1, .25 + rr()*.25]);
+    for (let i = 0; i < pos.count; i++){ const y = pos.getY(i)/r, b = .5 + .5*Math.sin(y*9 + Math.sin(pos.getX(i)/r*3)*.6);
+      const c = cs[0].clone().lerp(cs[1], (1 - y)/2).lerp(cs[2], b*.35);
+      for (const [bx, by, bz, br] of bumps) if (Math.hypot(pos.getX(i)/r - bx, y - by, pos.getZ(i)/r - bz) < br) c.multiplyScalar(.82);
+      col.set([c.r, c.g, c.b], i*3); }
+    g.setAttribute('color', new T.BufferAttribute(col, 3)); return g; };
+  { const { p, k } = deepAt(-2700, -2050, .6, -3200), pl = new T.Group(); pl.position.copy(p); pl.scale.setScalar(k); pl.rotation.set(.35, 0, -.28); scene.add(pl);
+    pl.add(new T.Mesh(bandSphere(300, ['#f7b6cf','#7a3166','#ffd6e6'], 3), std('#ffffff', { vertexColors: true, roughness: .7, emissive: C('#3a1230') })));
+    const ringTex = cvTex(256, 256, (g) => { g.translate(128,128); [[128,'rgba(246,200,214,.0)'],[124,'rgba(243,198,214,.85)'],[112,'rgba(214,166,214,.55)'],[104,'rgba(250,214,224,.9)'],[94,'rgba(200,150,210,.5)'],[86,'rgba(0,0,0,0)']].forEach(([r,c]) => { g.beginPath(); g.arc(0,0,r,0,7); g.fillStyle = c; g.fill(); }); g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(0,0,84,0,7); g.fill(); });
+    const ring = new T.Mesh(new T.RingGeometry(380, 620, 96), new T.MeshStandardMaterial({ map: ringTex, transparent: true, side: T.DoubleSide, roughness: .8, depthWrite: false, emissive: C('#3a1a3a') }));
+    ring.rotation.x = -1.25; pl.add(ring); pl.add(Object.assign(glow('#ff9ccc', 1300, .25), {})); }
+  { const { p, k } = deepAt(3050, -1850, .55, -2600), pl = new T.Mesh(bandSphere(230, ['#d7ccff','#3b2a76','#a28fe6'], 5), std('#ffffff', { vertexColors: true, roughness: .85, emissive: C('#1c1440') }));
+    pl.position.copy(p); pl.scale.setScalar(k); scene.add(pl); const gl = glow('#b6a4f2', 900*k, .22); gl.position.copy(p); scene.add(gl); }
+
+  /* ---- star whale, drifting far behind ---- */
+  const whale = new T.Group(); { const { p, k } = deepAt(-1500, -2650, .7, -5200); whale.position.copy(p); whale.scale.setScalar(k*1.05); scene.add(whale);
+    const wm = new T.MeshStandardMaterial({ color: C('#cdbff7'), transparent: true, opacity: .5, roughness: .6, emissive: C('#6f5bb5'), emissiveIntensity: .45, depthWrite: false }); deep.push(wm);
+    const blob = (x, y, z, sx, sy, sz, rz = 0) => { const m = new T.Mesh(new T.SphereGeometry(1, 28, 18), wm); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.z = rz; whale.add(m); };
+    blob(0, 0, 0, 640, 190, 230); blob(560, 80, 0, 160, 70, 90, .7); blob(700, 150, 60, 120, 40, 60, .2); blob(700, 150, -60, 120, 40, 60, .2); blob(-120, -150, 120, 170, 40, 60, -.5);
+    const pts = [[-380,120],[-150,160],[90,140],[300,60],[520,20],[-260,-60],[40,-80],[260,-120]];
+    pts.forEach(([x, y], i) => { const g = glow('#fff6c9', 120 + (i%3)*40, .8); g.position.set(x, y, 240); whale.add(g); deep.push(g.material); });
+    const lg = new T.BufferGeometry().setFromPoints([0,1,1,2,2,3,3,4,5,6,6,7].map(i => V(pts[i][0], pts[i][1], 240)));
+    const lm = new T.LineBasicMaterial({ color: C('#fff6c9'), transparent: true, opacity: .35, toneMapped: false }); whale.add(new T.LineSegments(lg, lm)); deep.push(lm);
+    const eye = new T.Mesh(new T.SphereGeometry(18, 12, 8), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 })); eye.position.set(-520, 30, 160); whale.add(eye); deep.push(eye.material); }
+  const whaleX = whale.position.x;
+  deep.forEach(m => m.userData.o = m.opacity);
+
+  /* ---- asteroid: the 2D outline puffed into a lumpy, cratered 3D rock; its ridge at z = 0 matches astTop() ---- */
+  const DZ = 650;
+  const ridge = (x, z) => { const b = Math.asin(clamp(z/DZ, -.95, .95)), cb = Math.cos(b); return -(40 + (astTop(x/cb) - 40)*cb); }; // 3D y of the top surface at (x, z)
+  {
+    const N = 128, M = 44, curve = new T.CatmullRomCurve3(astPts.map(([x, y]) => V(x, y, 0)), true, 'catmullrom', .5), out = curve.getSpacedPoints(N);
+    const craters = [[-900,120,150],[-300,220,90],[520,150,170],[1050,260,100],[-1150,250,80],[160,330,120],[-620,40,70],[860,40,80]].map(([x, y, r]) => {
+      const e = 1 - (x/1500)**2 - ((y - 40)/430)**2; return [x, y, DZ*Math.sqrt(Math.max(.05, e)), r]; });
+    const noise = (x, y, z) => Math.sin(x*.0041 + 1.3)*Math.sin(y*.0063 + .7)*Math.sin(z*.0052 + 2.1) + .5*Math.sin(x*.011 + y*.007)*Math.sin(z*.013 + .4) + .25*Math.sin(x*.023 - z*.019 + y*.02);
+    const pos = [], col = [], cTop = C('#c3b2f0'), cMid = C('#6a50a8'), cBot = C('#2b1b55'), cCr = C('#3a2770'), cRim = C('#f3c6e4'), tmp = C('#000');
+    for (let j = 0; j <= M; j++){ const b = -Math.PI/2 + Math.PI*j/M, cb = Math.cos(b), sb = Math.sin(b);
+      for (let i = 0; i <= N; i++){ const o = out[i % N], ox = o.x, oy = o.y - 40;
+        let x = ox*cb, y = 40 + oy*cb, z = DZ*sb;
+        const w = oy > 0 ? 1 : Math.min(1, (Math.abs(b)/.42)**2), len = Math.hypot(x, y - 40, z) || 1;
+        let d = 60*noise(x, y, z)*w, shade = 0;
+        for (const [cx, cy, cz, r] of craters){ const t = Math.hypot(x - cx, y - cy, z - cz)/r; if (t < 1){ d -= 42*(1 - t*t); shade = Math.max(shade, 1 - t); } else if (t < 1.35) d += 16*(1 - (t - 1)/.35); }
+        x += x/len*d; y += (y - 40)/len*d; z += z/len*d;
+        pos.push(x, -y, z);
+        const v = clamp((y + 390)/860, 0, 1);
+        tmp.copy(v < .45 ? cTop.clone().lerp(cMid, v/.45) : cMid.clone().lerp(cBot, (v - .45)/.55));
+        if (sb > 0) tmp.multiplyScalar(.9 + .14*sb);
+        if (y < -250 && oy < 0) tmp.lerp(cRim, .22*Math.min(1, (-250 - y)/120));
+        if (shade) tmp.lerp(cCr, shade*.8);
+        col.push(tmp.r, tmp.g, tmp.b);
+      } }
+    const idx = []; for (let j = 0; j < M; j++) for (let i = 0; i < N; i++){ const a = j*(N + 1) + i, c = a + N + 1; idx.push(a, c, a + 1, c, c + 1, a + 1); }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new T.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+    // flip the winding if the front ended up facing inward, then weld the seam normals
+    const nrm = g.attributes.normal, front = Math.round(M*.75)*(N + 1) + N/2;
+    if (nrm.getZ(front) < 0){ for (let k = 0; k < idx.length; k += 3){ const t = idx[k]; idx[k] = idx[k + 1]; idx[k + 1] = t; } g.setIndex(idx); g.computeVertexNormals(); }
+    for (let j = 0; j <= M; j++){ const a = j*(N + 1), c = a + N, n = V(nrm.getX(a) + nrm.getX(c), nrm.getY(a) + nrm.getY(c), nrm.getZ(a) + nrm.getZ(c)).normalize(); nrm.setXYZ(a, n.x, n.y, n.z); nrm.setXYZ(c, n.x, n.y, n.z); }
+    scene.add(new T.Mesh(g, std('#ffffff', { vertexColors: true, roughness: .93, emissive: C('#140a2e') })));
+  }
+  // glowing mushrooms and curly sprouts
+  const shrooms = [];
+  [[-1250,'#5fd3c8',160],[-1130,'#e98bb5',-120],[-620,'#f6c86a',200],[640,'#5fd3c8',-150],[1220,'#e98bb5',150],[1320,'#b6a4f2',-60]].forEach(([x, c, z], i) => {
+    const g = new T.Group(), h = 70 + (i%3)*34, y = ridge(x, z) - 10; g.position.set(x, y, z); scene.add(g);
+    const stem = new T.Mesh(new T.CylinderGeometry(13, 18, h, 10), std('#efe3ff', { roughness: .6, emissive: C('#3a2a5a') })); stem.position.y = h/2; g.add(stem);
+    const cap = new T.Mesh(new T.SphereGeometry(48, 22, 12, 0, Math.PI*2, 0, Math.PI/2), std(c, { roughness: .4, emissive: C(c), emissiveIntensity: .75 })); cap.scale.y = .72; cap.position.y = h - 4; g.add(cap);
+    const spot = new T.Mesh(new T.SphereGeometry(7, 8, 6), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .75 })); spot.position.set(-16, h + 18, 26); g.add(spot);
+    const gl = glow(c, 380, .5); gl.position.y = h + 10; g.add(gl); shrooms.push(gl);
+  });
+  const sproutM = std('#86c97a', { roughness: .55, emissive: C('#1c3a1c') });
+  [[-380, 90],[260, -110],[980, 120]].forEach(([x, z]) => { const y = ridge(x, z) + 10;
+    const pts = [[0,0],[-12,-50],[14,-110],[34,-150],[18,-178],[-6,-170],[-8,-150],[6,-142]].map(([dx, dy]) => V(x + dx, y - dy, z));
+    scene.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 40, 7, 8), sproutM)); });
+
+  /* ---- billboard: posts, frame, chasing bulbs, and a live screen that matches the HTML hero ---- */
+  const woodM = std('#6b4458', { roughness: .7, emissive: C('#1a0a14') });
+  [-430, 430].forEach(x => { const yb = astTop(x) + 30; scene.add(rod(W3(x, -760, -60), W3(x, yb, -60), 32, woodM, 12)); });
+  scene.add(rod(W3(-430, -600, -60), W3(430, -480, -60), 9, woodM)); scene.add(rod(W3(430, -600, -60), W3(-430, -480, -60), 9, woodM));
+  const rrect = (w, h, r) => { const s = new T.Shape(), x = -w/2, y = -h/2; s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h); s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s; };
+  { const fr = rrect(FW + 100, FH + 100, 36); fr.holes.push(rrect(FW + 4, FH + 4, 10));
+    const frame = new T.Mesh(new T.ExtrudeGeometry(fr, { depth: 40, bevelEnabled: true, bevelThickness: 10, bevelSize: 8, bevelSegments: 3, curveSegments: 8 }), std('#2c1748', { roughness: .45, emissive: C('#0e0620') }));
+    frame.position.set(BBx, -BBy, -38); scene.add(frame);
+    const back = new T.Mesh(new T.BoxGeometry(FW + 100, FH + 100, 16), std('#1c0f33', { roughness: .8 })); back.position.set(BBx, -BBy, -46); scene.add(back);
+    const tr = rrect(FW + 64, FH + 64, 26); tr.holes.push(rrect(FW + 48, FH + 48, 20));
+    const trim = new T.Mesh(new T.ShapeGeometry(tr, 8), std('#d7a6c9', { roughness: .35, metalness: .35, emissive: C('#3a1a33') })); trim.position.set(BBx, -BBy, 13); scene.add(trim); }
+  const NB = 44, per = 2*(FW + FH + 152), bulbPos = new Float32Array(NB*3), bulbCol = new Float32Array(NB*3);
+  const bulbs = new T.InstancedMesh(new T.SphereGeometry(11, 10, 8), new T.MeshBasicMaterial({ toneMapped: false }), NB), dm = new T.Object3D();
+  for (let i = 0; i < NB; i++){ let d = i/NB*per, x, y; const L = -FW/2 - 38, Tp = BBy - FH/2 - 38, Wd = FW + 76, Hd = FH + 76;
+    if (d < Wd){ x = L + d; y = Tp; } else if ((d -= Wd) < Hd){ x = L + Wd; y = Tp + d; } else if ((d -= Hd) < Wd){ x = L + Wd - d; y = Tp + Hd; } else { d -= Wd; x = L; y = Tp + Hd - d; }
+    dm.position.set(x, -y, 16); dm.updateMatrix(); bulbs.setMatrixAt(i, dm.matrix); bulbs.setColorAt(i, C('#fff1c4')); bulbPos.set([x, -y, 22], i*3); }
+  scene.add(bulbs);
+  const bulbG = new T.BufferGeometry(); bulbG.setAttribute('position', new T.BufferAttribute(bulbPos, 3)); bulbG.setAttribute('color', new T.BufferAttribute(bulbCol, 3));
+  scene.add(new T.Points(bulbG, new T.PointsMaterial({ size: 170, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false })));
+  const BON = C('#fff1c4'), BOFF = C('#f29a52');
+  // the screen: drawn on a canvas to match the HTML billboard face
+  const SW = LITE ? 768 : 1024, SH = SW*FH/FW, scv = document.createElement('canvas'); scv.width = SW; scv.height = SH;
+  const sx = scv.getContext('2d'), screenTex = new T.CanvasTexture(scv); screenTex.encoding = T.sRGBEncoding; screenTex.anisotropy = 4;
+  const screen = new T.Mesh(new T.PlaneGeometry(FW, FH), new T.MeshBasicMaterial({ map: screenTex, toneMapped: false })); screen.position.set(BBx, -BBy, 0); scene.add(screen);
+  const screenGlow = glow('#9d6ff0', 2600, .18); screenGlow.position.set(BBx, -BBy, 30); scene.add(screenGlow);
+  const djImg = new Image(); let djOK = false;
+  { const dj = overlay.querySelector('.dj'), sym = document.getElementById('gostSym');
+    if (dj && sym){ let s = dj.outerHTML.replace(/<use[^>]*gostSym[^>]*>(<\/use>)?/, `<svg x="42" y="6" width="116" height="150" viewBox="0 0 200 290">${sym.innerHTML}</svg>`);
+      s = s.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="480"'); djImg.onload = () => djOK = true; djImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s); } }
+  // read the hero's own layout (line breaks, positions, widths) so the 3D screen matches it in every hero mode
+  let faceL = null, faceKey = '';
+  function measureFace(){
+    const R = overlay.getBoundingClientRect(); if (R.width < 10) return faceL;
+    const key = Math.round(R.width) + 'x' + Math.round(R.height) + stage.className.includes('compact'); if (key === faceKey && faceL) return faceL;
+    faceKey = key; const rel = r => ({ x: (r.left - R.left)/R.width, y: (r.top - R.top)/R.height, w: r.width/R.width, h: r.height/R.height });
+    const shown = el => el && el.getClientRects().length, dj = overlay.querySelector('.dj'), btn = overlay.querySelector('.btn');
+    const out = { dj: shown(dj) ? rel(dj.getBoundingClientRect()) : null, btn: shown(btn) ? rel(btn.getBoundingClientRect()) : null, lines: [] };
+    ['.kicker', 'h2', '.tag', '.note'].forEach(sel => { const el = overlay.querySelector(sel); if (!shown(el)) return;
+      const cs = getComputedStyle(el), node = el.firstChild, txt = node.textContent, lines = []; let i = 0;
+      txt.split(' ').forEach(wd => { if (!wd) return; const a = txt.indexOf(wd, i), e = a + wd.length; i = e; const rg = document.createRange(); rg.setStart(node, a); rg.setEnd(node, e); const r = rg.getBoundingClientRect();
+        let L = lines.find(l => Math.abs(l.top - r.top) < r.height*.5); if (!L){ L = { top: r.top, bottom: r.bottom, left: r.left, right: r.right, words: [] }; lines.push(L); }
+        L.words.push(wd); L.left = Math.min(L.left, r.left); L.right = Math.max(L.right, r.right); L.bottom = Math.max(L.bottom, r.bottom); });
+      lines.forEach(l => out.lines.push({ text: l.words.join(' '), x: (l.left - R.left)/R.width, y: ((l.top + l.bottom)/2 - R.top)/R.height, w: (l.right - l.left)/R.width,
+        fs: parseFloat(cs.fontSize)/R.width, weight: cs.fontWeight, color: cs.color, glow: sel === 'h2' }));
+    });
+    return faceL = out;
+  }
+  let textA = 1;
+  function drawScreen(t){
+    const w = SW, h = SH, q = w/100; // q = 1cqw
+    let g = sx.createRadialGradient(w*.5, h*1.15, 0, w*.5, h*1.15, w*.75); g.addColorStop(0, '#4a1c78'); g.addColorStop(.55, '#1e0e40'); g.addColorStop(1, '#0d0622');
+    sx.globalCompositeOperation = 'source-over'; sx.fillStyle = g; sx.fillRect(0, 0, w, h);
+    sx.globalCompositeOperation = 'lighter';
+    [['95,211,200', 5, 0], ['233,139,181', 4.1, 1.3], ['182,164,242', 5.9, 2.6]].forEach(([c, dur, ph]) => {
+      const a = (reduce.matches ? Math.sin(ph) : Math.sin(t/dur*Math.PI + ph))*36*Math.PI/180;
+      sx.save(); sx.translate(w/2, h*1.1); sx.rotate(a); const lg = sx.createLinearGradient(0, 0, 0, -h*1.5); lg.addColorStop(0, `rgba(${c},.85)`); lg.addColorStop(1, `rgba(${c},0)`);
+      sx.fillStyle = lg; sx.beginPath(); sx.moveTo(-q*.6, 0); sx.lineTo(q*.6, 0); sx.lineTo(q*1.6, -h*1.5); sx.lineTo(-q*1.6, -h*1.5); sx.fill(); sx.restore(); });
+    sx.globalCompositeOperation = 'source-over';
+    g = sx.createLinearGradient(0, h, 0, h*.55); g.addColorStop(0, 'rgba(182,164,242,.28)'); g.addColorStop(1, 'rgba(182,164,242,0)'); sx.fillStyle = g; sx.fillRect(0, h*.55, w, h*.45);
+    const nb = 22, bw = (w - 6*q - 21*.5*q)/nb;
+    for (let i = 0; i < nb; i++){ const ph = (i*137 % 1000)/1000, f = .55 + ((i*53) % 50)/100;
+      const k = reduce.matches ? .45 : .12 + .88*(.5 + .5*Math.sin((t/f + ph)*Math.PI)); const bh = h*.16*k, x = 3*q + i*(bw + .5*q);
+      g = sx.createLinearGradient(0, h, 0, h - bh); g.addColorStop(0, 'rgba(233,139,181,.9)'); g.addColorStop(1, 'rgba(95,211,200,.9)'); sx.fillStyle = g; sx.fillRect(x, h - bh, bw, bh); }
+    const FL = measureFace(); if (!FL){ screenTex.needsUpdate = true; return; }
+    if (djOK && FL.dj) sx.drawImage(djImg, FL.dj.x*w, FL.dj.y*h, FL.dj.w*w, FL.dj.h*h);
+    const F = '"Bricolage Grotesque", system-ui, sans-serif';
+    sx.globalAlpha = textA; sx.textBaseline = 'middle';
+    if (FL.btn){ const b = FL.btn, r = b.h*h/2; sx.fillStyle = '#b88a2c'; sx.beginPath(); sx.roundRect ? sx.roundRect(b.x*w, b.y*h + .25*r, b.w*w, b.h*h, r) : sx.rect(b.x*w, b.y*h + .25*r, b.w*w, b.h*h); sx.fill();
+      sx.fillStyle = '#f6c86a'; sx.beginPath(); sx.roundRect ? sx.roundRect(b.x*w, b.y*h, b.w*w, b.h*h, r) : sx.rect(b.x*w, b.y*h, b.w*w, b.h*h); sx.fill();
+      sx.fillStyle = '#24163a'; sx.font = `700 ${b.h*h*.42}px ${F}`; const bt = '▶ Play Vibe Booth', bw = sx.measureText(bt).width, k = Math.min(1, b.w*w*.8/bw);
+      sx.save(); sx.translate((b.x + b.w/2)*w - bw*k/2, (b.y + b.h/2)*h); sx.scale(k, 1); sx.fillText(bt, 0, 0); sx.restore(); }
+    FL.lines.forEach(l => { sx.font = `${l.weight} ${l.fs*w}px ${F}`; const mw = sx.measureText(l.text).width || 1;
+      sx.save(); sx.translate(l.x*w, l.y*h); sx.scale(l.w*w/mw, 1); sx.fillStyle = l.color;
+      if (l.glow){ sx.shadowColor = 'rgba(233,139,181,.6)'; sx.shadowBlur = 3*q; } sx.fillText(l.text, 0, 0); sx.restore(); });
+    sx.globalAlpha = 1;
+    screenTex.needsUpdate = true;
+  }
+
+  /* ---- moon snail (tap to hide in its shell; the tap area is the 2D hit()) ---- */
+  const snail3 = new T.Group(); snail3.position.set(SNX, -(SNY + 6), 30); snail3.rotation.y = .45; scene.add(snail3);
+  { const foot = new T.Mesh(new T.SphereGeometry(1, 24, 14), std('#f2b8d2', { roughness: .5, emissive: C('#3a1428') })); foot.scale.set(128, 28, 58); foot.position.set(0, 24, 0); snail3.add(foot);
+    const head = new T.Mesh(new T.SphereGeometry(40, 18, 12), foot.material); head.position.set(-104, 40, 0); head.scale.set(1, .9, .95); snail3.add(head);
+    const eyes = new T.Group(); eyes.position.set(-104, 60, 0); snail3.add(eyes); snail3.userData.eyes = eyes;
+    [[-22, -10],[ 12, 10]].forEach(([dx, dz]) => { eyes.add(rod(V(0, 0, dz*.5), V(dx, 86, dz), 6, foot.material));
+      const e = new T.Mesh(new T.SphereGeometry(14, 14, 10), std('#ffffff', { roughness: .3 })); e.position.set(dx, 92, dz); eyes.add(e);
+      const pu = new T.Mesh(new T.SphereGeometry(6, 10, 8), std('#1a1030', { roughness: .2 })); pu.position.set(dx - 6, 92, dz + 10); eyes.add(pu); });
+    const shell = new T.Group(); shell.position.set(36, 104, 0); snail3.add(shell); snail3.userData.shell = shell;
+    const sh3 = new T.Mesh(new T.SphereGeometry(70, 28, 20), std('#5fd3c8', { roughness: .35, emissive: C('#0f3a3a') })); sh3.scale.z = .8; shell.add(sh3);
+    const spiral = []; for (let k = 0; k <= 60; k++){ const a = k/60*Math.PI*5, r = 6 + k/60*58; spiral.push(V(Math.cos(a)*r, Math.sin(a)*r, 0)); }
+    const groove = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(spiral.map(p => { const zz = Math.sqrt(Math.max(0, 70*70 - p.x*p.x - p.y*p.y))*.8 + 2; return V(p.x, p.y, zz); })), 120, 4.5, 6), std('#2f7f8a', { roughness: .5 }));
+    shell.add(groove); const hl = new T.Mesh(new T.SphereGeometry(12, 10, 8), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .55 })); hl.position.set(-28, 34, 44); shell.add(hl);
+    const cs = contact(330, 60); cs.position.set(0, 4, 40); snail3.add(cs); }
+
+  /* ---- portal and beam ---- */
+  const portal3 = new T.Group(); portal3.position.copy(W3(PORTAL.x, PORTAL.y, 0)); portal3.scale.setScalar(.001); scene.add(portal3);
+  const portalU = { time: { value: 0 } };
+  { portal3.add(new T.Mesh(new T.TorusGeometry(330, 62, 20, 72), new T.ShaderMaterial({ uniforms: portalU, toneMapped: false,
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: 'uniform float time; varying vec3 vP; void main(){ float a = atan(vP.y, vP.x)/6.2832 + time*0.3; float s = fract(a*20.0); vec3 c = s < 0.333 ? vec3(0.714,0.643,0.949) : s < 0.666 ? vec3(0.373,0.827,0.784) : vec3(0.914,0.545,0.71); float l = 0.75 + 0.25*smoothstep(0.0, 62.0, vP.z + 30.0); gl_FragColor = vec4(c*l, 1.0); }' })));
+    portal3.add(new T.Mesh(new T.CircleGeometry(275, 48), new T.ShaderMaterial({ uniforms: portalU, toneMapped: false,
+      vertexShader: 'varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: 'uniform float time; varying vec2 vU; void main(){ vec2 d = vU - 0.5; float r = length(d)*2.0; float sw = 0.5 + 0.5*sin(atan(d.y, d.x)*3.0 - time*2.0 + r*8.0); vec3 c = mix(vec3(1.0), vec3(0.79,1.0,0.97), smoothstep(0.0, 0.3, r)); c = mix(c, vec3(0.23,0.11,0.43), smoothstep(0.3, 1.0, r)); c += sw*0.12*(1.0 - r); gl_FragColor = vec4(c, 1.0); }' })));
+    const pg = glow('#5fd3c8', 1900, .55); pg.position.z = 20; portal3.add(pg); }
+  const beam3 = new T.Mesh(new T.CylinderGeometry(1, 1, 1, 10, 1, true), new T.MeshBasicMaterial({ color: C('#d9fff9'), transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  const beamGlow = glow('#5fd3c8', 300, 0); scene.add(beam3, beamGlow);
+
+  /* ---- Shigost: the rigged model from Vibe Booth, loaded the same way ---- */
+  const K = 3.2; // model units to world units (her model is about 82 units tall)
+  const SG = { wrap: new T.Group(), body: new T.Group(), ready: false, ry: .45 };
+  SG.body.scale.setScalar(K); SG.body.position.y = 41.4*K; SG.wrap.add(SG.body); scene.add(SG.wrap);
+  const sgShadow = contact(300, 56); scene.add(sgShadow);
+  // portal gun, kept in world space and aimed at the portal every frame
+  const gun = new T.Group(); { const gm = std('#b6a4f2', { roughness: .35, emissive: C('#2a1a55') });
+    const body = new T.Mesh(new T.BoxGeometry(30, 30, 74), gm); body.position.z = 26; gun.add(body);
+    const ring = new T.Mesh(new T.TorusGeometry(15, 5, 8, 18), std('#8f7cc9', { roughness: .4 })); ring.position.z = 4; gun.add(ring);
+    const tip = new T.Mesh(new T.CylinderGeometry(11, 11, 18, 14), std('#5fd3c8', { roughness: .3, emissive: C('#5fd3c8'), emissiveIntensity: .8 })); tip.rotation.x = Math.PI/2; tip.position.z = 70; gun.add(tip);
+    const grip = new T.Mesh(new T.BoxGeometry(18, 34, 18), std('#8f7cc9', { roughness: .5 })); grip.position.set(0, -26, 10); gun.add(grip);
+    const gg = glow('#5fd3c8', 120, .6); gg.position.z = 84; gun.add(gg); }
+  scene.add(gun);
+  // parachute: same panel colors as the 2D one, lines run to her hands
+  const chute = new T.Group(); SG.wrap.add(chute); chute.visible = false;
+  const CANOPY_Y = 620, rim = [];
+  { const g = new T.SphereGeometry(330, 42, 10, 0, Math.PI*2, 0, 1.15), pos = g.attributes.position, col = new Float32Array(pos.count*3), pc = ['#e9a6b8','#9fd8c9','#c9bdf5','#f2a7a0','#9fd8c9','#e9a6b8','#c9bdf5'].map(C);
+    for (let i = 0; i < pos.count; i++){ const a = (Math.atan2(pos.getZ(i), pos.getX(i)) + Math.PI)/(Math.PI*2), c = pc[Math.floor(a*14) % 7]; col.set([c.r, c.g, c.b], i*3); }
+    g.setAttribute('color', new T.BufferAttribute(col, 3));
+    const can = new T.Mesh(g, std('#ffffff', { vertexColors: true, side: T.DoubleSide, roughness: .7, emissive: C('#2a1a3a') })); can.scale.y = .78; can.position.y = CANOPY_Y - 200; can.rotation.x = .32; chute.add(can); can.updateMatrix();
+    const rimY = 330*Math.cos(1.15); for (let k = 0; k < 6; k++){ const a = k/6*Math.PI*2 + .52; rim.push(V(Math.cos(a)*330*Math.sin(1.15), rimY, Math.sin(a)*330*Math.sin(1.15)).applyMatrix4(can.matrix)); } }
+  const cordM = std('#4a3a6e', { roughness: .8, emissive: C('#1a1030') }), cords = rim.map(() => { const m = new T.Mesh(new T.CylinderGeometry(3.2, 3.2, 1, 5), cordM); SG.wrap.add(m); return m; });
+  let chuteK = 0;
+  const _A = V(0,0,0), _B = V(0,0,0), _Cv = V(0,0,0), _E = V(0,0,0), _T = V(0,0,0), _d = V(0,0,0), _pv = V(0,0,0), _v1 = V(0,0,0), _v2 = V(0,0,0), _w = V(0,0,0);
+  const _q = new T.Quaternion(), _qw = new T.Quaternion(), _qp = new T.Quaternion(), _qx = new T.Quaternion(), _eu = new T.Euler();
+  const poleL = V(30, -8, -10), poleR = V(-30, -8, -10);
+  // two-bone IK and helpers, as in Vibe Booth
+  function aimBone(bone, cur, tgt){ _q.setFromUnitVectors(cur.normalize(), tgt.normalize()); bone.getWorldQuaternion(_qw); _qw.premultiply(_q); bone.parent.getWorldQuaternion(_qp); bone.quaternion.copy(_qp.invert().multiply(_qw)); bone.updateMatrixWorld(true); }
+  function ik2(up, lo, hd, Tm, Pm){
+    const g = SG.root; _T.copy(Tm); g.localToWorld(_T); _pv.copy(Pm); g.localToWorld(_pv);
+    up.getWorldPosition(_A); lo.getWorldPosition(_B); hd.getWorldPosition(_Cv);
+    const la = _A.distanceTo(_B), lb = _B.distanceTo(_Cv); _d.subVectors(_T, _A); const dist = clamp(_d.length(), 1e-4, la + lb - 1e-4); _d.normalize();
+    const ca = clamp((la*la + dist*dist - lb*lb)/(2*la*dist), -1, 1), sa = Math.sqrt(1 - ca*ca);
+    _pv.sub(_A); _pv.addScaledVector(_d, -_pv.dot(_d)); if (_pv.lengthSq() < 1e-12) _pv.set(0, -1, 0); _pv.normalize();
+    _E.copy(_A).addScaledVector(_d, ca*la).addScaledVector(_pv, sa*la);
+    aimBone(up, _v1.subVectors(_B, _A), _v2.subVectors(_E, _A)); lo.getWorldPosition(_B); hd.getWorldPosition(_Cv);
+    _T.copy(_A).addScaledVector(_d, dist); aimBone(lo, _v1.subVectors(_Cv, _B), _v2.subVectors(_T, _B));
+  }
+  const boneTurn = (bone, x, y, z) => { if (bone){ _qx.setFromEuler(_eu.set(x, y, z)); bone.quaternion.multiply(_qx); } };
+  fetch('assets/shigost.glb').then(r => { if (!r.ok) throw new Error('missing model'); return r.arrayBuffer(); })
+    .then(buf => new T.GLTFLoader().parse(buf, '', gltf => {
+      const root = gltf.scene; SG.body.add(root); SG.root = root;
+      const tex = new T.TextureLoader().load('assets/shigost.jpg', () => { SG.ready = true; s3.sg = true; });
+      tex.flipY = false; tex.encoding = T.sRGBEncoding; tex.anisotropy = 4;
+      root.traverse(o => { if (o.isMesh){ o.material.map = tex; o.material.color.set(0xffffff); o.material.roughness = .96; o.material.metalness = 0; o.material.needsUpdate = true; o.frustumCulled = false; } });
+      SG.b = {}; ['body','body_top0','neck','arm_left_top','arm_left_bot','arm_left_hand','arm_right_top','arm_right_bot','arm_right_hand','leg_left_top','leg_right_top','leg_left_bot','leg_right_bot'].forEach(n => SG.b[n] = root.getObjectByName(n));
+      SG.bind = []; root.traverse(o => { if (o.isBone) SG.bind.push([o, o.position.clone(), o.quaternion.clone()]); });
+    }, err => console.warn('Shigost model failed to parse', err)))
+    .catch(err => console.warn('Shigost model could not load, keeping the 2D Shigost in space', err));
+  const handL = V(0,0,0), handR = V(0,0,0), muzzle = V(0,0,0), portalW = W3(PORTAL.x, PORTAL.y, 0);
+  function poseShigost(s, t, idle, dt){
+    const w = SG.wrap, b = SG.b, stand = s.s === 'st-stand', air = !stand;
+    SG.ry += ((stand ? .45 : 0) - SG.ry)*Math.min(1, dt*6);
+    w.position.set(s.x, -(s.y + SG_FOOT), 0); w.rotation.set(0, SG.ry, -s.r*Math.PI/180);
+    SG.bind.forEach(([o, p, q]) => { o.position.copy(p); o.quaternion.copy(q); });
+    const calm = reduce.matches ? 0 : 1;
+    if (b.body) b.body.position.y += Math.sin(t*1.7)*.35*calm;
+    boneTurn(b.body_top0, 0, Math.sin(t*.5)*.05*calm, Math.sin(t*.9)*.02*calm);
+    boneTurn(b.neck, Math.sin(t*1.1)*.03*calm, stand ? -.25 + Math.sin(t*.31)*.15*calm : 0, Math.sin(t*.8)*.04*calm);
+    if (air){ const k = s.s === 'st-chute' ? Math.sin(t*2.2)*.25*calm : s.s === 'st-fall' ? Math.sin(t*14)*.18*calm : -.35;
+      boneTurn(b.leg_left_top, k, 0, .1); boneTurn(b.leg_right_top, -k, 0, -.1); }
+    w.updateMatrixWorld(true);
+    if (stand){ // portal gun in her left hand, aimed at the portal; she waves with the other when idle
+      b.arm_left_top.getWorldPosition(_w); _v1.subVectors(portalW, _w).normalize();
+      ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, SG.root.worldToLocal(_w.addScaledVector(_v1, 60*K)), poleL);
+      if (idle && calm){ _v2.set(-21 + Math.sin(t*14)*2.5, 8.5, 8 + Math.cos(t*14)*1.5); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2, poleR); }
+    } else { // arms up: jumping, flailing, or holding the parachute lines
+      const f = s.s === 'st-fall' ? Math.sin(t*16)*4*calm : 0;
+      ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, _v1.set(15 + f, 46, 3), poleL);
+      ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2.set(-15 - f, 46, 3), poleR);
+    }
+    b.arm_left_hand.getWorldPosition(handL); b.arm_right_hand.getWorldPosition(handR);
+    gun.visible = stand; if (stand){ gun.position.copy(handL); gun.lookAt(portalW); gun.updateMatrixWorld(); gun.localToWorld(muzzle.set(0, 0, 84)); }
+    // parachute opens with a springy pop and stays above her hands
+    chuteK += ((s.s === 'st-chute' ? 1 : 0) - chuteK)*Math.min(1, dt*7); chute.visible = chuteK > .02;
+    const hl = w.worldToLocal(handL.clone()), hr = w.worldToLocal(handR.clone());
+    if (chute.visible) chute.scale.set(chuteK, Math.max(.05, chuteK), chuteK);
+    cords.forEach((c, k) => { c.visible = chute.visible; if (!c.visible) return;
+      const a = rim[k].clone().multiply(chute.scale), h = rim[k].x > 0 ? hl : hr, d = _v1.subVectors(h, a), len = d.length();
+      c.position.copy(a).addScaledVector(d, .5); c.quaternion.setFromUnitVectors(_v2.set(0, 1, 0), d.normalize()); c.scale.set(1, len, 1); });
+    sgShadow.visible = stand; if (stand){ sgShadow.position.set(s.x, ridge(s.x, 0) + 2, 60); }
+  }
+
+  /* ---- per frame ---- */
+  let lastW = 0, lastH = 0, lastVh = 0, lastT = 0, scrT = 0;
+  s3.update = (p, cam, s, vw, vhS, H, now, idle, heroA) => {
+    const want = s3.ready && p < HANDOFF && journey.getBoundingClientRect().bottom > 0;
+    if (!want){ if (canvas.style.display !== 'none') canvas.style.display = 'none'; return false; }
+    if (canvas.style.display === 'none') canvas.style.display = '';
+    const t = reduce.matches ? 0 : now/1000, dt = Math.min(.1, Math.max(0, (now - lastT)/1000)); lastT = now;
+    if (vw !== lastW || H !== lastH || vhS !== lastVh){ lastW = vw; lastH = H; lastVh = vhS; renderer.setSize(vw, H, false); camera.aspect = vw/vhS; camera.setViewOffset(vw, vhS, 0, 0, vw, H); }
+    // perspective camera that frames the z = 0 plane exactly like the 2D camera
+    const D = vhS/cam.z/2/TAN; camera.position.set(cam.x, -cam.y, D); camera.near = D*.05; camera.far = D + 60000; camera.updateProjectionMatrix();
+    const [top, bot] = skyAt(cam.y); skyU.top.value.set(top); skyU.bot.value.set(bot);
+    const sa = starAlpha(cam.y); starU.time.value = t; starU.alpha.value = sa; stars.visible = sa > 0;
+    deep.forEach(m => { m.opacity = m.userData.o*sa; m.visible = sa > 0; });
+    whale.position.x = whaleX + Math.sin(t/19)*260;
+    shrooms.forEach((g, i) => g.material.opacity = g.userData.o*(.75 + .25*Math.sin(t*2.4 + i)));
+    // marquee bulbs chase
+    const ph = Math.floor(t/.7) % 2;
+    for (let i = 0; i < NB; i++){ const c = (i + ph) % 2 ? BON : BOFF; bulbs.setColorAt(i, c); bulbCol.set([c.r*.8, c.g*.7, c.b*.6], i*3); }
+    bulbs.instanceColor.needsUpdate = true; bulbG.attributes.color.needsUpdate = true;
+    // the screen only needs redrawing when the HTML hero isn't covering it
+    if (heroA < .98 && now - scrT > (LITE ? 50 : 33)){ scrT = now; textA = clamp(1 - heroA/.35, 0, 1); drawScreen(t); }
+    // snail
+    const hid = snail.classList.contains('hide'), eyes = snail3.userData.eyes;
+    eyes.scale.y += ((hid ? .08 : 1) - eyes.scale.y)*Math.min(1, dt*10); snail3.userData.shell.rotation.z = hid && !reduce.matches ? Math.sin(t*14)*.12 : 0;
+    // portal and beam
+    const open = $('#portal').classList.contains('open'); portalU.time.value = t;
+    const ps = portal3.scale.x + ((open ? 1 : .001) - portal3.scale.x)*Math.min(1, dt*(open ? 5 : 9)); portal3.scale.setScalar(ps); portal3.visible = ps > .01; portal3.rotation.z = t*.2;
+    const ft = (now - s3.fireAt)/1000;
+    if (ft >= 0 && ft < .6 && SG.ready){ const len = muzzle.distanceTo(portalW)*Math.min(1, ft/.42), dir = _w.subVectors(portalW, muzzle).normalize();
+      beam3.position.copy(muzzle).addScaledVector(dir, len/2); beam3.quaternion.setFromUnitVectors(V(0,1,0), dir); beam3.scale.set(14, len, 14);
+      const o = ft < .42 ? 1 : 1 - (ft - .42)/.18; beam3.material.opacity = o; beamGlow.material.opacity = o*.8; beamGlow.position.copy(muzzle).addScaledVector(dir, len); beam3.visible = beamGlow.visible = true; }
+    else beam3.visible = beamGlow.visible = false;
+    // shooting stars while in space
+    if (!reduce.matches && sa > .5){ if (!shoot.visible && Math.random() < .004){ shoot.visible = true; shootT = 0;
+        shoot.userData = { x: cam.x - vw/cam.z*(.1 + Math.random()*.4), y: -cam.y + vhS/cam.z*(.15 + Math.random()*.3), len: 900 + Math.random()*900 }; }
+      if (shoot.visible){ shootT += dt; const u = shoot.userData, k = shootT/.7; shoot.position.set(u.x + k*u.len*1.6, u.y - k*u.len*.7, -1500); shoot.rotation.z = -Math.atan2(.7, 1.6);
+        shoot.scale.set(u.len*Math.min(1, k*2), 10, 1); shoot.material.opacity = Math.max(0, 1 - k)*sa; if (k >= 1) shoot.visible = false; } }
+    else shoot.visible = false;
+    SG.wrap.visible = SG.ready;
+    if (SG.ready && SG.root) poseShigost(s, t, idle, dt);
+    renderer.render(scene, camera);
+    return true;
+  };
+  if (document.fonts) document.fonts.load('800 60px "Bricolage Grotesque"').then(() => drawScreen(0)).catch(() => {});
+  drawScreen(0);
+  s3.ready = true;
+}
 
 /* ================= MAIN LOOP ================= */
 let target = 0, cur = 0, lastScroll = performance.now(), lastSky = '';
@@ -1140,7 +1546,7 @@ function frame(time){
   if (!LY || LY.vw !== vw || LY.vh !== vh){ LY = relayout(vw, vh); stage.classList.toggle('compact', LY.hero.mode !== 'full'); stage.classList.toggle('side', LY.hero.mode === 'side'); }
   let p;
   if (reduce.matches){
-    const c = chapterOf(target); p = c.rest;
+    const c = chapterOf(target); p = target < .12*S ? 0 : c.rest; // the hero is its own calm beat
     if (shownP !== null && p !== shownP){ world.classList.add('fade'); setTimeout(()=>world.classList.remove('fade'), 220); }
     shownP = p;
   } else { cur += (target - cur) * .1; if (Math.abs(target-cur) < .00005) cur = target; p = cur; }
@@ -1174,7 +1580,7 @@ function frame(time){
 
   const [top, bot] = skyAt(cam.y);
   if (top + bot !== lastSky){ sky.style.background = `linear-gradient(${top}, ${bot})`; lastSky = top + bot; }
-  drawStars(cam, vw, vh, time, clamp(1 - (cam.y - 1200)/4500, 0, 1));
+
 
   const fx = vw/2 + (BBx - FW/2 - cam.x)*cam.z, fy = vh/2 + (BBy - FH/2 - cam.y)*cam.z;
   const heroA = clamp(1 - (p - .012)/.04, 0, 1);
@@ -1188,6 +1594,10 @@ function frame(time){
   heroCta.style.opacity = heroA; heroCta.style.visibility = heroA>0?'visible':'hidden';
   topBar.classList.toggle('solid', journey.getBoundingClientRect().bottom < topBar.offsetHeight);
   hint.style.opacity = clamp(1 - p/.025, 0, 1);
+
+  const on3 = s3.update(p, cam, s, vw, vh, stage.clientHeight, time, idle, heroA);
+  stage.classList.toggle('s3d', on3); stage.classList.toggle('s3d-sg', on3 && s3.sg); stage.classList.toggle('s3d-ready', s3.ready);
+  drawStars(cam, vw, vh, time, on3 ? 0 : starAlpha(cam.y));
 
   requestAnimationFrame(frame);
 }
