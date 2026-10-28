@@ -46,7 +46,7 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 
 ## Characters and interactions
 
-- **Shigost**: small white ghost with big dark eyes. In space she has a portal gun; tapping her fires it and opens a portal teasing the Space Explorer game.
+- **Shigost**: a small gost (never "ghost") with big dark eyes. In space she has a portal gun; tapping her fires it and opens a portal teasing the Space Explorer game.
 - **Moon snail** on the asteroid hides in its shell when tapped. A **star whale** drifts in the background.
 - **The painter** in the hills: a lanky, feathered lavender creature (inspired by Alyssa’s own character studies). Tapping opens the future art gallery.
 - **Puffsheep** in the hills bounce when tapped.
