@@ -29,17 +29,20 @@ A scroll-driven, clickable journey through a world that is becoming **real 3D, o
 1. **Outer space** (built in 3D): hero billboard advertising Vibe Booth sits on a floating asteroid. Scrolling pulls back, Shigost fires her portal gun if tapped, jumps off, and parachutes down. The 3D view hands off to the 2D world inside a cloud during the fall.
 2. **Grassy hills** (built, still 2D): she lands, then walks right toward the jungle.
 3. **Jungle** (built, still 2D): she hops into a misty jungle and rests by the vine harp.
-4. Sand dunes (next)
-5. Beach
-6. Reef
+4. **Sand dunes** (built in 3D): out of the jungle canopy into blinding sunlight, then down onto golden dunes. Shigost walks to the singing ridge and rests, then crosses the dunes and hops down the last big one.
+5. **Beach** (built in 3D): one continuous camera move over the last crest to the coast. Late-day light, waves, wet sand, tide pool, shells, and crabs. The far end leads into the water with a “The reef, coming soon” sign.
+6. Reef (next)
 7. Deep ocean
 8. The island
+
+The chapter order never changes. The space chapter is the quality bar and visual standard for every new 3D chapter.
 
 When scrolling stops, each chapter plays an idle loop. Objects in each scene act as doors to other content (games, art, and so on). Build chapters one at a time, and keep earlier chapters working.
 
 ## Art direction
 
-- **The site is moving to real 3D, chapter by chapter, matching Vibe Booth's look**: soft stylized lighting, gradients, depth, glow, and shadows. Cartoony and whimsical, but elevated. No flat fills and no bold outlines; 3D that keeps the charm of a 2D cartoon. Outer space is done; the hills and jungle are still 2D until their turn.
+- **The site is moving to real 3D, chapter by chapter, matching Vibe Booth's look**: soft stylized lighting, gradients, depth, glow, and shadows. Cartoony and whimsical, but elevated. No flat fills and no bold outlines; 3D that keeps the charm of a 2D cartoon. Outer space, the sand dunes, and the beach are 3D; the hills and jungle are still 2D until their turn.
+- Plants and critters are original and Seussian (curly stalks with pom bulbs, striped barrels, puff bushes, curly palms), never realistic cacti or real-world mascots. Sand is warm apricot and peach, not lemon yellow, and rest views keep sky or sea behind Shigost.
 - **The old plan of hand-drawn 2D layers replacing SVG placeholders is retired.** The remaining SVG art (hills, jungle, the 2D space fallback, and the small `#gostSym` Shigost in cards) is placeholder until each chapter moves to 3D.
 - The spirit is still **Studio Ghibli, Dr. Seuss, and Adventure Time**: soft skies and haze, curly whimsical shapes.
 - Avoid anything that looks cheesy or clip-art: no bubbly fonts, no “Click me!” speech bubbles, no flat candy colors. Clickable things are marked with a soft dashed halo plus a small hint at the bottom of the screen.
@@ -59,6 +62,20 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 - **Vibe Booth** (play.recklyss.com) is the playable teaser for the music side of the game: Shigost on her first tiny island. It will get a new name later and become an island in the full game.
 - **The game’s other islands are private and not live.** Describe the kinds of worlds in general terms only. Never name, show, or link an individual island.
 
+## Transitions between chapters
+
+- The journey should feel like one continuous world. The camera swoops in every direction (up, down, sideways, toward and away) with big shifts in scale. Use a nested zoom (diving into something small to reveal the next place) only now and then.
+- **When a 2D chapter hands off to a 3D one, hide the cut** inside something that fills the screen: a cloud (space to the 2D fall, see `HANDOFF`) or blinding sunlight (`#flash`, jungle canopy to dunes at `J_FLASH`). Match sky colors on both sides (`skyFor`).
+- Between two 3D chapters, there is no cut at all: one continuous camera move (dunes to beach rises over the last crest for a wide look at the coast, then dives down to the sand).
+- Camera keyframes live in `relayout()`. After the jungle, stops carry `pitch` and `yaw` for the 3D camera (the 2D world ignores them). `fit3()` frames 3D rest views: tall screens crop the sides a little, look down a bit more, and give spare height to the sky above.
+
+## Recurring features for every chapter
+
+- **A musical toy.** Music is the heart of Shigost's world. So far: the jungle vine harp, the singing dune ridge (drag along the crest and the sand hums), and the beach shell bells and tide pool. Anything with the class `vine`, a `data-freq`, and a `data-voice` can be tapped or strummed (`strummable()`); `tone(freq, voice)` has the voices `vine`, `dune`, `shell`, `bloop`, `chirp`, `clack`, and `chime`.
+- **A cleanup moment.** Shigost keeps worlds clean: litter to tap away with a sparkle, a chime, and a thank-you (`toast()`). So far: the half-buried can in the dunes and three pieces of beach litter with a countdown.
+- **One or two original critters** that react when tapped (the moon snail, painter, puffsheep, lemur, dune hopper, and two crabs).
+- Soft dashed halos and a bottom hint mark what's tappable during each rest view, and every chapter ends by teasing the next one with a “coming soon” sign until that chapter exists.
+
 ## 3D: assets, setup, and loading
 
 - **Assets come from Alyssa's game, but only from the public vibe-booth repo** (github.com/shigost/vibe-booth). **Never use anything from the unreleased game islands.** Right now that means only `assets/shigost.glb` and `assets/shigost.jpg`.
@@ -69,11 +86,23 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 - **The 2D-to-3D handoff**: `HANDOFF` (0.56 of the space-and-hills span) is where the 3D view stops and the 2D world takes over, during the parachute fall. A tall 2D cloud is placed exactly on her path there so the swap is hidden. The 3D sky shader uses the same `skyAt()` colors as the 2D `#sky`, and both star fields fade with `starAlpha()`, so nothing pops.
 - **Fallbacks**: the 2D space art (`art2d` class) shows until 3D is ready, and stays if WebGL is missing or the context is lost. Stage classes: `s3d-ready` (hide 2D space art), `s3d` (3D is rendering), and `s3d-sg` (3D Shigost replaces the 2D one).
 - The billboard screen is a canvas texture laid out from the HTML hero's own text positions (`measureFace`), so the two match while the hero fades.
+- **Dunes and beach** (`buildEarth()`): one scene for both chapters, built shortly after load (or on demand). Ground heights come from `earthH(x, z)` (height above `GE`; z = 0 is Shigost's path, negative is away from the camera), which the 3D terrain, Shigost's path (`earthAt`), and the 2D fallback all share. Beats are in `EP` (scroll positions) and `EX` (where she walks and rests). The journey's scroll now runs to `PMAX` (1.43) instead of 1.
+- **3D tap targets** use `hot(target, radius, options)`: a screen-space element positioned over the 3D object every frame, never smaller than 44 px, with an optional halo. They work at any camera angle.
+- Only one scene renders per frame: space before `HANDOFF`, the dunes and beach after `J_FLASH`, and nothing in between (the 2D world shows then). Shigost's single model moves between scenes.
+
+## Shigost's animations (shared library)
+
+- Alyssa has a library of named animation clips on the same rig as her model (idle, walk, run, jump_start, jump, jump_fall, jump_end, crouch, crouch_walk, crawl, dance, lie_down, lying_down_idle, get_up_from_lying_down, sit, and more). They are **not in the repo yet**; don't look for them.
+- The same clips will be shared by this site, Vibe Booth, and the game, so keep their names exactly as authored and load them by name.
+- The site is ready for them: `SGA` in `build3D()` maps her states to clip names (`st-walk` to `walk`, `st-land` to `idle`, `st-jump` to `jump`, `st-fall` to `jump_fall`). When a clip exists, it crossfades in (0.3 seconds) over the procedural pose; when it doesn't, the procedural pose (two-bone IK, breathing, looking around) shows. Load clips with `s3.loadClips(url)` from any GLB on the same rig (one file per clip or one library file both work). Clips play in place (root position tracks are dropped), because the journey moves her. Vibe Booth's own `sit`, `dance`, and `jump` are registered as `vb_*` so they never replace the site's poses by accident.
+- When the files arrive: put them under `assets/anims/`, call `s3.loadClips` for the clips a chapter needs when that chapter gets near, and extend `SGA.map` for new states.
 
 ## Characters and interactions
 
 - **Shigost**: see “Who Shigost is” above. In space she is the 3D model from Vibe Booth: she holds the portal gun and waves when idle, and tapping her fires the gun, eases the camera out, opens the portal, and shows the Space Explorer concept card. She jumps with her arms up and hangs from the parachute cords by her hands. After the handoff, the 2D Shigost (separate SVG arm layers, stepping sneakers, idle loops) takes over in the hills and jungle. The small `#gostSym` version is used in cards, About, and the billboard DJ.
 - **Moon snail** on the asteroid hides in its shell when tapped. A **star whale** drifts in the background.
+- **Dune hopper** in the dunes: a big-eared, lavender-cream critter that springs up and spins when tapped.
+- **Crabs** on the beach (coral and pink) sidestep, and when tapped they raise their claws, clack, and scuttle off.
 - **The painter** in the hills: a lanky, feathered lavender creature (inspired by Alyssa’s own character studies). Tapping opens the future art gallery.
 - **Puffsheep** in the hills bounce when tapped.
 - **Lemur** in the jungle hangs by its tail and waves when tapped. A **parrot** sits on a branch.
@@ -97,7 +126,7 @@ Space Explorer’s planets from an older prototype were named Elystra, Vulcron, 
 - `hit(x, y, w, h, fn)` adds an invisible tap area; `halo(x, y, d, chapter)` adds the dashed halo.
 - `shigostAt(p)` returns Shigost’s position and state for scroll progress `p` (0 to 1). The constant `S` (currently 0.70) marks where space and hills end and the jungle portion begins.
 - `relayout(vw, vh)` builds the camera keyframes for the current viewport; `camAt(p)` reads them. Each keyframe names a world box that must stay in view, and `fit()` chooses zoom and center inside the safe frame (below the header, above the HUD, inside the safe areas). It also picks the hero layout: copy inside the billboard (wide), call to action below it (`stack`), or beside it (`side`).
-- `CHAPTERS` defines chapter names, scroll ranges, and rest points (used for the reduced motion version).
+- `CHAPTERS` defines chapter names, scroll ranges, and rest points (used for the reduced motion version). Scroll progress `p` runs from 0 to `PMAX`.
 - World landmarks: asteroid near y 0, hills ground `GROUND` at y 15800, jungle floor `JG` at y 15900, jungle spans x 4250 to 12500. New chapters continue to the right of the jungle.
 - To add a chapter: extend the scroll length (`#journey` height), add Shigost and camera keyframes after the jungle, add a `CHAPTERS` entry, mark its dot as built in `#rail`, and add its scene objects.
 
@@ -121,6 +150,8 @@ Mobile Safari ran out of graphics memory and reloaded when the world was built f
 - The hero stays real HTML, so it shows instantly while three.js loads. The 2D space chapter is the fallback, so never delete it.
 - Reduced motion: no camera flying. It jumps between calm rest views (the hero, the asteroid, the parachute in 3D, and then each chapter), and 3D idle motion, lasers, bulbs, and shooting stars hold still.
 - Testing locally: the model loads with `fetch`, so open the site through a local server (Live Server, or any static server), not by double-clicking the file.
+- New 3D chapters: build lazily, keep the terrain grid modest (about 240 by 92 on desktop, smaller on phones), use bump textures for fine detail like sand ripples instead of more vertices, and fade far planes (like the sea) into the sky rather than letting their edges show.
+- The crash test now runs from the top to the end of the beach and back, three times.
 
 ## Must keep working
 
@@ -135,7 +166,8 @@ Mobile Safari ran out of graphics memory and reloaded when the world was built f
 - Write a real description and card art for **Pathogen** once Alyssa explains the game.
 - Connect the **Join** form to a real mailing list (Formspree or similar) with spam protection. The old subscriber list is full of bot signups and must be cleaned before importing.
 - Fix and eventually link **Space Explorer** through Shigost’s portal.
-- Build the **sand dunes** chapter next.
+- Build the **reef** chapter next (3D), continuing from the beach's waterline.
+- Drop in Shigost's shared animation clips when they're ready (see “Shigost's animations”).
 - After the domain transfer: point recklyss.com at GitHub Pages and set up email forwarding for info@recklyss.com.
 - About section copy is a draft.
 
