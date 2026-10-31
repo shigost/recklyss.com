@@ -26,7 +26,9 @@ The site’s one job is **the studio’s creative work**. Client services belong
 
 A scroll-driven, clickable journey through **one continuous 3D world**, from space to the beach. As visitors scroll, the camera follows Shigost through eight chapters:
 
-1. **Outer space** (3D): hero billboard advertising Vibe Booth sits on a floating asteroid. Scrolling pulls back, Shigost fires her portal gun if tapped, jumps off, and parachutes down through the clouds (the camera swings above her to look down at the hills far below, around her side, and under her).
+The journey is a **true scroll adventure**: a simple story you can watch just by scrolling, and every other action (pausing, rewinding, moving the mouse, touching, and tapping) is rewarded with more about Shigost’s world and the creatures she meets.
+
+1. **Outer space** (3D, and a preview of Alyssa's next game, a space explorer: little floating asteroids with Womps on them): hero billboard advertising Vibe Booth sits on a floating asteroid. Scrolling pulls back, Shigost fires her portal gun if tapped, jumps off, and parachutes down through the clouds (the camera swings above her to look down at the hills far below, around her side, and under her).
 2. **Grassy hills** (3D): she lands among the painter, the easel, and the sheep choir, walks to the chime tree and rests, then hops into the jungle.
 3. **Jungle** (3D): she rests by the vine harp in a misty clearing, then runs out of the jungle and leaps into the sunlight of the dunes while the camera soars over the canopy.
 4. **Sand dunes** (3D): Shigost walks to the singing ridge and rests, then crosses the dunes and hops down the last big one.
@@ -48,6 +50,20 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 - Avoid anything that looks cheesy or clip-art: no bubbly fonts, no “Click me!” speech bubbles, no flat candy colors. Clickable things are marked with a soft dashed halo plus a small hint at the bottom of the screen.
 - Font: Bricolage Grotesque (Google Fonts), often condensed.
 - Shigost is referred to as **she**.
+
+## The Recklyss family look (wompified)
+
+- Alyssa's signature style: **soft, rounded, simple shapes with a matte finish, big glossy eyes, and stubby little limbs** (see Shigost's model and the Womps and Kikis in Vibe Booth's `app.js`). Every creature on the site follows it: the moon snail, puffsheep, lemur, parrot, dune hopper, crabs, and every Womp. The star whale stays as it is.
+- In code: `matte(hex)` for bodies, `eyeM` and `glintM` for the glossy eyes, `glossyEyes()` for a pair of eyes on a 3D group, and `folk(parts)` with `eyePair(parts, ...)` to bake a critter into three draw calls (matte body, glossy eyes, glints).
+
+## Womps
+
+- **Womps** are the main characters of Alyssa's world: tall bean-shaped folks with stubby arms and legs and big glossy eyes. They're the crowd in Vibe Booth (unnamed there; their name is Womp), and the site reuses that design (`wompGeo()`, the same body profile as Vibe Booth's crowd).
+- **They live everywhere**, in every chapter, space included. Each has its own personality: sizes range from as tall as the painter (about 880) down to Kiki size (about 100; Shigost is about 260), and colors and idle moods vary (`sway`, `wave`, `dance`, `cheer`).
+- **The roster is `WOMPS`** (one entry per Womp: id, chapter, where it stands, height, color, and mood). Add, move, or recolor Womps there.
+- **They're placeholders** until Alyssa builds them out. Each chapter draws its Womps with one shared set of InstancedMeshes (`wompSet`), so swapping in real models later means changing how a set is drawn, not the roster.
+- **They're Shigost's crowd**: when a visitor plays a musical toy, nearby Womps cheer and hop (`s3.onToy`, called from `playedToy`).
+- **The painter is a Womp artist** at her easel, in a beret, as tall as before.
 
 ## Who Shigost is
 
@@ -106,14 +122,27 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 - The site is ready for them: `SGA` in `build3D()` maps her states to clip names (`st-walk` to `walk`, `st-run` to `run` (out of the jungle), `st-land` to `idle`, `st-jump` to `jump`, `st-fall` to `jump_fall`), in every chapter from the landing to the beach. When a clip exists, it crossfades in (0.3 seconds) over the procedural pose; when it doesn't, the procedural pose (two-bone IK, breathing, looking around) shows. Load clips with `s3.loadClips(url)` from any GLB on the same rig (one file per clip or one library file both work). Clips play in place (root position tracks are dropped), because the journey moves her. Vibe Booth's own `sit`, `dance`, and `jump` are registered as `vb_*` so they never replace the site's poses by accident.
 - When the files arrive: put them under `assets/anims/`, call `s3.loadClips` for the clips a chapter needs when that chapter gets near, and extend `SGA.map` for new states.
 
+## Shigost's gaze and direction
+
+- **Gaze** (`gazeFrame()` and `GZ`): moving the mouse, or touching and drawing on the screen, draws her head toward the pointer (`PTR`); scrolling makes her look where she's headed; both at once blend smoothly. When nobody steers her, she glances at nearby critters and Womps (the `GAZE` list, registered with `gazeAt()` and by every Womp), sometimes watching a butterfly and sometimes waving at a Womp. Head turns stay inside her neck's range (`NECK`) and ease in smoothly. With reduced motion her gaze stays calm and steady (no tracking).
+- **Turning around**: she faces the way she's actually moving. Scrolling back turns her around (`moveDir`, passed as `s.dir`) with a quick, smooth turn, and scrolling forward turns her back. The 2D fallback Shigost flips too.
+
+## Lore cards and the discovery journal
+
+- **Lore**: every character (each Womp, each critter, and the painter) opens a small lore card when tapped (`meet(id)`), with a name and a short description. **Alyssa writes all the lore herself.** Every name and every piece of lore lives in the one `LORE` list; for now every card says “Lore coming in the next chapter.” Womp names there are placeholders for her to replace. Keep ids stable; the journal saves them.
+- **Field journal** (`JOURNAL`, the round book button in the bottom-right corner): fills in as visitors meet characters, play the musical toys (`TOYS`, each toy tagged with `data-toy`), and clean up litter (`LITTER_SPOTS`, the last argument of `litterAt`), for example “You’ve met 6 of 28 characters.” It's saved in the visitor's browser (`localStorage`, key `recklyss-journal`) as plain JSON, `{ v, met, played, cleaned, updated }` with ids and times, so a later round can sync it to accounts and a public leaderboard (alongside the painting studio). `JOURNAL.data()` returns a copy of it.
+- Both stay small and quiet: the lore card sits at the top left, doesn't block the world (so visitors can keep playing), and fades after a few seconds.
+
 ## Characters and interactions
 
 - **Shigost**: see “Who Shigost is” above. In space she is the 3D model from Vibe Booth: she holds the portal gun and waves when idle, and tapping her fires the gun, eases the camera out, opens the portal, and shows the Space Explorer concept card. She jumps with her arms up and hangs from the parachute cords by her hands. The same 3D model carries her through every chapter: she lands, walks, hops, rests, runs out of the jungle, and leaps into the dunes. The 2D Shigost (separate SVG arm layers, stepping sneakers, idle loops) is only the fallback. The small `#gostSym` version is used in cards, About, and the billboard DJ.
-- **Moon snail** on the asteroid hides in its shell when tapped. A **star whale** drifts in the background.
-- **The painter** in the hills (3D): a lanky, feathered lavender creature at her easel, painting with a brush; tapping her makes a happy flourish. **Her canvas is a door**: tapping it shows the “Painting studio, coming soon” card (`studioCard`). Its position is `EASEL`.
+- **Moon snail** on the asteroid hides in its shell when tapped. A **star whale** drifts in the background (unchanged, not wompified).
+- **Floating asteroids** in space (`SPACE_SLOTS`) are a preview of the space explorer game: each is a slot with Womps standing on it. To drop in a 3D model of one of Alyssa's creatures later, set that slot's `model` to the `.glb` path and `height` to how tall it should stand; the placeholder Womps on that slot are replaced automatically. Shigost's portal and the Space Explorer card stay as they are.
+- **The painter** in the hills (3D): a tall lavender Womp artist in a beret at her easel, painting with a long brush; tapping her makes a happy flourish. **Her canvas is a door**: tapping it shows the “Painting studio, coming soon” card (`studioCard`). Its position is `EASEL`.
 - **Puffsheep** (3D sheep choir): five sheep of different sizes; each bounces and sings its own note.
 - **Lemur** (3D) hangs by its tail from the harp limb and waves when tapped. The **parrot** perches on the same limb and chirps when tapped.
 - **Dune hopper** in the dunes: a big-eared, lavender-cream critter that springs up and spins when tapped.
+- Every critter tap also opens its lore card and adds it to the journal.
 - **Crabs** on the beach (coral and pink) sidestep, and when tapped they raise their claws, clack, and scuttle off.
 - The painter is inspired by Alyssa’s own character studies. In the 2D fallback, tapping her also opens the painting studio card.
 - **Vine harp** in the jungle: seven vines hanging from a big limb; dragging across them plays notes (Web Audio, works with touch).
@@ -178,6 +207,9 @@ Mobile Safari ran out of graphics memory and reloaded when the world was built f
 - Connect the **Join** form to a real mailing list (Formspree or similar) with spam protection. The old subscriber list is full of bot signups and must be cleaned before importing.
 - Fix and eventually link **Space Explorer** through Shigost’s portal.
 - Build the **reef** chapter next (3D), continuing from the beach's waterline.
+- Write the **lore** (names and descriptions) in `LORE`, including real names for the Womps.
+- Build the Womps out properly and swap them in (see “Womps”), and drop creature models into the space slots (`SPACE_SLOTS`).
+- **Accounts and a public leaderboard** built on the journal data, alongside the painting studio.
 - **Painting studio** (next round): the painter's canvas (`EASEL`) becomes the door. Visitors tap it, the camera zooms into the canvas (add a camera stop framing it, the way the harp close-up works), they paint, and they submit to a public gallery with voting and a leaderboard. That needs a backend for storage, moderation, and spam protection, so plan it with Alyssa first.
 - Drop in Shigost's shared animation clips when they're ready (see “Shigost's animations”).
 - After the domain transfer: point recklyss.com at GitHub Pages and set up email forwarding for info@recklyss.com.
