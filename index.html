@@ -270,7 +270,11 @@ a{color:inherit}
 #shigost .chute{position:absolute;left:50%;bottom:73.5%;width:290.9%;height:181.8%;margin-left:-145.45%;transform-origin:50% 100%;
   transform:scale(.1,0);opacity:0;transition:transform .55s cubic-bezier(.3,1.5,.5,1), opacity .2s}
 #shigost.st-chute .chute{transform:scale(1);opacity:1}
-#shigost.st-land .chute{transform:translate(40.6%,63.5%) rotate(70deg) scale(.9,.2);opacity:0;transition:transform .9s ease-in, opacity .9s ease-in .3s}
+/* the hoodie balloon billows softly, and on landing it deflates down into her hoodie */
+#shigost .chute .bal{transform-box:fill-box;transform-origin:50% 80%;animation:billow 2.6s ease-in-out infinite alternate}
+@keyframes billow{from{transform:scale(1.03,.97)}to{transform:scale(.97,1.04)}}
+#shigost .chute .strings{transform-box:fill-box;transform-origin:50% 0;animation:swing 1.9s ease-in-out infinite alternate}
+#shigost.st-land .chute{transform:translateY(62%) scale(.08,.14);opacity:0;transition:transform .8s cubic-bezier(.5,0,.8,.4), opacity .5s ease-in .3s}
 #shigost.st-walk .chute{opacity:0;transition:none}
 #shigost:not(.st-stand) .aura{display:none}
 /* one arm layer per pose: down, up (jump, fall, parachute), and the portal gun arm */
@@ -1050,11 +1054,22 @@ const sh = document.createElement('div'); sh.id = 'shigost'; sh.className = 'st-
 const hw = hoodie('sg');
 sh.innerHTML = `
 <svg class="chute" viewBox="0 0 640 520" aria-hidden="true">
-  <defs><clipPath id="dome"><path d="M40 260C40 60 600 60 600 260Z"/></clipPath></defs>
-  <g stroke="${INK}" stroke-width="4" fill="none" opacity=".8"><path d="M40 262L267 516M180 266L267 516M290 268L267 516M350 268L373 516M460 266L373 516M600 262L373 516"/></g>
-  <g clip-path="url(#dome)">${['#e9a6b8','#9fd8c9','#c9bdf5','#f2a7a0','#9fd8c9','#e9a6b8','#c9bdf5'].map((c,i)=>`<rect x="${i*92}" y="0" width="92" height="300" fill="${c}"/><path d="M${i*92} 0v300" stroke="#fff" stroke-width="3" stroke-dasharray="10 10" opacity=".7"/>`).join('')}
-    <ellipse cx="220" cy="120" rx="160" ry="60" fill="#fff" opacity=".25"/><rect x="0" y="200" width="640" height="80" fill="#24163a" opacity=".12"/></g>
-  <path d="M40 260C40 60 600 60 600 260q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0q-35 26 -70 0" fill="none" stroke="${INK}" stroke-width="9" stroke-linejoin="round"/>
+  <defs><radialGradient id="hbf" cx=".42" cy=".34" r=".75"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#ebe5f8"/></radialGradient></defs>
+  <path d="M244 318L267 516M282 322L267 516M358 322L373 516M396 318L373 516" stroke="${LINE}" stroke-width="4" fill="none"/>
+  <g class="bal">
+    <path d="M206 142C146 132 96 152 76 202C66 226 66 248 72 262L124 266C124 240 132 218 154 200C172 186 190 180 208 180Z" fill="url(#hbf)" stroke="${LINE}" stroke-width="5" stroke-linejoin="round"/>
+    <rect x="62" y="256" width="68" height="26" rx="12" fill="${SHADE}" stroke="${LINE}" stroke-width="4.5"/>
+    <g transform="matrix(-1 0 0 1 640 0)"><path d="M206 142C146 132 96 152 76 202C66 226 66 248 72 262L124 266C124 240 132 218 154 200C172 186 190 180 208 180Z" fill="url(#hbf)" stroke="${LINE}" stroke-width="5" stroke-linejoin="round"/>
+      <rect x="62" y="256" width="68" height="26" rx="12" fill="${SHADE}" stroke="${LINE}" stroke-width="4.5"/></g>
+    <path d="M320 66C432 66 474 142 474 212C474 264 444 292 412 302H228C196 292 166 264 166 212C166 142 208 66 320 66Z" fill="url(#hbf)" stroke="${LINE}" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M262 222Q320 212 378 222L388 268Q320 278 252 268Z" fill="${SHADE}" opacity=".7" stroke="#d3cbec" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="222" y="292" width="196" height="32" rx="15" fill="${SHADE}" stroke="${LINE}" stroke-width="4.5"/>
+    <path d="M250 296v24M278 296v24M306 296v24M334 296v24M362 296v24M390 296v24" stroke="#d6cef0" stroke-width="3"/>
+    <path d="M320 6C374 6 406 36 406 78C406 100 396 114 384 122C364 116 342 114 320 114C298 114 276 116 256 122C244 114 234 100 234 78C234 36 266 6 320 6Z" fill="url(#hbf)" stroke="${LINE}" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M320 116C307 104 282 90 282 62C282 40 299 26 320 26C341 26 358 40 358 62C358 90 333 104 320 116Z" fill="#ddd5f2" stroke="${LINE}" stroke-width="4" stroke-linejoin="round"/>
+    <g class="strings"><path d="M311 116C308 138 306 160 303 182M329 116C332 138 334 160 337 182" stroke="${LINE}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <rect x="297" y="180" width="11" height="18" rx="4" fill="#fff" stroke="${LINE}" stroke-width="3"/><rect x="332" y="180" width="11" height="18" rx="4" fill="#fff" stroke="${LINE}" stroke-width="3"/></g>
+  </g>
 </svg>
 <div class="hit"></div>
 <svg class="gost" viewBox="-45 -64 290 377" aria-hidden="true">
@@ -1914,16 +1929,55 @@ function build3D(){
     const grip = new T.Mesh(new T.BoxGeometry(18, 34, 18), std('#8f7cc9', { roughness: .5 })); grip.position.set(0, -26, 10); gun.add(grip);
     const gg = glow('#5fd3c8', 120, .6); gg.position.z = 84; gun.add(gg); }
   root.add(gun);
-  // parachute: same panel colors as the 2D one, lines run to her hands
+  // The hoodie parachute: her hoodie is her one magic tool. Here it stretches up above her and fills with air like a
+  // stretchy balloon (the hood with its teardrop opening, puffed sleeves, the pocket, the ribbed hem, and dangling
+  // drawstrings), billowing and wobbling as it slows her fall while her hands hold its cords. When she lands it
+  // deflates back down into her hoodie. Built the first time it opens.
   const chute = new T.Group(); SG.wrap.add(chute); chute.visible = false;
-  const CANOPY_Y = 620, rim = [];
-  { const g = new T.SphereGeometry(330, 42, 10, 0, Math.PI*2, 0, 1.15), pos = g.attributes.position, col = new Float32Array(pos.count*3), pc = ['#e9a6b8','#9fd8c9','#c9bdf5','#f2a7a0','#9fd8c9','#e9a6b8','#c9bdf5'].map(C);
-    for (let i = 0; i < pos.count; i++){ const a = (Math.atan2(pos.getZ(i), pos.getX(i)) + Math.PI)/(Math.PI*2), c = pc[Math.floor(a*14) % 7]; col.set([c.r, c.g, c.b], i*3); }
-    g.setAttribute('color', new T.BufferAttribute(col, 3));
-    const can = new T.Mesh(g, std('#ffffff', { vertexColors: true, side: T.DoubleSide, roughness: .7, emissive: C('#2a1a3a') })); can.scale.y = .78; can.position.y = CANOPY_Y - 200; can.rotation.x = .32; chute.add(can); can.updateMatrix();
-    const rimY = 330*Math.cos(1.15); for (let k = 0; k < 6; k++){ const a = k/6*Math.PI*2 + .52; rim.push(V(Math.cos(a)*330*Math.sin(1.15), rimY, Math.sin(a)*330*Math.sin(1.15)).applyMatrix4(can.matrix)); } }
-  const cordM = std('#4a3a6e', { roughness: .8, emissive: C('#1a1030') }), cords = rim.map(() => { const m = new T.Mesh(new T.CylinderGeometry(3.2, 3.2, 1, 5), cordM); SG.wrap.add(m); return m; });
-  let chuteK = 0;
+  const balU = { t: { value: 0 } }, HEM = [], cordM = matte('#f1edf8');
+  const cords = [0, 1, 2, 3].map(() => { const m = new T.Mesh(new T.CylinderGeometry(4, 4, 1, 6), cordM); m.visible = false; SG.wrap.add(m); return m; });
+  let chuteK = 0, chuteV = 0, bal = null;
+  function hoodieBalloon(){
+    const W = '#ffffff', SH = '#efeaf8', parts = [];
+    // the body: a soft bulb from the hem up to rounded shoulders (rB is its radius at a height, for things laid on it)
+    const prof = [[150, 0], [178, 22], [240, 82], [288, 170], [304, 258], [292, 330], [250, 384], [172, 418], [88, 438], [0, 445]];
+    const rB = y => { for (let i = 1; i < prof.length; i++) if (y <= prof[i][1]){ const [r0, y0] = prof[i - 1], [r1, y1] = prof[i]; return lerp(r0, r1, (y - y0)/(y1 - y0)); } return 0; };
+    parts.push([new T.LatheGeometry(prof.map(([r, y]) => new T.Vector2(r, y)), 44).scale(1, 1, .8), I4, W, 0, .3]);
+    // the hood on top, tipped back a little; its teardrop face opening (pointing down) faces the camera
+    const Mh = S4(0, 470, 78, 1, 1, 1, -.16), HR = [150, 142, 136];
+    parts.push([sph(30, 20), new T.Matrix4().multiplyMatrices(Mh, new T.Matrix4().makeScale(...HR)), W, 0, .3]);
+    const tear = new T.Shape(); tear.moveTo(0, -1); tear.bezierCurveTo(-.3, -.62, -.85, -.32, -.85, .2); tear.bezierCurveTo(-.85, .62, -.48, .92, 0, .92); tear.bezierCurveTo(.48, .92, .85, .62, .85, .2); tear.bezierCurveTo(.85, -.32, .3, -.62, 0, -1);
+    const onHood = (rx, ry, lift, hex) => { const g = new T.ShapeGeometry(tear, 18), p = g.attributes.position;
+      for (let i = 0; i < p.count; i++){ const x = p.getX(i)*rx, y = p.getY(i)*ry - 6, q = 1 - (x/HR[0])**2 - (y/HR[1])**2; p.setXYZ(i, x, y, HR[2]*Math.sqrt(Math.max(.02, q)) + lift); }
+      g.computeVertexNormals(); parts.push([g, Mh, hex, 0, .15]); };
+    onHood(84, 98, 2, '#f6f3fc'); onHood(70, 84, 3.5, '#d8cff0');
+    // sleeves puffing out to the sides, with ribbed cuffs
+    [-1, 1].forEach(sd => { const pts = [V(sd*220, 336, 0), V(sd*326, 318, 10), V(sd*398, 252, 18), V(sd*416, 166, 20)];
+      parts.push([taper(pts, 22, 14, 76, 58), I4, W, 0, .3]);
+      const e = pts[3], dir = e.clone().sub(pts[2]).normalize();
+      parts.push([new T.TorusGeometry(54, 16, 10, 26), new T.Matrix4().compose(e, new T.Quaternion().setFromUnitVectors(V(0, 0, 1), dir), V(1, 1, 1)), SH, 0, .2]); });
+    // the kangaroo pocket, laid on the front of the bulb
+    { const s = new T.Shape(); s.moveTo(-104, 70); s.quadraticCurveTo(0, 82, 104, 70); s.lineTo(122, 162); s.quadraticCurveTo(0, 176, -122, 162); s.lineTo(-104, 70);
+      const g = new T.ShapeGeometry(s, 8), p = g.attributes.position;
+      for (let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), r = rB(y); p.setXYZ(i, x, y, .8*Math.sqrt(Math.max(0, r*r - x*x)) + 2.5); }
+      g.computeVertexNormals(); parts.push([g, I4, SH, 0, .15]); }
+    // the ribbed hem at the bottom
+    { const g = new T.TorusGeometry(150, 22, 10, 64), p = g.attributes.position;
+      for (let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), a = Math.atan2(y, x), k = 1 + Math.sin(a*48)*.012; p.setXY(i, x*k, y*k); }
+      g.computeVertexNormals(); parts.push([g, S4(0, 4, 0, 1, .8, 1, Math.PI/2), SH, 0, .2]); }
+    // drawstrings dangling from the hood opening down the front, with aglets (they swing in the shader)
+    [-1, 1].forEach(sd => { const ys = 372, pts = [0, 50, 100, 150].map((d, k) => { const y = ys - d; return V(sd*(18 + k*7), y, .8*rB(y) + 9); });
+      parts.push([taper(pts, 12, 6, 5.5, 5), I4, SH, [1, -150, -ys]]);
+      const e = pts[3]; parts.push([new T.CylinderGeometry(8, 8, 26, 10), S4(e.x, e.y - 12, e.z, 1, 1, 1), '#d9d0f2', [1, -150, -ys]]); });
+    [.62, -.62, Math.PI - .62, Math.PI + .62].forEach(a => HEM.push(V(Math.cos(a)*150, 0, Math.sin(a)*120)));
+    const m = spirit(std('#ffffff', { vertexColors: true, roughness: .92 })), sp = m.onBeforeCompile;
+    m.onBeforeCompile = sh => { sp(sh); sh.uniforms.bT = balU.t;
+      sh.vertexShader = 'attribute float sway; uniform float bT;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+        float bw = (sin(bT*2.6 + position.y*0.018 + position.x*0.011)*5.0 + sin(bT*1.7 - position.x*0.02 + position.z*0.015)*4.0)*(1.0 - min(sway, 1.0));
+        transformed += objectNormal*bw; transformed.x += sin(bT*2.2 + position.y*0.01)*sway*22.0; transformed.z += cos(bT*1.8)*sway*12.0;`); };
+    m.customProgramCacheKey = () => 'balloon';
+    bal = new T.Mesh(bake(parts), m); bal.frustumCulled = false; bal.matrixAutoUpdate = false; chute.add(bal);
+  }
   const _A = V(0,0,0), _B = V(0,0,0), _Cv = V(0,0,0), _E = V(0,0,0), _T = V(0,0,0), _d = V(0,0,0), _pv = V(0,0,0), _v1 = V(0,0,0), _v2 = V(0,0,0), _w = V(0,0,0);
   const _q = new T.Quaternion(), _qw = new T.Quaternion(), _qp = new T.Quaternion(), _qx = new T.Quaternion(), _eu = new T.Euler();
   const poleL = V(30, -8, -10), poleR = V(-30, -8, -10);
@@ -2096,12 +2150,15 @@ function build3D(){
     lookLayer();
     b.arm_left_hand.getWorldPosition(handL); b.arm_right_hand.getWorldPosition(handR);
     gun.visible = stand; if (stand){ gun.position.copy(handL); gun.lookAt(portalW); gun.updateMatrixWorld(); gun.localToWorld(muzzle.set(0, 0, 84)); }
-    // parachute opens with a springy pop and stays above her hands
-    chuteK += ((s.s === 'st-chute' ? 1 : 0) - chuteK)*Math.min(1, dt*7); chute.visible = chuteK > .02;
+    // the hoodie balloon pops open with a stretchy overshoot and billows; on landing it deflates down into her hoodie
+    const open = st === 'st-chute'; if (open && !bal) hoodieBalloon();
+    if (open){ chuteV += (1 - chuteK)*70*dt; chuteV *= Math.exp(-6.5*dt); chuteK += chuteV*dt; } else { chuteV = 0; chuteK += (0 - chuteK)*Math.min(1, dt*4.5); }
+    chute.visible = !!bal && chuteK > .02;
+    if (chute.visible){ const k = Math.max(.02, chuteK), br = Math.sin(t*2.2)*.045*calm, sy = (1 + br)*Math.pow(k, .75), sx = Math.pow(k, 1.25)/Math.sqrt(1 + br);
+      bal.position.set(0, lerp(150, 420, Math.min(1, k)), 0); bal.rotation.set(.1 + br*.6, 0, Math.sin(t*1.3)*.05*calm); bal.scale.set(sx, sy, sx); bal.updateMatrix(); balU.t.value = t; }
     const hl = w.worldToLocal(handL.clone()), hr = w.worldToLocal(handR.clone());
-    if (chute.visible) chute.scale.set(chuteK, Math.max(.05, chuteK), chuteK);
     cords.forEach((c, k) => { c.visible = chute.visible; if (!c.visible) return;
-      const a = rim[k].clone().multiply(chute.scale), h = rim[k].x > 0 ? hl : hr, d = _v1.subVectors(h, a), len = d.length();
+      const a = HEM[k].clone().applyMatrix4(bal.matrix), h = HEM[k].x > 0 ? hl : hr, d = _v1.subVectors(h, a), len = d.length();
       c.position.copy(a).addScaledVector(d, .5); c.quaternion.setFromUnitVectors(_v2.set(0, 1, 0), d.normalize()); c.scale.set(1, len, 1); });
     sgShadow.visible = stand && !earth; if (stand && !earth){ sgShadow.position.set(s.x, ridge(s.x, 0) + 2, 60); }
   }
