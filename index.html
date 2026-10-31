@@ -158,7 +158,7 @@ a{color:inherit}
 #stage.h-dunes .halo.for-dunes,#stage.h-beach .halo.for-beach,#stage.h-reef .halo.for-reef,#stage.h-chimes .halo.for-chimes{opacity:1}
 /* 3D tap targets: positioned every frame over the 3D objects, never smaller than 44 px */
 #hot{position:absolute;inset:0;z-index:6;pointer-events:none;display:none}
-#stage.s3e #hot{display:block}
+#stage.s3e #hot,#stage.s3d #hot{display:block}
 #hot .hot{position:absolute;left:0;top:0;border-radius:50%;pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #hot .halo{position:absolute;left:0;top:0;pointer-events:none}
 #hot .off{display:none}
@@ -175,6 +175,32 @@ a{color:inherit}
 #card p{margin:0 0 14px;line-height:1.55;color:var(--muted)}
 #card .status{display:inline-block;font-weight:700;font-size:12px;background:var(--lilac);color:var(--ink);border-radius:999px;padding:3px 10px;margin-bottom:10px}
 #card .close{position:absolute;top:4px;right:4px;width:44px;height:44px;background:none;border:0;font-size:26px;line-height:1;cursor:pointer;color:var(--text)}
+/* lore cards and the field journal: small, quiet, and out of the way */
+#lore,#journal{position:absolute;z-index:8;opacity:0;pointer-events:none;background:var(--card);color:var(--text);border-radius:18px;padding:14px 16px;
+  box-shadow:0 14px 40px rgba(20,11,43,.3);transition:opacity .3s, transform .3s;font-size:14px}
+#lore{left:calc(clamp(14px,3vw,30px) + var(--sal));top:80px;width:min(290px,calc(100% - 28px - var(--sal) - var(--sar)));transform:translateY(-8px)}
+#journal{right:calc(clamp(14px,3vw,30px) + var(--sar));bottom:calc(var(--hud-b) + 56px);width:min(330px,calc(100% - 28px - var(--sal) - var(--sar)));
+  max-height:calc(100% - var(--hud-b) - 150px);overflow:auto;transform:translateY(8px)}
+#lore.show,#journal.show{opacity:1;pointer-events:auto;transform:none}
+#lore h3{font-weight:800;font-stretch:85%;font-size:20px;margin:0 0 4px}
+#lore p,#journal p{margin:0 0 10px;line-height:1.45;color:var(--muted)}
+#journal p b{color:var(--text);font-weight:700}
+#lore .status,#journal .status{display:inline-block;font-weight:700;font-size:11px;background:var(--lilac);color:var(--ink);border-radius:999px;padding:2px 9px;margin-bottom:8px}
+#lore .close,#journal .close{position:absolute;top:2px;right:2px;width:44px;height:44px;background:none;border:0;font-size:24px;cursor:pointer;color:var(--text)}
+#lore .jopen{font:700 13px var(--font);color:var(--text);background:none;border:0;padding:12px 0 4px;min-height:44px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.jbar{display:block;height:6px;border-radius:9px;background:rgba(127,111,160,.2);margin-top:6px;overflow:hidden}
+.jbar i{display:block;height:100%;background:var(--teal);border-radius:9px}
+.jlist{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-wrap:wrap;gap:5px}
+.jlist li{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(127,111,160,.14);color:var(--muted)}
+.jlist li.on{background:rgba(95,211,200,.28);color:var(--text)}
+.jnote{font-size:12px}
+#jbtn{position:absolute;z-index:6;right:calc(clamp(14px,3vw,30px) + var(--sar));bottom:calc(var(--hud-b) - 10px);width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.3);background:rgba(20,11,43,.55);color:#fff;cursor:pointer;display:grid;place-items:center;padding:0}
+#jbtn svg{width:22px;height:22px}
+#jdot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:0}
+#jbtn.new #jdot{animation:jnew 2.4s ease-out}
+@keyframes jnew{0%,60%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(1)}}
+#badge{right:calc(clamp(14px,3vw,30px) + var(--sar) + 56px)}
 
 /* world animations */
 .bulb{animation:bulb 1.4s steps(1) infinite}
@@ -619,7 +645,7 @@ const snail = place(`<svg viewBox="0 0 300 220"><defs><radialGradient id="shellG
 <g class="eyes"><path d="M60 175C55 140 48 118 40 100M78 172C80 140 86 120 92 104" stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="38" cy="96" r="13" fill="#fff" stroke="${INK}" stroke-width="6"/><circle cx="94" cy="100" r="13" fill="#fff" stroke="${INK}" stroke-width="6"/><circle cx="36" cy="97" r="5" fill="${INK}"/><circle cx="92" cy="101" r="5" fill="${INK}"/></g>
 <g class="shell"><circle cx="185" cy="118" r="70" fill="url(#shellG)" stroke="${INK}" stroke-width="7"/><path d="M185 118m0 -8a8 8 0 1 1 -8 8a22 22 0 1 1 24 22a40 40 0 1 1 -44 -40a58 58 0 1 1 62 62" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round" opacity=".7"/><circle cx="160" cy="88" r="10" fill="#fff" opacity=".7"/></g></svg>`,
   SNX, SNY - 88, 300, 220, {cls:'clickable art2d', id:'snail', z:4});
-const hideSnail = () => { snail.classList.add('hide'); clearTimeout(snail._t); snail._t = setTimeout(()=>snail.classList.remove('hide'), 2200); };
+const hideSnail = () => { snail.classList.add('hide'); clearTimeout(snail._t); snail._t = setTimeout(()=>snail.classList.remove('hide'), 2200); meet('moon-snail'); };
 snail.addEventListener('click', hideSnail);
 hit(SNX, SNY - 90, 480, 480, hideSnail);
 halo(SNX, SNY - 90, 380, 'space');
@@ -720,7 +746,7 @@ const painterSVG = `<svg viewBox="0 0 800 1000"><defs><linearGradient id="pBody"
 const painter = place(painterSVG, PX, PY - 340, 560, 700, {cls:'clickable', z:3});
 // the painter's canvas is the door to the future painting studio (zoom in, paint, and submit to a public gallery)
 const studioCard = () => showCard('Painting studio','Coming soon','Soon you’ll step up to the painter’s easel, paint something of your own, and hang it in a public gallery where visitors vote for their favorites.','See the games','#games');
-painter.addEventListener('click', studioCard);
+painter.addEventListener('click', () => { studioCard(); JOURNAL.add('met', 'painter'); });
 halo(PX + 130, PY - 470, 300, 'hills');
 
 // puffsheep critters
@@ -735,7 +761,7 @@ function puffSheep(flip){
 [[-2050,false],[1950,true],[2600,false]].forEach(([x,flip],i)=>{
   const s = place(puffSheep(flip), x, frontTop(x) - 96, 250, 200, {cls:'clickable', z:3});
   s.firstChild.style.animationDelay = (-i*.8)+'s';
-  const boing = () => { s.classList.remove('boing'); void s.offsetWidth; s.classList.add('boing'); };
+  const boing = () => { s.classList.remove('boing'); void s.offsetWidth; s.classList.add('boing'); meet('puffsheep'); };
   s.addEventListener('click', boing); hit(x, frontTop(x) - 96, 440, 440, boing);
 });
 
@@ -819,7 +845,7 @@ const lemur = place(`<svg viewBox="0 0 360 760"><path d="M-40 70C80 40 240 90 40
 <circle cx="150" cy="628" r="30" fill="#fff" stroke="${INK}" stroke-width="6"/><circle cx="210" cy="628" r="30" fill="#fff" stroke="${INK}" stroke-width="6"/>
 <g class="blink"><circle cx="152" cy="632" r="14" fill="${INK}"/><circle cx="212" cy="632" r="14" fill="${INK}"/></g><circle cx="146" cy="624" r="5" fill="#fff"/><circle cx="206" cy="624" r="5" fill="#fff"/>
 <path d="M170 668q10 8 20 0" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/></g></svg>`, LX, 14700 + 380, 360, 760, {cls:'clickable', id:'lemur', z:5});
-lemur.addEventListener('click', () => { lemur.classList.remove('wave'); void lemur.offsetWidth; lemur.classList.add('wave'); });
+lemur.addEventListener('click', () => { lemur.classList.remove('wave'); void lemur.offsetWidth; lemur.classList.add('wave'); meet('lemur'); });
 halo(LX, 14700 + 620, 340, 'jungle');
 
 // parrot with a curly crest
@@ -843,7 +869,7 @@ NOTES.forEach((f,i)=>{
   const v = place(`<svg viewBox="0 0 80 ${len+70}"><path d="${d}" stroke="#2f6b44" stroke-width="18" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#58a85a" stroke-width="8" fill="none" stroke-linecap="round"/>${leaves}
     <circle class="glow" cx="${(40 + Math.sin(len*.012 + i)*16).toFixed(1)}" cy="${len+24}" r="24" fill="${['#e98bb5','#f6c86a','#5fd3c8','#b6a4f2'][i%4]}" stroke="${INK}" stroke-width="5"/></svg>`,
     x, 14250 + (len+70)/2, 130, len+70, {cls:'vine', z:5});
-  v.dataset.freq = f; vines.push(v);
+  v.dataset.freq = f; v.dataset.toy = 'vine-harp'; vines.push(v);
 });
 halo(7540, 15500, 520, 'jungle');
 let actx = null;
@@ -896,6 +922,7 @@ function pluck(v){
   v.classList.remove('pluck'); void v.offsetWidth; v.classList.add('pluck');
   tone(+v.dataset.freq, v.dataset.voice || 'vine');
   if (v._fx) v._fx();
+  playedToy(v.dataset.toy, v._at || null);
 }
 let strumming = false, lastVine = null;
 const strummable = v => v.addEventListener('pointerdown', e => { strumming = true; lastVine = v; pluck(v); e.preventDefault(); });
@@ -1324,6 +1351,136 @@ sh.addEventListener('click', () => {
 });
 $('#portal').addEventListener('click', spaceCard);
 
+/* ================= LORE ================= */
+// Alyssa writes all the lore. Every character's name and lore live in this one list, so filling them in never
+// means touching anything else. The ids are what the discovery journal saves, so keep them stable.
+const LORE_SOON = 'Lore coming in the next chapter.';
+const LORE = {
+  // critters and the painter
+  'painter':       { name: 'The painter',  kind: 'Womp artist', text: LORE_SOON },
+  'moon-snail':    { name: 'Moon snail',   kind: 'Critter', text: LORE_SOON },
+  'puffsheep':     { name: 'Puffsheep',    kind: 'Critter', text: LORE_SOON },
+  'lemur':         { name: 'Lemur',        kind: 'Critter', text: LORE_SOON },
+  'parrot':        { name: 'Parrot',       kind: 'Critter', text: LORE_SOON },
+  'dune-hopper':   { name: 'Dune hopper',  kind: 'Critter', text: LORE_SOON },
+  'coral-crab':    { name: 'Coral crab',   kind: 'Critter', text: LORE_SOON },
+  'pink-crab':     { name: 'Pink crab',    kind: 'Critter', text: LORE_SOON },
+  // Womps (placeholder names until Alyssa names them)
+  'womp-asteroid': { name: 'Asteroid Womp',      kind: 'Womp', text: LORE_SOON },
+  'womp-drifter':  { name: 'Drifting Womp',      kind: 'Womp', text: LORE_SOON },
+  'womp-twins-a':  { name: 'Rock twin, the tall one',  kind: 'Womp', text: LORE_SOON },
+  'womp-twins-b':  { name: 'Rock twin, the small one', kind: 'Womp', text: LORE_SOON },
+  'womp-lookout':  { name: 'Lookout Womp',       kind: 'Womp', text: LORE_SOON },
+  'womp-cloud':    { name: 'Cloud rider',        kind: 'Womp', text: LORE_SOON },
+  'womp-fan':      { name: 'The painter’s fan',  kind: 'Womp', text: LORE_SOON },
+  'womp-choir':    { name: 'Choir leader',       kind: 'Womp', text: LORE_SOON },
+  'womp-chime':    { name: 'Little chime Womp',  kind: 'Womp', text: LORE_SOON },
+  'womp-signpost': { name: 'Signpost Womp',      kind: 'Womp', text: LORE_SOON },
+  'womp-fern':     { name: 'Fern Womp',          kind: 'Womp', text: LORE_SOON },
+  'womp-harp':     { name: 'Harp dancer',        kind: 'Womp', text: LORE_SOON },
+  'womp-canopy':   { name: 'Canopy Womp',        kind: 'Womp', text: LORE_SOON },
+  'womp-ridge':    { name: 'Ridge Womp',         kind: 'Womp', text: LORE_SOON },
+  'womp-hum':      { name: 'Little hummer',      kind: 'Womp', text: LORE_SOON },
+  'womp-dune':     { name: 'Tall dune Womp',     kind: 'Womp', text: LORE_SOON },
+  'womp-palm':     { name: 'Palm Womp',          kind: 'Womp', text: LORE_SOON },
+  'womp-shell':    { name: 'Shell keeper',       kind: 'Womp', text: LORE_SOON },
+  'womp-pool':     { name: 'Tide pool Womp',     kind: 'Womp', text: LORE_SOON },
+  'womp-reef':     { name: 'Reef watcher',       kind: 'Womp', text: LORE_SOON },
+};
+
+/* ================= WOMPS ================= */
+// Womps are the world's main characters: tall bean-shaped folks with stubby arms and legs and big glossy eyes
+// (the design of Vibe Booth's crowd). These are placeholders until Alyssa builds them out: each entry is one Womp,
+// and the 3D side draws them all with shared geometry (see wompSet), so swapping in real models later only means
+// changing how a set is drawn. ch: the chapter group; x and z: where it stands (z = 0 is Shigost's path, negative is
+// farther away); slot: stands on a floating asteroid instead (SPACE_SLOTS); h: height in world units (Shigost is about
+// 260, the painter about 880, a Kiki about 100); mood: its idle behavior (sway, wave, dance, or cheer).
+const WOMPS = [
+  { id: 'womp-asteroid', ch: 'space',  x: -520,  z: -170, h: 175, color: '#9fe3cf', mood: 'wave' },
+  { id: 'womp-drifter',  ch: 'space',  slot: 'rock-a', h: 150, color: '#f7b5cf', mood: 'sway' },
+  { id: 'womp-twins-a',  ch: 'space',  slot: 'rock-b', dx: -60, h: 230, color: '#c9b8f5', mood: 'dance' },
+  { id: 'womp-twins-b',  ch: 'space',  slot: 'rock-b', dx: 80,  h: 105, color: '#7fd3d0', mood: 'cheer' },
+  { id: 'womp-lookout',  ch: 'space',  slot: 'rock-c', h: 190, color: '#f6a59a', mood: 'wave' },
+  { id: 'womp-cloud',    ch: 'fall',   x: 2350, y: 8600, z: -700, h: 170, color: '#a9d2ff', mood: 'wave' },
+  { id: 'womp-fan',      ch: 'hills',  x: -250,  z: 160,  h: 230, color: '#f6a59a', mood: 'cheer' },
+  { id: 'womp-choir',    ch: 'hills',  x: 1330,  z: -80,  h: 330, color: '#9fe3cf', mood: 'dance' },
+  { id: 'womp-chime',    ch: 'hills',  x: 2420,  z: 260,  h: 110, color: '#c9b8f5', mood: 'sway' },
+  { id: 'womp-signpost', ch: 'hills',  x: 3260,  z: 120,  h: 190, color: '#f8c4a8', mood: 'wave' },
+  { id: 'womp-fern',     ch: 'jungle', x: 5620,  z: 300,  h: 210, color: '#7fd3d0', mood: 'sway' },
+  { id: 'womp-harp',     ch: 'jungle', x: 7300,  z: 330,  h: 140, color: '#f7b5cf', mood: 'dance' },
+  { id: 'womp-canopy',   ch: 'jungle', x: 9200,  z: 180,  h: 270, color: '#c9b8f5', mood: 'wave' },
+  { id: 'womp-ridge',    ch: 'earth',  x: 15750, z: 560,  h: 210, color: '#f19bb0', mood: 'wave' },
+  { id: 'womp-hum',      ch: 'earth',  x: 17650, z: 380,  h: 120, color: '#9fe3cf', mood: 'dance' },
+  { id: 'womp-dune',     ch: 'earth',  x: 20400, z: 380,  h: 300, color: '#b7a6ef', mood: 'sway' },
+  { id: 'womp-palm',     ch: 'earth',  x: 25250, z: 640,  h: 190, color: '#f6a59a', mood: 'dance' },
+  { id: 'womp-shell',    ch: 'earth',  x: 26700, z: 560,  h: 110, color: '#7fd3d0', mood: 'cheer' },
+  { id: 'womp-pool',     ch: 'earth',  x: 27750, z: 980,  h: 240, color: '#c9b8f5', mood: 'sway' },
+  { id: 'womp-reef',     ch: 'earth',  x: 30250, z: 330,  h: 170, color: '#f7b5cf', mood: 'wave' },
+];
+// Space is a preview of the space explorer game: little floating asteroids, each a slot with Womps on it. To drop in
+// a 3D model of one of Alyssa's creatures later, set model to its .glb path (and height to how tall it should stand):
+// the placeholder Womps on that slot are replaced by the model, with no other changes.
+const SPACE_SLOTS = [
+  { id: 'rock-a', x: -2350, y: -650, z: -900,  r: 210, model: null, height: 220 },
+  { id: 'rock-b', x: 2500,  y: 250,  z: -1500, r: 260, model: null, height: 260 },
+  { id: 'rock-c', x: -1900, y: 600,  z: -400,  r: 170, model: null, height: 200 },
+];
+
+/* ================= DISCOVERY JOURNAL ================= */
+// Fills in as visitors meet characters (tap them), play the musical toys, and clean up litter. Saved in this browser
+// for now. The saved record is plain JSON ({ v, met, played, cleaned, updated }, each entry an id with the time it
+// happened), so a later round can sync it to an account and a public leaderboard without changing how it's collected.
+const TOYS = { 'sheep-choir': 'Sheep choir', 'wind-chimes': 'Wind chimes', 'vine-harp': 'Vine harp', 'singing-ridge': 'Singing ridge', 'shell-bells': 'Shell bells', 'tide-pool': 'Tide pool' };
+const LITTER_SPOTS = { 'wrapper': 'Candy wrapper in the hills', 'jungle-bag': 'Bag on a jungle vine', 'can': 'Can in the dunes', 'bottle': 'Bottle on the beach', 'beach-bag': 'Bag on the beach', 'net': 'Tangled net' };
+const JOURNAL = (() => {
+  const KEY = 'recklyss-journal';
+  let data = { v: 1, met: {}, played: {}, cleaned: {}, updated: 0 };
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.v === 1) data = Object.assign(data, s); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} };
+  const btn = document.createElement('button'), panel = document.createElement('div');
+  btn.id = 'jbtn'; btn.setAttribute('aria-label', 'Open the field journal'); btn.setAttribute('aria-expanded', 'false');
+  btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5c2.6-.9 5-.6 7 .9v14c-2-1.5-4.4-1.8-7-.9z" fill="currentColor" opacity=".9"/><path d="M19 4.5c-2.6-.9-5-.6-7 .9v14c2-1.5 4.4-1.8 7-.9z" fill="currentColor" opacity=".55"/></svg><span id="jdot"></span>';
+  panel.id = 'journal'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Field journal');
+  stage.append(btn, panel);
+  const n = o => Object.keys(o).length, chars = Object.keys(LORE);
+  const bar = (k, of) => `<span class="jbar"><i style="width:${of ? Math.round(k/of*100) : 0}%"></i></span>`;
+  function render(){
+    const met = chars.filter(id => data.met[id]), pl = Object.keys(TOYS).filter(id => data.played[id]), cl = Object.keys(LITTER_SPOTS).filter(id => data.cleaned[id]);
+    panel.innerHTML = `<button class="close" aria-label="Close">×</button><span class="status">Field journal</span>
+      <p><b>You’ve met ${met.length} of ${chars.length} characters.</b>${bar(met.length, chars.length)}</p>
+      <ul class="jlist">${chars.map(id => `<li class="${data.met[id] ? 'on' : ''}">${data.met[id] ? LORE[id].name : '?'}</li>`).join('')}</ul>
+      <p><b>Played ${pl.length} of ${n(TOYS)} musical toys.</b>${bar(pl.length, n(TOYS))}</p>
+      <ul class="jlist">${Object.keys(TOYS).map(id => `<li class="${data.played[id] ? 'on' : ''}">${data.played[id] ? TOYS[id] : '?'}</li>`).join('')}</ul>
+      <p><b>Cleaned up ${cl.length} of ${n(LITTER_SPOTS)} pieces of litter.</b>${bar(cl.length, n(LITTER_SPOTS))}</p>
+      <p class="jnote">Tap characters, play the toys, and pick up litter to fill it in. Saved in this browser.</p>`;
+    panel.querySelector('.close').addEventListener('click', close);
+    btn.setAttribute('aria-label', `Open the field journal: ${met.length} of ${chars.length} characters met`);
+  }
+  function open(){ render(); panel.classList.add('show'); btn.setAttribute('aria-expanded', 'true'); }
+  function close(){ panel.classList.remove('show'); btn.setAttribute('aria-expanded', 'false'); }
+  btn.addEventListener('click', () => panel.classList.contains('show') ? close() : open());
+  // kind: 'met' (characters), 'played' (musical toys), or 'cleaned' (litter); returns true the first time
+  function add(kind, id){ if (!data[kind] || data[kind][id]) return false; data[kind][id] = Date.now(); data.updated = Date.now(); save();
+    btn.classList.remove('new'); void btn.offsetWidth; btn.classList.add('new'); if (panel.classList.contains('show')) render(); return true; }
+  render();
+  return { add, open, close, data: () => JSON.parse(JSON.stringify(data)) };
+})();
+
+/* ================= LORE CARDS ================= */
+// a small card that doesn't block the world (so a visitor can keep playing the sheep while it shows)
+const loreEl = document.createElement('div'); loreEl.id = 'lore'; loreEl.setAttribute('role', 'status'); loreEl.setAttribute('aria-live', 'polite'); stage.append(loreEl);
+let loreT = 0;
+function meet(id){
+  const L = LORE[id]; if (!L) return; JOURNAL.add('met', id);
+  loreEl.innerHTML = `<button class="close" aria-label="Close">×</button><span class="status">${L.kind}</span><h3>${L.name}</h3><p>${L.text}</p><button class="jopen">Open journal</button>`;
+  loreEl.style.top = ($('.top').offsetHeight + 10) + 'px';
+  loreEl.querySelector('.close').addEventListener('click', () => loreEl.classList.remove('show'));
+  loreEl.querySelector('.jopen').addEventListener('click', () => { loreEl.classList.remove('show'); JOURNAL.open(); });
+  loreEl.classList.add('show'); clearTimeout(loreT); loreT = setTimeout(() => { if (!loreEl.matches(':hover')) loreEl.classList.remove('show'); }, 7000);
+}
+// a musical toy was played: note it in the journal, and let nearby Womps react (see s3.onToy)
+function playedToy(id, at){ if (id) JOURNAL.add('played', id); if (s3.onToy) s3.onToy(at); }
+
 /* ================= 3D OUTER SPACE ================= */
 // The space chapter is real 3D (three.js r128 and GLTFLoader 0.128.0, the same builds Vibe Booth loads).
 // The 3D camera reads the same camera keyframes as the 2D world: world (x, y) is 3D (x, -y, 0) and the camera
@@ -1379,6 +1536,17 @@ function build3D(){
   const std = (hex, o) => new T.MeshStandardMaterial(Object.assign({ color: C(hex), roughness: .78, metalness: 0 }, o || {}));
   const contact = (w, h) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, toneMapped: false })); return m; };
   const rod = (a, b, r, mat, seg = 8) => { const d = b.clone().sub(a), m = new T.Mesh(new T.CylinderGeometry(r, r, d.length(), seg), mat); m.position.copy(a).addScaledVector(d, .5); m.quaternion.setFromUnitVectors(V(0,1,0), d.normalize()); return m; };
+
+  /* ---- the Recklyss family look, shared by Womps, Kikis, and every critter: soft rounded shapes with a matte
+     finish, big glossy eyes, and stubby little limbs (as in Shigost's model and Vibe Booth's crowd) ---- */
+  const matCache = {}, matte = (hex, glowK = 0) => matCache[hex + glowK] || (matCache[hex + glowK] = std(hex, { roughness: .92, emissive: C(hex), emissiveIntensity: glowK }));
+  const eyeM = new T.MeshStandardMaterial({ color: C('#0b0b0d'), roughness: .07, metalness: 0 }), glintM = new T.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+  const U_SPH = new T.SphereGeometry(1, 20, 14), U_SPH_LO = new T.SphereGeometry(1, 12, 9);
+  // a pair of big glossy eyes on a face: group centered at (x, y, z), looking along +z, eye radius r, half spacing sp
+  function glossyEyes(par, x, y, z, r, sp, yaw = 0){ const g = new T.Group(); g.position.set(x, y, z); g.rotation.y = yaw; par.add(g);
+    [-1, 1].forEach(sd => { const e = new T.Mesh(U_SPH, eyeM); e.position.set(sd*sp, 0, 0); e.scale.set(r*.9, r, r*.5); e.rotation.y = sd*.3; g.add(e);
+      const gl = new T.Mesh(U_SPH_LO, glintM); gl.position.set(sd*sp - r*.3, r*.38, r*.42); gl.scale.setScalar(r*.22); g.add(gl); }); return g; }
+  const blob = (par, hex, x, y, z, sx, sy, sz, glowK = 0) => { const m = new T.Mesh(U_SPH, matte(hex, glowK)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); par.add(m); return m; };
 
   /* ---- lighting: one rig for the whole journey, blended between chapter presets as the camera travels.
      Space: soft key, gentle fill, two rims so shapes pop. Fall: pastel daylight. Hills: warm light under a rose haze.
@@ -1602,17 +1770,16 @@ function build3D(){
 
   /* ---- moon snail (tap to hide in its shell; the tap area is the 2D hit()) ---- */
   const snail3 = new T.Group(); snail3.position.set(SNX, -(SNY + 6), 30); snail3.rotation.y = .45; scene.add(snail3);
-  { const foot = new T.Mesh(new T.SphereGeometry(1, 24, 14), std('#f2b8d2', { roughness: .5, emissive: C('#3a1428') })); foot.scale.set(128, 28, 58); foot.position.set(0, 24, 0); snail3.add(foot);
-    const head = new T.Mesh(new T.SphereGeometry(40, 18, 12), foot.material); head.position.set(-104, 40, 0); head.scale.set(1, .9, .95); snail3.add(head);
-    const eyes = new T.Group(); eyes.position.set(-104, 60, 0); snail3.add(eyes); snail3.userData.eyes = eyes;
-    [[-22, -10],[ 12, 10]].forEach(([dx, dz]) => { eyes.add(rod(V(0, 0, dz*.5), V(dx, 86, dz), 6, foot.material));
-      const e = new T.Mesh(new T.SphereGeometry(14, 14, 10), std('#ffffff', { roughness: .3 })); e.position.set(dx, 92, dz); eyes.add(e);
-      const pu = new T.Mesh(new T.SphereGeometry(6, 10, 8), std('#1a1030', { roughness: .2 })); pu.position.set(dx - 6, 92, dz + 10); eyes.add(pu); });
+  // wompified: a soft round slug with a big round head, stubby eye nubs, big glossy eyes, and a matte shell
+  { blob(snail3, '#f6bcd6', 0, 30, 0, 120, 34, 58, .12); blob(snail3, '#f6bcd6', -96, 58, 0, 52, 50, 50, .12);
+    blob(snail3, '#f7a9c8', -134, 42, 34, 9, 6, 6, .2); blob(snail3, '#f7a9c8', -134, 42, -34, 9, 6, 6, .2);
+    const eyes = new T.Group(); eyes.position.set(-104, 92, 0); snail3.add(eyes); snail3.userData.eyes = eyes;
+    [-1, 1].forEach(sd => blob(eyes, '#f6bcd6', -6, 8, sd*22, 13, 22, 13, .12));
+    glossyEyes(eyes, -14, 30, 0, 21, 24, -Math.PI/2 + .25);
     const shell = new T.Group(); shell.position.set(36, 104, 0); snail3.add(shell); snail3.userData.shell = shell;
-    const sh3 = new T.Mesh(new T.SphereGeometry(70, 28, 20), std('#5fd3c8', { roughness: .35, emissive: C('#0f3a3a') })); sh3.scale.z = .8; shell.add(sh3);
+    blob(shell, '#6fd8cc', 0, 0, 0, 72, 72, 58, .14);
     const spiral = []; for (let k = 0; k <= 60; k++){ const a = k/60*Math.PI*5, r = 6 + k/60*58; spiral.push(V(Math.cos(a)*r, Math.sin(a)*r, 0)); }
-    const groove = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(spiral.map(p => { const zz = Math.sqrt(Math.max(0, 70*70 - p.x*p.x - p.y*p.y))*.8 + 2; return V(p.x, p.y, zz); })), 120, 4.5, 6), std('#2f7f8a', { roughness: .5 }));
-    shell.add(groove); const hl = new T.Mesh(new T.SphereGeometry(12, 10, 8), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .55 })); hl.position.set(-28, 34, 44); shell.add(hl);
+    shell.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(spiral.map(p => { const zz = Math.sqrt(Math.max(0, 72*72 - p.x*p.x - p.y*p.y))*.8 + 2; return V(p.x, p.y, zz); })), 120, 5, 6), matte('#4fb8b0', .1)));
     const cs = contact(330, 60); cs.position.set(0, 4, 40); snail3.add(cs); }
 
   /* ---- portal and beam ---- */
@@ -1696,16 +1863,49 @@ function build3D(){
   };
   s3.loadClips = url => new Promise((res, rej) => new T.GLTFLoader().load(url, g => res(SGA.add(g.animations)), undefined, rej));
   const handL = V(0,0,0), handR = V(0,0,0), muzzle = V(0,0,0), portalW = W3(PORTAL.x, PORTAL.y, 0);
+  // Where Shigost looks. Moving the mouse, or touching and drawing on the screen, draws her gaze to the pointer;
+  // scrolling makes her look where she's headed; both at once blend. When nobody steers her, she glances at the
+  // critters and Womps nearby (and waves at Womps). With reduced motion she keeps a calm, steady gaze.
+  const GZ = { pt: V(0,0,0), y: 0, x: 0, w: 0, idle: null, next: 0, wave: false, mv: 0 }, _ga = V(0,0,0), _gb = V(0,0,0), _gh = V(0,0,0), _gn = V(0,0,0);
+  const NECK = { yaw: -1, pitch: -1, maxYaw: .9, up: .4, down: .2 }; // bone axes and her neck's comfortable range
+  function gazeFrame(p, s, now, dt, idle, D){
+    if (reduce.matches || !SG.b.neck){ GZ.w = 0; return; }
+    SG.b.neck.getWorldPosition(_gh); _ga.set(0, 0, 0); let sum = 0;
+    // the pointer (mouse moves fade after a couple of seconds; a finger on the screen holds her gaze)
+    const wp = PTR.down ? 1 : clamp(1 - (now - PTR.t - 1600)/1200, 0, 1);
+    if (wp > 0){ const r = canvas.getBoundingClientRect();
+      _gn.set((PTR.x - r.left)/r.width*2 - 1, -((PTR.y - r.top)/r.height)*2 + 1, .5).unproject(camera).sub(camera.position).normalize();
+      let d = Math.abs(_gn.z) > .05 ? (_gh.z + 300 - camera.position.z)/_gn.z : D; if (!(d > 0)) d = D;
+      _ga.addScaledVector(_gb.copy(camera.position).addScaledVector(_gn, d), wp); sum += wp; }
+    // scrolling: look where she's headed
+    GZ.mv += ((idle ? 0 : 1) - GZ.mv)*Math.min(1, dt*4);
+    if (GZ.mv > .01){ const a = shigostAt(clamp(p + (s.dir || 1)*.004, 0, PMAX)); _gb.set(a.x - s.x, -(a.y - s.y), 0);
+      if (_gb.lengthSq() < 1) _gb.set(s.dir || 1, 0, 0); _gb.normalize().multiplyScalar(900).add(_gh); _gb.y -= 140; _ga.addScaledVector(_gb, GZ.mv); sum += GZ.mv; }
+    // nobody steering: glance around at nearby friends now and then
+    const wi = 1 - Math.min(1, sum);
+    if (wi > .01){
+      if (now > GZ.next){ GZ.next = now + 2400 + Math.random()*2400; const near = GAZE.filter(g => shown(g.grp) && g.at(_gb).distanceTo(_gh) < 2800);
+        GZ.idle = near.length && Math.random() < .8 ? near[Math.floor(Math.random()*near.length)] : null; GZ.wave = !!(GZ.idle && GZ.idle.womp && Math.random() < .6); }
+      if (GZ.idle) GZ.idle.at(_gb); else _gb.copy(camera.position);
+      _ga.addScaledVector(_gb, wi); sum += wi; } else GZ.wave = false;
+    GZ.pt.copy(_ga).multiplyScalar(1/sum); GZ.w = 1;
+  }
   function poseShigost(s, t, idle, dt){
     const w = SG.wrap, b = SG.b, st = s.s, earth = !!s.e, stand = st === 'st-stand', run = st === 'st-run', walk = st === 'st-walk' || run, air = st === 'st-jump' || st === 'st-fall' || st === 'st-chute';
-    SG.ry += ((stand ? .45 : earth ? (walk || air ? 1.1 : .3) : 0) - SG.ry)*Math.min(1, dt*6);
+    // she faces the way she's actually moving: scrolling back turns her around (a quick, smooth turn)
+    const dir = s.dir || 1;
+    SG.ry += ((stand ? .45 : earth ? (walk || air ? 1.1 : .3)*dir : 0) - SG.ry)*Math.min(1, dt*8);
     w.position.set(s.x, -(s.y + SG_FOOT), 0); w.rotation.set(0, SG.ry, -s.r*Math.PI/180);
     const cw = SGA.mixer ? SGA.step(st, dt) : 0; if (cw) SGA.grab(SG.bind);
     SG.bind.forEach(([o, p, q]) => { o.position.copy(p); o.quaternion.copy(q); });
     const calm = reduce.matches ? 0 : 1;
     if (b.body) b.body.position.y += Math.sin(t*1.7)*.35*calm;
     boneTurn(b.body_top0, 0, Math.sin(t*.5)*.05*calm, Math.sin(t*.9)*.02*calm);
-    boneTurn(b.neck, Math.sin(t*1.1)*.03*calm, stand ? -.25 + Math.sin(t*.31)*.15*calm : (earth && !walk && !air) ? -.2 + Math.sin(t*.31)*.45*calm : 0, Math.sin(t*.8)*.04*calm);
+    let nX = Math.sin(t*1.1)*.03*calm, nY = stand ? -.25 + Math.sin(t*.31)*.15*calm : (earth && !walk && !air) ? -.2 + Math.sin(t*.31)*.45*calm : 0;
+    if (GZ.w){ w.updateMatrixWorld(true); _ga.copy(GZ.pt); w.worldToLocal(_ga); b.neck.getWorldPosition(_gb); w.worldToLocal(_gb); _ga.sub(_gb);
+      const yaw = clamp(Math.atan2(_ga.x, _ga.z), -NECK.maxYaw, NECK.maxYaw), pit = clamp(Math.atan2(_ga.y, Math.hypot(_ga.x, _ga.z)), -NECK.down, NECK.up);
+      const k = Math.min(1, dt*6); GZ.y += (yaw - GZ.y)*k; GZ.x += (pit - GZ.x)*k; nY = GZ.y*NECK.yaw; nX = GZ.x*NECK.pitch + nX*.5; }
+    boneTurn(b.neck, nX, nY, Math.sin(t*.8)*.04*calm);
     if (air){ const k = st === 'st-chute' ? Math.sin(t*2.2)*.25*calm : st === 'st-fall' ? Math.sin(t*14)*.18*calm : -.35;
       boneTurn(b.leg_left_top, k, 0, .1); boneTurn(b.leg_right_top, -k, 0, -.1); }
     if (walk){ // steps follow the distance walked, so her sneakers keep pace with the scroll; running takes longer, higher strides
@@ -1723,7 +1923,7 @@ function build3D(){
       const f = st === 'st-fall' ? Math.sin(t*16)*4*calm : 0;
       ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, _v1.set(15 + f, 46, 3), poleL);
       ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2.set(-15 - f, 46, 3), poleR);
-    } else if (earth && idle && calm && Math.sin(t*.45) > .7){ // resting: now and then a little wave
+    } else if (earth && idle && calm && (GZ.wave || (!GZ.w && Math.sin(t*.45) > .7))){ // resting: a little wave, usually at a Womp she's looking at
       _v2.set(-21 + Math.sin(t*14)*2.5, 8.5, 8 + Math.cos(t*14)*1.5); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2, poleR);
     }
     if (cw){ SGA.mixIn(SG.bind, cw); w.updateMatrixWorld(true); }
@@ -1753,7 +1953,7 @@ function build3D(){
   // o.grp: the chapter group it belongs to (hidden with it), o.aspect: taller than wide (vines, chimes)
   function hotAt(target, r, o = {}){
     const h = { target, r, haloK: o.haloK || 1.3, aspect: o.aspect || 1, grp: o.grp || null, wp: V(0,0,0), d: -1, hd: -1, x: -1e4, y: -1e4, el: null, ha: null };
-    if (!o.noHit){ h.el = document.createElement('div'); h.el.className = 'hot off' + (o.cls ? ' ' + o.cls : ''); h.el.setAttribute('role', 'button'); h.el.setAttribute('aria-label', o.label || ''); hotEl.appendChild(h.el); if (o.tap) h.el.addEventListener('click', o.tap);
+    if (!o.noHit){ h.el = document.createElement('div'); h.el.className = 'hot off' + (o.cls ? ' ' + o.cls : ''); h.el._at = h.wp; h.el.setAttribute('role', 'button'); h.el.setAttribute('aria-label', o.label || ''); hotEl.appendChild(h.el); if (o.tap) h.el.addEventListener('click', o.tap);
       if (h.aspect !== 1) h.el.style.borderRadius = '40%'; }
     if (o.halo){ h.ha = document.createElement('div'); h.ha.className = 'halo off for-' + o.halo; h.ha.innerHTML = HALO_SVG; hotEl.appendChild(h.ha); }
     HOTS.push(h); return h;
@@ -1781,9 +1981,9 @@ function build3D(){
   function burst(p, cols, n = 18, spd = 260, up = 300){ spLive = 2; for (let k = 0; k < n; k++){ const q = sps[spI]; spI = (spI + 1) % NSP; const a = Math.random()*6.28, c = C(cols[k % cols.length]);
     Object.assign(q, { life: 1, x: p.x, y: p.y, z: p.z, vx: Math.cos(a)*spd*Math.random(), vy: up*(.4 + Math.random()), vz: Math.sin(a)*spd*.5*Math.random(), r: c.r, g: c.g, b: c.b }); } }
   // litter: tap it away with a sparkle, a chime, and a thank-you
-  function litterAt(obj, p, r, msg, chapter, halo, grp){ obj.position.copy(p); grp.add(obj); const L = { obj, t: -1, base: obj.position.clone(), s0: obj.scale.clone() };
+  function litterAt(obj, p, r, msg, chapter, halo, grp, id){ obj.position.copy(p); grp.add(obj); const L = { obj, t: -1, base: obj.position.clone(), s0: obj.scale.clone() };
     const h = hotAt(obj, r, { label: 'Pick up the litter', cls: 'top', grp, halo: halo ? chapter : null, tap: () => { if (L.t >= 0) return; L.t = 0; h.gone = true;
-      burst(p.clone().add(V(0, 40, 0)), ['#ffffff','#c9fff8','#f6c9e6','#c9bdf5'], 26, 380, 520); tone(784, 'chime'); toast(typeof msg === 'function' ? msg() : msg); } });
+      burst(p.clone().add(V(0, 40, 0)), ['#ffffff','#c9fff8','#f6c9e6','#c9bdf5'], 26, 380, 520); tone(784, 'chime'); toast(typeof msg === 'function' ? msg() : msg); if (id) JOURNAL.add('cleaned', id); } });
     LITTER.push(L); return L; }
   function updateFx(dt){
     if (spLive > 0){ spLive -= dt; const pa = spG.attributes.position, ca = spG.attributes.color; for (let i = 0; i < NSP; i++){ const q = sps[i];
@@ -1924,32 +2124,24 @@ function build3D(){
        [-2900,900,700,3,-50],[3500,1050,640,1,40],[600,-2900,900,4,-40]].forEach(([x, z, h, c, lean], i) => seuss(parts, x, z, h, TC[c][0], lean, 50 + i));
       hills.add(new T.Mesh(bake(parts), softM)); }
 
-    /* ---- the painter, a lanky feathered lavender creature, at her easel; the canvas is a door (the studio) ---- */
+    /* ---- the painter: a tall Womp artist at her easel, in a beret; the canvas is a door (the studio) ---- */
     const painter = new T.Group(), brushArm = new T.Group(); let paintT = -1;
-    { const p0 = at3(-360, -640); painter.position.copy(p0); painter.rotation.y = .5; hills.add(painter);
-      const parts = [], lav = '#b9acf7', LEG = '#a594ee';
-      [-1, 1].forEach(sd => { parts.push([taper([V(sd*22, 330, 0), V(sd*26 + 26, 190, 0), V(sd*24 - 8, 30, 0), V(sd*24, 0, 0)], 16, 6, 10, 7), I4, LEG, 0, .2]);
-        [-.5, 0, .5].forEach(a => parts.push([new T.CylinderGeometry(4, 5, 46, 5).rotateZ(Math.PI/2), S4(sd*24 + 18*Math.cos(a), 4, 18*Math.sin(a), 1, 1, 1, 0, -a, 0), '#5b4a8a'])); });
-      for (let k = 0; k < 10; k++){ const a = k/10*6.28; parts.push([sph(10, 8), S4(Math.cos(a)*58, 330, Math.sin(a)*48, 24, 62, 12, Math.sin(a)*.5, -a, Math.cos(a)*-.5), k % 2 ? '#e6defc' : '#d9cff8', 0, .3]); }
-      const body = new T.LatheGeometry([[0,0],[52,18],[72,90],[62,180],[38,260],[0,290]].map(([a, b]) => new T.Vector2(a, b)), 20), bp = body.attributes.position, bc = new Float32Array(bp.count*3), cA = C('#cfc4ff'), cB = C('#8f7fe0'), tc = C('#000');
-      for (let i = 0; i < bp.count; i++){ tc.copy(cB).lerp(cA, bp.getY(i)/290); bc.set([tc.r, tc.g, tc.b], i*3); } body.setAttribute('color', new T.BufferAttribute(bc, 3));
-      parts.push([body, M4(0, 330, 0), '#ffffff']);
-      parts.push([taper([V(10, 600, 0), V(-6, 660, 0), V(14, 740, 4), V(40, 800, 8)], 16, 8, 22, 14), I4, lav, 0, .3]);
-      parts.push([sph(18, 14), S4(54, 836, 8, 54, 46, 46), '#c9bdff', 0, .35]);
-      parts.push([new T.ConeGeometry(17, 120, 12).rotateZ(-Math.PI/2), S4(150, 828, 10, 1, 1, 1, 0, 0, -.12), '#f49ac1']);
-      [[1, 22], [-1, -22]].forEach(([sd, dz]) => { parts.push([sph(12, 10), S4(82, 852, dz + sd*18, 13, 13, 9), '#ffffff']); parts.push([sph(10, 8), S4(91, 852, dz + sd*24, 6.5, 6.5, 5), '#24163a']); });
-      parts.push([taper(spiral(30, 880, 0, 30, 1.4, 70, 18, -1), 30, 6, 9, 4), I4, '#c9bdff', 0, .3]);
-      parts.push([taper([V(-20, 560, 22), V(-60, 470, 40), V(-20, 420, 60)], 12, 6, 13, 10), I4, lav]);
-      parts.push([sph(16, 10), S4(0, 412, 70, 60, 10, 32, 0, .3, 0), '#ead6ac']);
-      [['#e98bb5', -22, 66], ['#5fd3c8', 4, 82], ['#c9bdf5', 26, 64], ['#f2a7a0', -6, 52]].forEach(([c, dx, dz]) => parts.push([sph(8, 6), S4(dx, 424, dz, 9, 5, 9), c]));
-      painter.add(new T.Mesh(bake(parts), solidM));
-      brushArm.position.set(26, 575, -14); painter.add(brushArm);
-      const ap = []; ap.push([taper([V(0, 0, 0), V(70, -50, -10), V(140, -10, -18)], 12, 6, 13, 10), I4, lav]);
-      ap.push([new T.CylinderGeometry(5, 5, 130, 6).rotateZ(-1.1), M4(196, 22, -20), '#7a5236']); ap.push([new T.ConeGeometry(10, 26, 8).rotateZ(-1.1 - Math.PI), M4(254, 50, -20), '#e98bb5']);
-      brushArm.add(new T.Mesh(bake(ap), solidM));
-      const cs = contact(320, 70); cs.position.set(0, 4, 20); painter.add(cs); }
+    { const p0 = at3(-360, -640); painter.position.copy(p0); painter.rotation.y = 1.0; hills.add(painter);
+      const G = wompGeo(), s = 880/1.045, pm = std('#c9b8f5', { vertexColors: true, roughness: .92 }), body = new T.Group(); body.scale.setScalar(s); painter.add(body);
+      body.add(new T.Mesh(G.body, pm), new T.Mesh(G.eyes, eyeM), new T.Mesh(G.glints, glintM));
+      const palArm = new T.Mesh(G.arm, pm); palArm.position.set(-.31, .58, 0); palArm.rotation.set(-.9, 0, -.5); body.add(palArm);
+      const extra = [[new T.SphereGeometry(1, 18, 12), S4(.02, 1.03, -.02, .27, .07, .25, -.15, 0, .12), '#8f6fd6', 0, .3], [new T.SphereGeometry(1, 10, 8), S4(.04, 1.1, -.03, .035, .04, .035), '#8f6fd6'],
+        [new T.SphereGeometry(1, 16, 10), S4(-.42, .36, .2, .13, .02, .09, 0, .4, 0), '#ead6ac', 0, .2]];
+      [['#e98bb5', -.46, .25], ['#5fd3c8', -.4, .3], ['#9fe3cf', -.36, .22], ['#f2a7a0', -.44, .17]].forEach(([c, x, z]) => extra.push([new T.SphereGeometry(1, 8, 6), S4(x, .38, z, .018, .01, .018), c]));
+      body.add(folk(extra));
+      brushArm.position.set(.31*s, .58*s, 0); painter.add(brushArm);
+      const ap = [[new T.SphereGeometry(1, 14, 10), S4(0, -40, 60, 62, 70, 140, .5, 0, 0), '#c9b8f5', 0, .2],
+        [new T.CylinderGeometry(6, 6, 190, 6).rotateX(Math.PI/2 - .35), M4(0, -40, 230), '#7a5236'], [new T.ConeGeometry(12, 30, 8).rotateX(Math.PI/2 - .35), M4(0, -6, 330), '#e98bb5']];
+      brushArm.add(folk(ap));
+      const cs = contact(380, 90); cs.position.set(0, 4, 0); painter.add(cs); }
     const tg = (par, x, y, z) => { const o = new T.Object3D(); o.position.set(x, y, z); par.add(o); return o; };
-    hotH(tg(painter, 40, 600, 0), 170, { label: 'The painter', tap: () => { if (paintT < 0){ paintT = 0; tone(659.25, 'chirp'); setTimeout(() => tone(880, 'chirp'), 140); } } });
+    hotH(tg(painter, 0, 520, 0), 200, { label: 'The painter', tap: () => { meet('painter'); if (paintT < 0){ paintT = 0; tone(659.25, 'chirp'); setTimeout(() => tone(880, 'chirp'), 140); } } });
+    gazeAt(hills, painter, 760);
     // the easel and its canvas: big, bright, and facing the visitor
     const easel = new T.Group(); let canvasFace;
     { const e0 = at3(EASEL.x, EASEL.z); easel.position.copy(e0); easel.rotation.y = -.12; hills.add(easel);
@@ -1981,20 +2173,21 @@ function build3D(){
     const BAA = [261.63, 293.66, 329.63, 392, 440], sheep = [];
     [[470, 330, 1.15], [670, 170, 1.06], [870, 340, 1], [1070, 180, .92], [1260, 320, .85]].forEach(([x, z, s], i) => {
       const g = new T.Group(), body = new T.Group(); g.position.copy(at3(x, z)); g.rotation.y = -.5 + i*.08; g.scale.setScalar(s); hills.add(g); g.add(body);
-      const parts = [], W = '#fff8ec', D = '#5b4a5e';
-      [[0,118,62],[52,104,58],[-50,104,56],[20,152,56],[-26,148,52],[60,148,46],[-62,138,42]].forEach(([px, py, r]) => parts.push([sph(14, 10), S4(px, py, (px % 3)*4, r, r*.94, r*.9), W, 0, .35]));
-      [[-40,-34],[-40,34],[44,-30],[44,30]].forEach(([px, pz]) => parts.push([new T.CylinderGeometry(9, 8, 70, 7), M4(px, 36, pz), '#4a3a4e']));
-      parts.push([sph(14, 10), S4(-98, 128, 0, 38, 44, 34), D, 0, .3]);
-      [-1, 1].forEach(sd => { parts.push([sph(8, 6), S4(-100, 154, sd*38, 9, 22, 6, sd*.6, 0, -.3), D]);
-        parts.push([new T.TorusGeometry(7, 2.4, 5, 10, Math.PI), S4(-130, 132, sd*14, 1, 1, 1, 0, -Math.PI/2, Math.PI), '#ffffff']);
-        parts.push([sph(6, 5), S4(-124, 114, sd*20, 7, 5, 4), '#e9a6b8']);
-        parts.push([taper(spiral(-86, 158, sd*30, 18, 1.1, 10, 12, sd), 18, 5, 7, 3), I4, '#e6d4c4']); });
-      body.add(new T.Mesh(bake(parts), solidM));
+      // wompified: a soft wool puff, a big round face with glossy eyes, round ears, and stubby round legs
+      const parts = [], W = '#fff8ec', D = '#8a7396';
+      [[0,120,66],[46,112,58],[-40,110,56],[16,158,54],[-20,152,50],[56,150,44]].forEach(([px, py, r]) => parts.push([sph(16, 12), S4(px, py, 0, r, r*.95, r*.92), W, 0, .3]));
+      [[-38,-30],[-38,30],[40,-28],[40,28]].forEach(([px, pz]) => parts.push([sph(12, 9), S4(px, 34, pz, 17, 30, 17), D, 0, .2]));
+      parts.push([sph(18, 14), S4(-92, 136, 0, 50, 52, 48), D, 0, .3]);
+      [-1, 1].forEach(sd => { parts.push([sph(10, 8), S4(-86, 168, sd*46, 22, 11, 14, sd*.5, 0, 0), D, 0, .2]); parts.push([sph(8, 6), S4(-126, 116, sd*28, 9, 6, 6), '#f2a7c3']); });
+      parts.push([sph(14, 10), S4(-82, 184, 0, 26, 18, 24), W, 0, .3]);
+      eyePair(parts, -126, 142, 8, 17, 19, -Math.PI/2 + .55);
+      body.add(folk(parts));
       const cs = contact(300, 70); cs.position.set(0, 3, 0); g.add(cs);
       const S_ = { g, body, t: -1, ph: i*1.3, base: g.position.clone(), s };
       const h = hotH(tg(body, -20, 120, 0), 100*s, { cls: 'vine', label: 'Sheep, note ' + (i + 1) });
-      h.el.dataset.freq = BAA[i]; h.el.dataset.voice = 'baa'; strummable(h.el);
-      h.el._fx = () => { S_.t = 0; burst(g.position.clone().add(V(0, 260*s, 0)), ['#f7c6d9','#c9bdf5','#ffffff'], 8, 160, 280); };
+      h.el.dataset.freq = BAA[i]; h.el.dataset.voice = 'baa'; h.el.dataset.toy = 'sheep-choir'; strummable(h.el);
+      h.el._fx = () => { S_.t = 0; meet('puffsheep'); burst(g.position.clone().add(V(0, 260*s, 0)), ['#f7c6d9','#c9bdf5','#ffffff'], 8, 160, 280); };
+      if (i === 2) gazeAt(hills, body, 160);
       sheep.push(S_); });
     hotH(at3(865, 260, 130), 300, { noHit: true, halo: 'hills', haloK: 1.6 });
 
@@ -2004,7 +2197,7 @@ function build3D(){
       parts.push([cc, S4(0, 0, 0, 34, 15, 15), '#ffffff']);
       [-1, 1].forEach(sd => parts.push([new T.ConeGeometry(14, 30, 6).rotateZ(sd*Math.PI/2), S4(sd*44, 0, 0, 1, 1, 1, sd*.6, 0, 0), '#f7c6d9']));
       w.add(new T.Mesh(bake(parts), std('#ffffff', { vertexColors: true, roughness: .35, metalness: .25 }))); w.rotation.set(.3, .7, .35);
-      const L = litterAt(w, at3(-60, 380, 14), 100, 'Wrapper collected. The hills say thank you!', 'hills', true, hills); L.flutter = 1; }
+      const L = litterAt(w, at3(-60, 380, 14), 100, 'Wrapper collected. The hills say thank you!', 'hills', true, hills, 'wrapper'); L.flutter = 1; }
 
     /* ---- the chime tree: wind chimes hanging from a curly branch; tap or drag across them ---- */
     const CHN = [880, 1046.5, 1174.66, 1318.51, 1567.98, 1760], CHC = ['#c9bdf5','#9fd8c9','#f7c6d9','#b8e0f5','#e7c0f0','#f2a7a0'], chimes = [];
@@ -2025,7 +2218,7 @@ function build3D(){
         const cap = new T.Mesh(new T.CylinderGeometry(16, 16, 6, 14), std('#efe4d0', { roughness: .5 })); cap.position.y = -str; g.add(cap);
         const gl = glow(CHC[i], 260, 0); gl.position.y = -str - len*.6; g.add(gl);
         const C_ = { g, t: -1, gl, ph: i*.9 }; chimes.push(C_);
-        const h = hotH(tube, 40, { cls: 'vine', label: 'Wind chime, note ' + (i + 1), aspect: 2.6 }); h.el.dataset.freq = f; h.el.dataset.voice = 'windchime'; strummable(h.el);
+        const h = hotH(tube, 40, { cls: 'vine', label: 'Wind chime, note ' + (i + 1), aspect: 2.6 }); h.el.dataset.freq = f; h.el.dataset.voice = 'windchime'; h.el.dataset.toy = 'wind-chimes'; strummable(h.el);
         h.el._fx = () => { C_.t = 0; burst(tube.getWorldPosition(V(0,0,0)).add(V(0, -len*.4, 0)), [CHC[i], '#ffffff'], 8, 160, 200); }; });
       const mid = at3(CX + 310, -160, 680); hotH(mid, 330, { noHit: true, halo: 'chimes', haloK: 1.25 }); }
 
@@ -2106,40 +2299,46 @@ function build3D(){
       const gl = glow(c, 300, .45); gl.position.copy(bulb.position); gl.material.fog = false; g.add(gl);
       const tgt = new T.Object3D(); tgt.position.set(0, -L + 260, 0); g.add(tgt);
       const H_ = { g, t: -1, gl, bulb, ph: i*.7 }; harp.push(H_);
-      const h = hotJ(tgt, 52, { cls: 'vine', label: 'Vine, note ' + (i + 1), aspect: 3.2 }); h.el.dataset.freq = f; strummable(h.el);
+      const h = hotJ(tgt, 52, { cls: 'vine', label: 'Vine, note ' + (i + 1), aspect: 3.2 }); h.el.dataset.freq = f; h.el.dataset.toy = 'vine-harp'; strummable(h.el);
       h.el._fx = () => { H_.t = 0; burst(bulb.getWorldPosition(V(0,0,0)), [c, '#ffffff', '#d8ffc4'], 8, 160, 220); }; });
     hotJ(limbPt(6550).add(V(0, -700, 60)), 420, { noHit: true, halo: 'jungle', haloK: 1.2 });
 
     /* ---- the lemur hangs by its tail from the limb and waves when tapped ---- */
     const lemur = new T.Group(), lemArm = new T.Group(); let lemT = -1;
     { lemur.position.copy(limbPt(7090)); jungle.add(lemur);
-      const parts = [], fur = '#e8b46a', pts = [V(0, 0, 0), V(-40, -60, 10), V(30, -150, 20), V(-20, -250, 10), V(10, -340, 0)];
-      const tail = taper(pts, 40, 8, 15, 13), tp = tail.attributes.position, tcol = new Float32Array(tp.count*3), A = C(fur), B = C('#5b4434');
-      for (let i = 0; i < tp.count; i++){ const c = Math.floor(i/9/4) % 2 ? B : A; tcol.set([c.r, c.g, c.b], i*3); } tail.setAttribute('color', new T.BufferAttribute(tcol, 3));
+      // wompified: a round bean body, a big round head with glossy eyes, round ears, stubby limbs, and a ringed tail
+      const parts = [], fur = '#f0be82', pts = [V(0, 0, 0), V(-40, -60, 10), V(30, -150, 20), V(-20, -250, 10), V(10, -340, 0)];
+      const tail = taper(pts, 40, 8, 17, 15), tp = tail.attributes.position, tcol = new Float32Array(tp.count*3), A = C(fur), B = C('#8a6a5a');
+      for (let i = 0; i < tp.count; i++){ const c = Math.floor(i/9/4) % 2 ? B : A; tcol.set([c.r, c.g, c.b], i*3); } tail.setAttribute('color', new T.BufferAttribute(tail.attributes.position.count ? tcol : tcol, 3));
       parts.push([tail, I4, '#ffffff']);
-      parts.push([sph(16, 12), S4(10, -430, 0, 70, 96, 60), fur, 0, .3]); parts.push([sph(14, 10), S4(14, -450, 38, 40, 58, 30), '#fbe2b8']);
-      parts.push([taper([V(-50, -400, 10), V(-82, -470, 20), V(-74, -540, 30)], 10, 6, 13, 11), I4, fur]);
-      parts.push([sph(16, 12), S4(10, -585, 8, 66, 62, 60), fur, 0, .3]);
-      [-1, 1].forEach(sd => { parts.push([new T.ConeGeometry(20, 54, 8), S4(10 + sd*52, -540, 0, 1, 1, .5, 0, 0, -sd*.75), fur]);
-        parts.push([sph(14, 10), S4(10 + sd*26, -590, 52, 25, 25, 14), '#ffffff']); parts.push([sph(10, 8), S4(12 + sd*26, -588, 64, 12, 12, 7), '#24163a']); parts.push([sph(6, 4), S4(6 + sd*26, -582, 70, 4, 4, 3), '#ffffff']); });
-      parts.push([sph(8, 6), S4(10, -620, 62, 10, 7, 6), '#5b4434']);
-      lemur.add(new T.Mesh(bake(parts), solidM));
-      lemArm.position.set(64, -410, 10); lemur.add(lemArm);
-      lemArm.add(new T.Mesh(bake([[taper([V(0, 0, 0), V(34, -70, 10), V(26, -140, 20)], 10, 6, 13, 11), I4, fur], [sph(10, 8), S4(26, -146, 20, 16, 14, 14), '#fbe2b8']]), solidM)); }
-    hotJ(tg(lemur, 10, -500, 20), 150, { label: 'Lemur', halo: 'jungle', haloK: 1.3, tap: () => { if (lemT < 0){ lemT = 0; tone(988, 'chirp'); setTimeout(() => tone(1318.51, 'chirp'), 180); } } });
+      parts.push([sph(18, 14), S4(10, -440, 0, 72, 90, 64), fur, 0, .3]); parts.push([sph(14, 10), S4(12, -455, 40, 46, 56, 30), '#fde6c6']);
+      parts.push([sph(12, 9), S4(-58, -470, 24, 22, 40, 22, 0, 0, -.3), fur, 0, .2]);
+      [-1, 1].forEach(sd => parts.push([sph(12, 9), S4(10 + sd*34, -530, 20, 22, 26, 22), fur, 0, .2]));
+      parts.push([sph(18, 14), S4(10, -605, 10, 78, 72, 70), fur, 0, .3]); parts.push([sph(14, 10), S4(10, -625, 52, 44, 32, 30), '#fde6c6']);
+      [-1, 1].forEach(sd => { parts.push([sph(12, 10), S4(10 + sd*68, -562, 0, 26, 30, 14), fur, 0, .3]); parts.push([sph(10, 8), S4(10 + sd*70, -562, 8, 15, 18, 8), '#f7b5cf']); });
+      eyePair(parts, 10, -598, 68, 24, 30, 0);
+      parts.push([sph(8, 6), S4(10, -636, 78, 9, 7, 6), '#8a6a5a']);
+      lemur.add(folk(parts));
+      lemArm.position.set(70, -410, 10); lemur.add(lemArm);
+      lemArm.add(folk([[sph(12, 9), S4(14, -40, 6, 22, 46, 22, 0, 0, .25), fur, 0, .2]])); }
+    gazeAt(jungle, lemur, -560);
+    hotJ(tg(lemur, 10, -500, 20), 150, { label: 'Lemur', halo: 'jungle', haloK: 1.3, tap: () => { meet('lemur'); if (lemT < 0){ lemT = 0; tone(988, 'chirp'); setTimeout(() => tone(1318.51, 'chirp'), 180); } } });
     // the parrot on the limb, with a curly crest
     const parrot = new T.Group(); let parT = -1;
     { parrot.position.copy(limbPt(5990)).add(V(0, 34, 20)); parrot.rotation.y = .5; jungle.add(parrot);
-      const parts = [];
-      parts.push([sph(16, 12), S4(0, 70, 0, 42, 70, 38, 0, 0, .15), '#e9564f', 0, .3]); parts.push([sph(12, 10), S4(-8, 66, 30, 22, 50, 12, 0, 0, .2), '#3b9c8f']); parts.push([sph(12, 10), S4(-8, 66, -30, 22, 50, 12, 0, 0, .2), '#3b9c8f']);
-      [[-.15, '#3b9c8f'], [0, '#5fd3c8'], [.15, '#3b9c8f']].forEach(([a, c]) => parts.push([sph(10, 8), S4(-26, 0, a*60, 12, 60, 6, a, 0, .35), c]));
-      parts.push([sph(14, 12), S4(10, 150, 0, 38, 36, 34), '#e9564f', 0, .3]);
-      parts.push([new T.ConeGeometry(13, 40, 10).rotateZ(-Math.PI/2 - .5), M4(48, 140, 0), '#f6c86a']);
-      [-1, 1].forEach(sd => { parts.push([sph(10, 8), S4(26, 158, sd*26, 10, 10, 6), '#ffffff']); parts.push([sph(8, 6), S4(30, 158, sd*31, 5, 5, 3), '#24163a']); });
-      parts.push([taper(spiral(0, 182, 0, 26, 1.2, 50, 14, -1), 20, 5, 8, 3), I4, '#e9564f']);
-      [-1, 1].forEach(sd => parts.push([new T.CylinderGeometry(4, 4, 26, 5), M4(4, 4, sd*14), '#4a3a4e']));
-      parrot.add(new T.Mesh(bake(parts), solidM)); }
-    hotJ(tg(parrot, 0, 90, 0), 90, { label: 'Parrot', tap: () => { if (parT < 0){ parT = 0; tone(1568, 'chirp'); setTimeout(() => tone(1760, 'chirp'), 110); } } });
+      // wompified: a round egg body, a big round head with glossy eyes, a tiny soft beak, and stubby wings and feet
+      const parts = [], R_ = '#f27b72', TL = '#5fc4b4';
+      parts.push([sph(18, 14), S4(0, 80, 0, 52, 72, 48), R_, 0, .3]);
+      [-1, 1].forEach(sd => parts.push([sph(12, 10), S4(-10, 80, sd*44, 26, 42, 14, sd*.2, 0, .3), TL, 0, .2]));
+      [[-.2, TL], [0, '#8fe0d0'], [.2, TL]].forEach(([a, c]) => parts.push([sph(12, 9), S4(-38, 20, a*50, 16, 42, 10, a, 0, .4), c, 0, .2]));
+      parts.push([sph(18, 14), S4(10, 168, 0, 52, 50, 48), R_, 0, .3]);
+      parts.push([sph(12, 9), S4(58, 156, 0, 18, 12, 14, 0, 0, -.4), '#f7b96b']);
+      eyePair(parts, 38, 176, 0, 18, 24, Math.PI/2 - .55);
+      parts.push([taper(spiral(0, 212, 0, 24, 1.2, 46, 14, -1), 20, 6, 10, 5), I4, R_]);
+      [-1, 1].forEach(sd => parts.push([sph(10, 8), S4(6, 8, sd*16, 14, 9, 12), '#8a7396']));
+      parrot.add(folk(parts)); }
+    gazeAt(jungle, parrot, 160);
+    hotJ(tg(parrot, 0, 110, 0), 100, { label: 'Parrot', tap: () => { meet('parrot'); if (parT < 0){ parT = 0; tone(1568, 'chirp'); setTimeout(() => tone(1760, 'chirp'), 110); } } });
 
     /* ---- a plastic bag snagged on a jungle vine ---- */
     { const x = 5975, top = Y(2150), L = 1520, pts = []; for (let k = 0; k <= 8; k++) pts.push(V(x + Math.sin(k*.8)*24, top - L*k/8, -40));
@@ -2148,10 +2347,18 @@ function build3D(){
       for (let i = 0; i < bp.count; i++){ const n = 1 + .22*Math.sin(bp.getX(i)*.3 + bp.getY(i)*.25)*Math.cos(bp.getZ(i)*.28); bp.setXYZ(i, bp.getX(i)*n*.9, bp.getY(i)*n*1.15 - (bp.getY(i) > 0 ? 0 : 6), bp.getZ(i)*n*.55); } bg.computeVertexNormals();
       const bm = std('#eeeaf6', { roughness: .85, transparent: true, opacity: .93 }); bag.add(new T.Mesh(bg, bm));
       [-1, 1].forEach(sd => { const hd = new T.Mesh(new T.TorusGeometry(16, 4, 6, 14, Math.PI*1.2), bm); hd.position.set(sd*20, 58, 0); hd.rotation.z = sd*.3 - .3; bag.add(hd); });
-      bag.rotation.z = .25; const L_ = litterAt(bag, V(x + 30, top - 1180, -10), 100, 'Bag untangled. The jungle thanks you!', 'jungle', true, jungle); L_.flutter = 1; }
+      bag.rotation.z = .25; const L_ = litterAt(bag, V(x + 30, top - 1180, -10), 100, 'Bag untangled. The jungle thanks you!', 'jungle', true, jungle, 'jungle-bag'); L_.flutter = 1; }
 
     const dSign = signpost(jungle, 9950, 260, [['Sand dunes', '#f3e3c2', 360, 100, 380, 70], ['this way', '#e9c27a', 300, 78, 268, 54]], -.2);
     hotJ(dSign.top, 200, { label: 'Sand dunes, this way', tap: () => showCard('The sand dunes','Next up','Keep scrolling: Shigost heads out of the jungle into the singing sand dunes, then on to the beach.','See the games','#games') });
+
+    /* ---- Womps of the fall (one rides a little cloud), the hills, and the jungle ---- */
+    { const L = WOMPS.filter(w => w.ch === 'fall').map(w => Object.assign(w, { pos: V(w.x, -w.y, w.z) }));
+      L.forEach(w => { const parts = []; cloudParts(w.x, -w.y - 95, w.z, .42, '#f3d6ea', parts); fall.add(new T.Mesh(bake(parts), cloudM)); });
+      wompSet(fall, L, (t, r, o) => hotAt(t, r, Object.assign({ grp: fall }, o))); }
+    wompSet(hills, WOMPS.filter(w => w.ch === 'hills').map(w => Object.assign(w, { pos: at3(w.x, w.z) })), hotH);
+    wompSet(jungle, WOMPS.filter(w => w.ch === 'jungle').map(w => Object.assign(w, { pos: at3(w.x, w.z) })), hotJ);
+    flies.forEach(F => gazeAt(hills, F.g));
 
     /* ---- per frame ---- */
     const _v = V(0,0,0), calm = () => reduce.matches ? 0 : 1;
@@ -2191,11 +2398,72 @@ function build3D(){
     };
   }
 
+  /* ================= THE RECKLYSS FAMILY: CRITTERS AND WOMPS ================= */
+  // Critters are baked from parts like other decor, but parts colored EYE or GLINT go into a glossy eye mesh, so a
+  // critter is three draw calls: matte body, glossy eyes, and eye glints.
+  const EYE = 'eye', GLINT = 'glint', folkM = std('#ffffff', { vertexColors: true, roughness: .92 });
+  function folk(parts){ const g = new T.Group(), pick = k => parts.filter(p => (p[2] === k) === true).map(p => p.slice()), body = parts.filter(p => p[2] !== EYE && p[2] !== GLINT);
+    g.add(new T.Mesh(bake(body), folkM));
+    const e = pick(EYE).map(p => (p[2] = '#ffffff', p)), l = pick(GLINT).map(p => (p[2] = '#ffffff', p));
+    if (e.length) g.add(new T.Mesh(bake(e), eyeM)); if (l.length) g.add(new T.Mesh(bake(l), glintM)); return g; }
+  // two big glossy eyes centered at (x, y, z), looking along yaw (0 is +z), eye radius r, half spacing sp
+  function eyePair(parts, x, y, z, r, sp, yaw = 0){ const c = Math.cos(yaw), s = Math.sin(yaw), at = (lx, ly, lz) => [x + lx*c + lz*s, y + ly, z - lx*s + lz*c];
+    [-1, 1].forEach(sd => { const [ex, ey, ez] = at(sd*sp, 0, 0); parts.push([new T.SphereGeometry(1, 18, 12), S4(ex, ey, ez, r*.9, r, r*.5, 0, yaw + sd*.3, 0), EYE]);
+      const [gx, gy, gz] = at(sd*sp - r*.3, r*.38, r*.45); parts.push([new T.SphereGeometry(1, 8, 6), S4(gx, gy, gz, r*.22, r*.22, r*.22), GLINT]); }); }
+  // Womps: Vibe Booth's crowd design (a tall bean with stubby arms and legs and glossy eyes), one unit tall
+  let WG = null;
+  function wompGeo(){ if (WG) return WG;
+    const bp = [[0.001,0.15],[0.21,0.16],[0.28,0.22],[0.305,0.36],[0.3,0.6],[0.285,0.8],[0.245,0.94],[0.15,1.02],[0.001,1.045]].map(p => new T.Vector2(p[0], p[1]));
+    const S = (x, y, z, sx, sy, sz, ry = 0) => S4(x, y, z, sx, sy, sz, 0, ry, 0);
+    WG = { body: bake([[new T.LatheGeometry(bp, 28).scale(1, 1, .86), I4, '#ffffff', 0, .22], [new T.SphereGeometry(1, 16, 12), S(.11, .1, .03, .11, .12, .13), '#ffffff', 0, .22], [new T.SphereGeometry(1, 16, 12), S(-.11, .1, .03, .11, .12, .13), '#ffffff', 0, .22]]),
+      arm: bake([[new T.SphereGeometry(1, 14, 10), S(0, -.13, 0, .075, .17, .085), '#ffffff', 0, .2]]),
+      eyes: bake([[new T.SphereGeometry(1, 18, 12), S(.12, .72, .222, .09, .1, .045, .45), '#ffffff'], [new T.SphereGeometry(1, 18, 12), S(-.12, .72, .222, .09, .1, .045, -.45), '#ffffff']]),
+      glints: bake([[new T.SphereGeometry(1, 8, 6), S(.098, .757, .262, .022, .022, .022), '#ffffff'], [new T.SphereGeometry(1, 8, 6), S(-.142, .757, .25, .022, .022, .022), '#ffffff']]),
+      shadow: new T.PlaneGeometry(1, 1).rotateX(-Math.PI/2), mat: std('#ffffff', { vertexColors: true, roughness: .92 }),
+      shadowM: new T.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, toneMapped: false }) };
+    return WG; }
+  // One set of Womps per chapter group: five InstancedMeshes (body, arms, eyes, glints, shadows) that every Womp in the
+  // chapter shares. w.pos is where its feet are; w.anchor (optional) moves it with a floating rock.
+  const WSETS = [], GAZE = [], _wm = new T.Matrix4(), _wa = new T.Matrix4(), _wq = new T.Quaternion(), _wq2 = new T.Quaternion(), _we = new T.Euler(), _ws = V(1,1,1), _wp = V(0,0,0), _wo = V(0,0,0), _one = V(1,1,1);
+  const shown = o => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+  function wompSet(grp, list, hotFn){ const G = wompGeo(), n = list.length; if (!n) return;
+    const mk = (geo, mat, k) => { const m = new T.InstancedMesh(geo, mat, k); m.frustumCulled = false; grp.add(m); return m; };
+    const S = { grp, list, body: mk(G.body, G.mat, n), arms: mk(G.arm, G.mat, n*2), eyes: mk(G.eyes, eyeM, n), gl: mk(G.glints, glintM, n), sh: mk(G.shadow, G.shadowM, n) };
+    list.forEach((w, i) => { const c = C(w.color); S.body.setColorAt(i, c); S.arms.setColorAt(i*2, c); S.arms.setColorAt(i*2 + 1, c);
+      Object.assign(w, { s: w.h/1.045, t: -1, cheer: 0, ph: i*1.7 + w.h*.01, local: w.pos.clone() });
+      w.tgt = new T.Object3D(); w.tgt.position.copy(w.pos).add(V(0, w.h*.5, 0)); grp.add(w.tgt);
+      hotFn(w.tgt, Math.max(60, w.h*.36), { label: (LORE[w.id] || {}).name || 'Womp', tap: () => { w.t = 0; tone(clamp(1500 - w.h*1.6, 420, 1400), 'chirp'); meet(w.id); } });
+      GAZE.push({ grp, womp: w, at: v => v.copy(w.pos).add(_wo.set(0, w.h*.8, 0)) }); });
+    WSETS.push(S); }
+  function updateWomps(t, dt, cm){
+    WSETS.forEach(S => { if (!shown(S.grp)) return;
+      S.list.forEach((w, i) => { const s = w.s; let y = 0, rz = 0, aL = .12, aR = -.12, sq = 1;
+        if (w.anchor){ w.anchor.updateMatrixWorld(); w.pos.copy(w.local).applyMatrix4(w.anchor.matrixWorld); w.tgt.position.copy(w.pos).add(_wo.set(0, w.h*.5, 0)); }
+        let yaw = Math.atan2(camera.position.x - w.pos.x, camera.position.z - w.pos.z)*.7;
+        if (cm){ const T_ = t + w.ph;
+          if (w.mood === 'sway'){ rz = Math.sin(T_*1.3)*.07; aL = .25 + Math.sin(T_*1.3)*.18; aR = -.25 + Math.sin(T_*1.3)*.18; }
+          else if (w.mood === 'wave'){ aR = -(2.3 + Math.sin(T_*7)*.35); rz = Math.sin(T_*.9)*.03; }
+          else if (w.mood === 'dance'){ y = Math.abs(Math.sin(T_*4))*.06; yaw += Math.sin(T_*2)*.45; aL = .6 + Math.sin(T_*8)*.6; aR = -(.6 + Math.sin(T_*8 + Math.PI)*.6); }
+          else if (w.mood === 'cheer'){ const k = (T_*.55) % 1.7; if (k < .5){ y = Math.sin(k/.5*Math.PI)*.15; aL = 2.6; aR = -2.6; } } }
+        if (w.cheer > 0){ w.cheer -= dt; y = Math.max(y, Math.abs(Math.sin(t*8 + w.ph))*.17*Math.min(1, w.cheer)); aL = 2.5 + Math.sin(t*12 + w.ph)*.25; aR = -aL; }
+        if (w.t >= 0){ w.t += dt; const k = Math.min(1, w.t/.6); y = Math.max(y, Math.sin(k*Math.PI)*.24); sq = 1 + .1*Math.sin(k*Math.PI*2); aL = Math.max(aL, 1.6*Math.sin(k*Math.PI)); aR = Math.min(aR, -1.6*Math.sin(k*Math.PI)); if (k >= 1) w.t = -1; }
+        _wp.copy(w.pos); _wp.y += y*w.h; _wq.setFromEuler(_we.set(0, yaw, rz)); _ws.set(s/Math.sqrt(sq), s*sq, s/Math.sqrt(sq)); _wm.compose(_wp, _wq, _ws);
+        S.body.setMatrixAt(i, _wm); S.eyes.setMatrixAt(i, _wm); S.gl.setMatrixAt(i, _wm);
+        _wa.compose(_wo.set(.31, .58, 0), _wq2.setFromEuler(_we.set(0, 0, aL)), _one); S.arms.setMatrixAt(i*2, _wa.premultiply(_wm));
+        _wa.compose(_wo.set(-.31, .58, 0), _wq2.setFromEuler(_we.set(0, 0, aR)), _one); S.arms.setMatrixAt(i*2 + 1, _wa.premultiply(_wm));
+        const k = 1/(1 + y*4); _wa.compose(_wp.copy(w.pos).add(_wo.set(0, 2, 0)), _wq2.identity(), _wo.set(s*.66*k, 1, s*.5*k)); S.sh.setMatrixAt(i, _wa); });
+      ['body', 'arms', 'eyes', 'gl', 'sh'].forEach(k => S[k].instanceMatrix.needsUpdate = true); });
+  }
+  // when a musical toy plays, the Womps nearby become Shigost's crowd and cheer
+  s3.onToy = at => WSETS.forEach(S => { if (!shown(S.grp)) return; S.list.forEach(w => { if (!at || w.pos.distanceTo(at) < 3600) w.cheer = 2.6; }); });
+  // critters and others Shigost likes to glance at when nobody is steering her gaze
+  const gazeAt = (grp, obj, lift = 0) => GAZE.push({ grp, at: v => obj.getWorldPosition(v).add(_wo.set(0, lift, 0)) });
+
   const EARTH = { built: false };
   function buildEarth(){
     EARTH.built = true;
     const es = new T.Group(); root.add(es); EARTH.group = es;
-    const hot = (t, r, o = {}) => hotAt(t, r, Object.assign({ grp: es }, o)), litter = (o, p, r, m, c, h) => litterAt(o, p, r, m, c, h, es);
+    const hot = (t, r, o = {}) => hotAt(t, r, Object.assign({ grp: es }, o)), litter = (o, p, r, m, c, h, id) => litterAt(o, p, r, m, c, h, es, id);
 
     /* terrain: sculpted dunes that flatten into the beach, with wind ripples from a tiny bump texture */
     const X0 = s3.L3 ? LAND_X1 : 9000, X1 = 34500, Z0 = -4400, Z1 = 7000, NXs = LITE ? 170 : 240, NZs = LITE ? 64 : 92;
@@ -2294,7 +2562,7 @@ function build3D(){
     RNOTES.forEach((f, i) => { const x = RIDGE.x0 + 150 + i*(RIDGE.x1 - RIDGE.x0 - 300)/(RNOTES.length - 1), z = RIDGE.z(x), p = V(x, Y(earthH(x, z)) + 24, z);
       const shine = glow('#ffe9de', 520, 0); shine.position.copy(p).add(V(0, 40, 30)); es.add(shine); ridgeFx.push(shine);
       const h = hot(p, 100, { cls: 'vine', label: 'Singing sand, note ' + (i + 1) });
-      h.el.dataset.freq = f; h.el.dataset.voice = 'dune'; strummable(h.el);
+      h.el.dataset.freq = f; h.el.dataset.voice = 'dune'; h.el.dataset.toy = 'singing-ridge'; strummable(h.el);
       h.el._fx = () => { shine.userData.t = 1; burst(p.clone().add(V(0, 30, 0)), ['#ffe7d6','#ffd2c2','#f6c9e6'], 14, 300, 420); }; });
     { const x = (RIDGE.x0 + RIDGE.x1)/2, z = RIDGE.z(x); hot(V(x, Y(earthH(x, z)) + 60, z), 260, { noHit: true, halo: 'dunes', haloK: 1.2 }); }
 
@@ -2303,32 +2571,32 @@ function build3D(){
     { const can = new T.Group(), body = new T.Mesh(new T.CylinderGeometry(34, 34, 116, 20), std('#bcb4cc', { roughness: .32, metalness: .55 }));
       can.add(body); const band = new T.Mesh(new T.CylinderGeometry(35, 35, 40, 20), std('#e98bb5', { roughness: .5 })); can.add(band);
       const rimT = new T.Mesh(new T.TorusGeometry(31, 4, 8, 20), std('#d8d2e4', { roughness: .3, metalness: .6 })); rimT.rotation.x = Math.PI/2; rimT.position.y = 58; can.add(rimT);
-      can.rotation.set(.35, .4, 1.05); litter(can, at3(17150, 260, 6), 120, 'Sparkly clean. Thanks for helping Shigost!', 'dunes', true); }
+      can.rotation.set(.35, .4, 1.05); litter(can, at3(17150, 260, 6), 120, 'Sparkly clean. Thanks for helping Shigost!', 'dunes', true, 'can'); }
     { const bottle = new T.Group(), gm = new T.MeshStandardMaterial({ color: C('#8fe0d8'), transparent: true, opacity: .62, roughness: .12, metalness: .1 });
       bottle.add(new T.Mesh(new T.CylinderGeometry(24, 24, 96, 16), gm)); const neck = new T.Mesh(new T.CylinderGeometry(10, 22, 34, 16), gm); neck.position.y = 64; bottle.add(neck);
       const cap = new T.Mesh(new T.CylinderGeometry(11, 11, 14, 12), std('#b6a4f2')); cap.position.y = 86; bottle.add(cap); bottle.rotation.set(0, .5, 1.45);
       const msg = () => (--beachLeft) ? `Collected! ${beachLeft} more to find on the beach` : 'The beach is clean. Thank you for helping Shigost!';
-      litter(bottle, at3(25640, 900, 24), 110, msg, 'beach', true);
+      litter(bottle, at3(25640, 900, 24), 110, msg, 'beach', true, 'bottle');
       const bagG = new T.SphereGeometry(48, 14, 10), bp = bagG.attributes.position; for (let i = 0; i < bp.count; i++){ const n = 1 + .25*Math.sin(bp.getX(i)*.3 + bp.getY(i)*.25)*Math.cos(bp.getZ(i)*.28); bp.setXYZ(i, bp.getX(i)*n, bp.getY(i)*n*.42, bp.getZ(i)*n); } bagG.computeVertexNormals();
-      litter(new T.Mesh(bagG, std('#eeeaf6', { roughness: .85 })), at3(26880, 800, 14), 110, msg, 'beach', false);
+      litter(new T.Mesh(bagG, std('#eeeaf6', { roughness: .85 })), at3(26880, 800, 14), 110, msg, 'beach', false, 'beach-bag');
       const net = new T.Mesh(new T.TorusKnotGeometry(30, 5, 72, 6, 2, 3), std('#f2a7a0', { roughness: .8 })); net.scale.set(1, .45, 1);
-      litter(net, at3(26020, 760, 14), 110, msg, 'beach', false); }
+      litter(net, at3(26020, 760, 14), 110, msg, 'beach', false, 'net'); }
 
     /* dune hopper: a big-eared little critter that springs and spins when tapped */
-    const hop = new T.Group(); { hop.position.copy(at3(16050, 300)); hop.rotation.y = .5; es.add(hop); const fur = std('#efe1ef', { roughness: .8 }), pink = std('#f6b6cf', { roughness: .7 });
-      const body = new T.Mesh(new T.SphereGeometry(52, 18, 14), fur); body.scale.set(1.05, .9, 1); body.position.y = 56; hop.add(body);
-      const head = new T.Mesh(new T.SphereGeometry(40, 18, 14), fur); head.position.set(-44, 104, 10); hop.add(head); hop.userData.head = head;
-      [-1, 1].forEach(sd => { const ear = new T.Group(); ear.position.set(-50, 132, sd*20); ear.rotation.set(sd*.25, 0, .35); hop.add(ear);
-        const e1 = new T.Mesh(new T.ConeGeometry(17, 118, 14), fur); e1.position.y = 56; ear.add(e1); const e2 = new T.Mesh(new T.ConeGeometry(10, 92, 12), pink); e2.position.set(-6, 52, 0); ear.add(e2);
-        (hop.userData.ears = hop.userData.ears || []).push(ear);
-        const eye = new T.Mesh(new T.SphereGeometry(11, 12, 10), std('#1a1030', { roughness: .2 })); eye.position.set(-72, 110, sd*20); hop.add(eye);
-        const gl2 = new T.Mesh(new T.SphereGeometry(4, 8, 6), new T.MeshBasicMaterial({ color: 0xffffff })); gl2.position.set(-80, 115, sd*22 + 4); hop.add(gl2);
-        const foot = new T.Mesh(new T.SphereGeometry(1, 12, 8), fur); foot.scale.set(44, 12, 16); foot.position.set(-10, 10, sd*26); hop.add(foot); });
-      const tail = []; for (let k = 0; k <= 10; k++) tail.push(V(40 + k*20, 50 + Math.sin(k*.5)*40 + k*6, 0)); hop.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(tail), 30, 5, 6), fur));
-      const tuft = new T.Mesh(new T.SphereGeometry(18, 12, 10), pink); tuft.position.copy(tail[10]); hop.add(tuft);
+    // wompified: a round body, a big round head with glossy eyes, soft long ears, stubby feet, and a puff of a tail
+    const hop = new T.Group(); { hop.position.copy(at3(16050, 300)); hop.rotation.y = .5; es.add(hop); const fur = '#efe1f2', pink = '#f7b5cf';
+      const parts = [[new T.SphereGeometry(1, 18, 14), S4(6, 58, 0, 60, 54, 56), fur, 0, .3], [new T.SphereGeometry(1, 18, 14), S4(-46, 112, 6, 52, 50, 50), fur, 0, .3],
+        [new T.SphereGeometry(1, 12, 9), S4(-90, 96, 18, 8, 6, 6), pink], [new T.SphereGeometry(1, 14, 10), S4(62, 78, 0, 26, 26, 26), pink, 0, .3]];
+      [-1, 1].forEach(sd => { parts.push([new T.SphereGeometry(1, 12, 9), S4(-10, 12, sd*30, 30, 14, 18), fur, 0, .2]); parts.push([new T.SphereGeometry(1, 10, 8), S4(-78, 92, sd*32, 9, 6, 5), '#f6a8c4']); });
+      eyePair(parts, -80, 118, 18, 19, 22, -Math.PI/2 + .55);
+      hop.add(folk(parts)); hop.userData.head = hop.children[0];
+      [-1, 1].forEach(sd => { const ear = new T.Group(); ear.position.set(-50, 148, sd*22); ear.rotation.set(sd*.25, 0, .35); hop.add(ear);
+        ear.add(folk([[new T.SphereGeometry(1, 14, 10), S4(0, 56, 0, 20, 60, 12), fur, 0, .25], [new T.SphereGeometry(1, 12, 9), S4(-6, 54, sd*2, 11, 44, 6), pink]]));
+        (hop.userData.ears = hop.userData.ears || []).push(ear); });
       const cs = contact(200, 44); cs.position.set(0, 4, 20); hop.add(cs); hop.userData.cs = cs; }
     const hopBase = hop.position.clone(); let hopT = -1;
-    hot(hop, 120, { label: 'Dune hopper', halo: 'dunes', tap: () => { if (hopT < 0){ hopT = 0; tone(880, 'chirp'); setTimeout(() => tone(1175, 'chirp'), 160); } } });
+    gazeAt(es, hop, 100);
+    hot(hop, 120, { label: 'Dune hopper', halo: 'dunes', tap: () => { meet('dune-hopper'); if (hopT < 0){ hopT = 0; tone(880, 'chirp'); setTimeout(() => tone(1175, 'chirp'), 160); } } });
 
     /* beach: shells that ring like bells, a tide pool, and two crabs */
     const SNOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66], SCOLS = ['#f7c6d9','#c9bdf5','#9fd8c9','#f2a7a0','#fff5f8','#b8e0f5','#e7c0f0'], shells = [];
@@ -2340,7 +2608,7 @@ function build3D(){
     SNOTES.forEach((f, i) => { const x = 26420 + i*120, z = 300 + 70*Math.sin(i*1.3), m = std(SCOLS[i], { roughness: .3, emissive: C(SCOLS[i]), emissiveIntensity: .12, side: T.DoubleSide });
       const sh3 = new T.Mesh(shellGeo(i % 3), m); sh3.position.copy(at3(x, z, 14)); sh3.rotation.y = i*.9; es.add(sh3); const base = sh3.position.clone(); shells.push({ m: sh3, base, t: -1 });
       const cs = contact(110, 30); cs.position.copy(base).add(V(0, -10, 10)); es.add(cs);
-      const h = hot(sh3, 70, { cls: 'vine', label: 'Shell bell, note ' + (i + 1) }); h.el.dataset.freq = f; h.el.dataset.voice = 'shell'; strummable(h.el);
+      const h = hot(sh3, 70, { cls: 'vine', label: 'Shell bell, note ' + (i + 1) }); h.el.dataset.freq = f; h.el.dataset.voice = 'shell'; h.el.dataset.toy = 'shell-bells'; strummable(h.el);
       h.el._fx = () => { shells[i].t = 0; burst(base.clone().add(V(0, 30, 0)), [SCOLS[i], '#ffffff'], 10, 220, 360); }; });
     hot(shells[3].m, 170, { noHit: true, halo: 'beach', haloK: 1.3 });
     const poolU = { time: { value: 0 }, tap: { value: -99 } }; const poolP = at3(27250, 720, 3);
@@ -2351,20 +2619,23 @@ function build3D(){
       const star = new T.Shape(); for (let k = 0; k < 10; k++){ const a = k/10*Math.PI*2 - Math.PI/2, r = k % 2 ? 14 : 36; k ? star.lineTo(Math.cos(a)*r, Math.sin(a)*r) : star.moveTo(Math.cos(a)*r, Math.sin(a)*r); }
       const st = new T.Mesh(new T.ExtrudeGeometry(star, { depth: 8, bevelEnabled: true, bevelSize: 4, bevelThickness: 4, bevelSegments: 2 }).rotateX(-Math.PI/2), std('#f28c7a', { roughness: .6 })); st.position.copy(poolP).add(V(-80, 4, 30)); es.add(st);
       [[60, -20, '#b6a4f2'], [90, 10, '#f29ab5'], [40, 30, '#5fd3c8']].forEach(([dx, dz, c]) => { const a = new T.Mesh(new T.SphereGeometry(16, 10, 8), std(c, { emissive: C(c), emissiveIntensity: .2 })); a.position.copy(poolP).add(V(dx, 8, dz)); es.add(a); }); }
-    hot(poolP.clone().add(V(0, 20, 0)), 200, { label: 'Tide pool', tap: () => { poolU.tap.value = poolU.time.value; tone(330, 'bloop'); burst(poolP.clone().add(V(0, 30, 0)), ['#c9fff8','#ffffff'], 10, 200, 260); } });
+    hot(poolP.clone().add(V(0, 20, 0)), 200, { label: 'Tide pool', tap: () => { poolU.tap.value = poolU.time.value; tone(330, 'bloop'); playedToy('tide-pool', poolP); burst(poolP.clone().add(V(0, 30, 0)), ['#c9fff8','#ffffff'], 10, 200, 260); } });
     const crabs = [];
-    function crab(x, z, c1, ph, halo){ const g = new T.Group(); g.position.copy(at3(x, z)); g.rotation.y = .2; es.add(g); const sh = std(c1, { roughness: .45 }), dk = std('#c45d5d', { roughness: .5 });
-      const body = new T.Mesh(new T.SphereGeometry(1, 20, 14), sh); body.scale.set(66, 30, 48); body.position.y = 44; g.add(body);
-      [-1, 1].forEach(sd => { g.add(rod(V(sd*20, 60, 30), V(sd*28, 104, 40), 4, dk)); const e = new T.Mesh(new T.SphereGeometry(11, 10, 8), std('#ffffff', { roughness: .2 })); e.position.set(sd*28, 108, 42); g.add(e);
-        const pu = new T.Mesh(new T.SphereGeometry(5, 8, 6), std('#1a1030')); pu.position.set(sd*28, 108, 52); g.add(pu);
-        for (let k = 0; k < 3; k++){ const lg = new T.Group(); lg.position.set(sd*50, 40, -20 + k*20); g.add(lg); lg.add(rod(V(0,0,0), V(sd*40, 6, 0), 5, dk)); lg.add(rod(V(sd*40, 6, 0), V(sd*58, -38, 0), 4, dk)); (g.userData.legs = g.userData.legs || []).push(lg); }
-        const arm = new T.Group(); arm.position.set(sd*48, 56, 34); g.add(arm); arm.add(rod(V(0,0,0), V(sd*30, 18, 22), 6, sh));
-        const claw = new T.Mesh(new T.SphereGeometry(1, 14, 10), sh); claw.scale.set(26, 18, 18); claw.position.set(sd*40, 26, 32); arm.add(claw);
-        const pin = new T.Mesh(new T.ConeGeometry(8, 30, 10), sh); pin.position.set(sd*52, 40, 34); pin.rotation.z = -sd*.6; arm.add(pin); (g.userData.arms = g.userData.arms || []).push([arm, sd]); });
+    // wompified crabs: a soft round body, big glossy eyes on stubby nubs, stubby round legs, and round claws
+    function crab(x, z, c1, ph, halo, id){ const g = new T.Group(); g.position.copy(at3(x, z)); g.rotation.y = .2; es.add(g); const dk = '#e98a86';
+      const parts = [[new T.SphereGeometry(1, 20, 14), S4(0, 52, 0, 68, 40, 52), c1, 0, .3]];
+      [-1, 1].forEach(sd => parts.push([new T.SphereGeometry(1, 12, 9), S4(sd*22, 92, 30, 13, 22, 13), c1, 0, .2]));
+      eyePair(parts, 0, 116, 38, 19, 24, 0);
+      g.add(folk(parts));
+      [-1, 1].forEach(sd => {
+        for (let k = 0; k < 3; k++){ const lg = new T.Group(); lg.position.set(sd*54, 36, -22 + k*22); g.add(lg); lg.add(folk([[new T.SphereGeometry(1, 10, 8), S4(sd*18, -12, 0, 22, 12, 12, 0, 0, -sd*.6), dk, 0, .2]])); (g.userData.legs = g.userData.legs || []).push(lg); }
+        const arm = new T.Group(); arm.position.set(sd*52, 60, 30); g.add(arm);
+        arm.add(folk([[new T.SphereGeometry(1, 10, 8), S4(sd*14, 8, 10, 16, 12, 12), c1, 0, .2], [new T.SphereGeometry(1, 14, 10), S4(sd*38, 26, 26, 28, 24, 22), c1, 0, .3], [new T.SphereGeometry(1, 10, 8), S4(sd*50, 46, 30, 12, 14, 11), c1, 0, .2]]));
+        (g.userData.arms = g.userData.arms || []).push([arm, sd]); });
       const cs = contact(220, 50); cs.position.set(0, 4, 20); g.add(cs);
-      const C_ = { g, base: g.position.clone(), ph, t: -1 }; crabs.push(C_);
-      hot(g, 110, { label: 'Crab', halo: halo ? 'beach' : null, tap: () => { if (C_.t < 0){ C_.t = 0; tone(1700, 'clack'); setTimeout(() => tone(1500, 'clack'), 130); setTimeout(() => tone(1800, 'clack'), 260); } } }); }
-    crab(25880, 250, '#f28c7a', 0, true); crab(27500, 150, '#f29ab5', 2.1, false);
+      const C_ = { g, base: g.position.clone(), ph, t: -1 }; crabs.push(C_); gazeAt(es, g, 90);
+      hot(g, 110, { label: LORE[id].name, halo: halo ? 'beach' : null, tap: () => { meet(id); if (C_.t < 0){ C_.t = 0; tone(1700, 'clack'); setTimeout(() => tone(1500, 'clack'), 130); setTimeout(() => tone(1800, 'clack'), 260); } } }); }
+    crab(25880, 250, '#f6a08f', 0, true, 'coral-crab'); crab(27500, 150, '#f7b0c8', 2.1, false, 'pink-crab');
 
     /* the far end: the waterline leads toward the reef, with corals breaking the surface and a fish now and then */
     { const post = std('#8a5a3a', { roughness: .8 }), sp = at3(30700, 40, -10);
@@ -2382,6 +2653,9 @@ function build3D(){
     const fish = new T.Group(); { const fm = std('#5fd3c8', { roughness: .35, emissive: C('#2a8a8a'), emissiveIntensity: .2 }); const b = new T.Mesh(new T.SphereGeometry(1, 14, 10), fm); b.scale.set(44, 22, 14); fish.add(b);
       const tl = new T.Mesh(new T.ConeGeometry(20, 34, 10), std('#f29ab5')); tl.rotation.z = Math.PI/2; tl.position.x = 52; fish.add(tl); fish.visible = false; es.add(fish); }
     let fishT = 0;
+
+    /* ---- Womps of the dunes and beach ---- */
+    wompSet(es, WOMPS.filter(w => w.ch === 'earth').map(w => Object.assign(w, { pos: at3(w.x, w.z) })), hot);
 
     /* ---- per frame ---- */
     EARTH.frame = (p, cam, s, vw, H, t, dt, D) => {
@@ -2453,9 +2727,10 @@ function build3D(){
     updateFx(dt);
     // Shigost's soft shadow once she's on the ground
     sgGround.visible = SG.ready && !!s.e; if (sgGround.visible){ const gy = Y(groundH(s.x, 0)), sk = s.s === 'st-jump' ? .55 : 1; sgGround.position.set(s.x, gy + 2, 50); sgGround.scale.set(sk, sk, 1); }
-    if (scene.visible) spaceFrame(p, cam, vw, vhS, now, t, dt, heroA);
-    SG.wrap.visible = SG.ready; if (SG.ready && SG.root) poseShigost(s, t, idle, dt);
-    if (mode === 'earth') projectHots(vw, H);
+    if (scene.visible){ spaceFrame(p, cam, vw, vhS, now, t, dt, heroA); spaceFolk(t); }
+    updateWomps(t, dt, reduce.matches ? 0 : 1);
+    SG.wrap.visible = SG.ready; if (SG.ready && SG.root){ gazeFrame(p, s, now, dt, idle, D); poseShigost(s, t, idle, dt); }
+    projectHots(vw, H);
     renderer.render(root, camera);
     return mode;
   };
@@ -2488,13 +2763,40 @@ function build3D(){
         shoot.scale.set(u.len*Math.min(1, k*2), 10, 1); shoot.material.opacity = Math.max(0, 1 - k)*sa; if (k >= 1) shoot.visible = false; } }
     else shoot.visible = false;
   }
+  /* ---- space: a preview of the space explorer game. Little floating asteroids, each a slot with Womps on it
+     (SPACE_SLOTS), plus a Womp on the big asteroid. A slot with a model path shows that model instead. ---- */
+  const slotGroups = [];
+  { const rg = new T.SphereGeometry(1, 24, 16), rp = rg.attributes.position, rc = new Float32Array(rp.count*3), top = C('#b9a6ee'), bot = C('#4a3488'), tc = C('#000');
+    for (let i = 0; i < rp.count; i++){ const x = rp.getX(i), y = rp.getY(i), z = rp.getZ(i), n = 1 + .12*Math.sin(x*5 + 1)*Math.sin(y*4 + 2)*Math.sin(z*6) + .06*Math.sin(x*11 + z*9);
+      rp.setXYZ(i, x*n, y*n*(y > 0 ? .55 : 1), z*n); tc.copy(bot).lerp(top, clamp(y*.6 + .5, 0, 1)); rc.set([tc.r, tc.g, tc.b], i*3); }
+    rg.setAttribute('color', new T.BufferAttribute(rc, 3)); rg.computeVertexNormals();
+    const rockM = std('#ffffff', { vertexColors: true, roughness: .93, emissive: C('#1c1238') }), hotS = (t, r, o) => hotAt(t, r, Object.assign({ grp: scene }, o)), list = [];
+    SPACE_SLOTS.forEach((sl, i) => { const g = new T.Group(); g.position.set(sl.x, -sl.y, sl.z); g.userData.base = g.position.y; g.userData.ph = i*2.1; scene.add(g); slotGroups.push(g);
+      const rock = new T.Mesh(rg, rockM); rock.scale.set(sl.r, sl.r, sl.r*.85); g.add(rock);
+      const gl = glow('#b6a4f2', sl.r*4, .16); g.add(gl); const topY = sl.r*.5;
+      if (sl.model){ fetch(sl.model).then(r => r.arrayBuffer()).then(buf => new T.GLTFLoader().parse(buf, '', gltf => { const m = gltf.scene, b = new T.Box3().setFromObject(m), h = b.max.y - b.min.y || 1;
+          m.scale.multiplyScalar(sl.height/h); m.position.y = topY - b.min.y*sl.height/h; g.add(m); })).catch(e => console.warn('slot model failed', sl.id, e)); return; }
+      WOMPS.filter(w => w.slot === sl.id).forEach(w => list.push(Object.assign(w, { pos: V(w.dx || 0, topY - 6, 0), anchor: g }))); });
+    WOMPS.filter(w => w.ch === 'space' && !w.slot).forEach(w => list.push(Object.assign(w, { pos: V(w.x, ridge(w.x, w.z) - 4, w.z) })));
+    wompSet(scene, list, hotS); }
+  gazeAt(scene, snail3, 110);
+  function spaceFolk(t){ slotGroups.forEach(g => { g.position.y = g.userData.base + Math.sin(t*.6 + g.userData.ph)*40; g.rotation.y = Math.sin(t*.2 + g.userData.ph)*.25; }); }
+
   if (document.fonts) document.fonts.load('800 60px "Bricolage Grotesque"').then(() => drawScreen(0)).catch(() => {});
   drawScreen(0);
   s3.ready = true;
 }
 
 /* ================= MAIN LOOP ================= */
-let target = 0, cur = 0, lastScroll = performance.now(), lastSky = '';
+let target = 0, cur = 0, lastScroll = performance.now(), lastSky = '', moveDir = 1, lastP = 0;
+// the pointer, for Shigost's gaze: a mouse anywhere, or a finger touching (or drawing on) the screen
+const PTR = { x: 0, y: 0, t: -1e9, down: false };
+const ptrAt = (x, y) => { PTR.x = x; PTR.y = y; PTR.t = performance.now(); };
+addEventListener('pointermove', e => { if (e.pointerType === 'mouse' || PTR.down) ptrAt(e.clientX, e.clientY); }, { passive: true });
+addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') PTR.down = true; ptrAt(e.clientX, e.clientY); }, { passive: true });
+addEventListener('touchstart', e => { PTR.down = true; ptrAt(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+addEventListener('touchmove', e => ptrAt(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+['touchend', 'touchcancel', 'pointerup'].forEach(k => addEventListener(k, e => { if (k !== 'pointerup' || e.pointerType !== 'mouse') PTR.down = false; }, { passive: true }));
 function readScroll(){
   const total = journey.offsetHeight - stage.offsetHeight;
   target = clamp(-journey.getBoundingClientRect().top / total, 0, 1)*PMAX;
@@ -2506,7 +2808,7 @@ if (document.fonts) document.fonts.ready.then(() => { LY = null; });
 const topBar = $('.top');
 readScroll(); cur = target;
 
-const TIPS = { 'h-space':'Tap Shigost, or the little snail', 'h-hills':'Tap the painter or the sheep', 'h-jungle':'Drag across the vines to play them',
+const TIPS = { 'h-space':'Tap Shigost, the snail, or a Womp', 'h-hills':'Tap the painter or the sheep', 'h-jungle':'Drag across the vines to play them',
   'h-dunes':'Drag along the ridge to make the sand sing', 'h-beach':'Tap the shells, the crabs, or the litter', 'h-reef':'Tap the sign to see what’s next' };
 const TIPS3 = { 'h-hills':'Tap the sheep to sing, or the painter’s canvas', 'h-chimes':'Tap or drag across the wind chimes', 'h-jungle':'Drag across the vines, or tap the lemur' };
 let tipHold = 0;
@@ -2539,6 +2841,8 @@ function frame(time){
     if (shownP !== null && p !== shownP){ world.classList.add('fade'); setTimeout(()=>world.classList.remove('fade'), 220); }
     shownP = p;
   } else { cur += (target - cur) * .1; if (Math.abs(target-cur) < .00005) cur = target; p = cur; }
+  // which way she's traveling: scrolling back turns her around
+  if (p - lastP > .00008) moveDir = 1; else if (p - lastP < -.00008) moveDir = -1; lastP = p;
 
   const ch = chapterOf(p);
   if (ch !== curCh){
@@ -2567,8 +2871,9 @@ function frame(time){
   world.style.transform = `translate(${vw/2}px,${vh/2}px) scale(${(cam.z/U).toFixed(5)}) translate(${px(-cam.x)},${px(-cam.y)})`;
   cull(cam, vw, vh);
 
-  const s = shigostAt(p);
-  sh.style.transform = `translate(${px(s.x-110)},${px(s.y-(s.bob || 0)-143)}) rotate(${s.r}deg)`;
+  const s = shigostAt(p); s.dir = moveDir;
+  const flip = s.e && moveDir < 0 && s.s !== 'st-land' ? ' scale(-1,1)' : '';
+  sh.style.transform = `translate(${px(s.x-110)},${px(s.y-(s.bob || 0)-143)}) rotate(${s.r}deg)${flip}`;
   if (sh.dataset.s !== s.s){ sh.className = (s.s === 'st-run' ? 'st-walk' : s.s) + ' clickable'; sh.dataset.s = s.s; }
 
   const [top, bot] = skyFor(p, cam.y);
