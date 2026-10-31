@@ -68,7 +68,7 @@ a{color:inherit}
 
 /* stage */
 /* lvh and svh never change while the iOS toolbar slides, so nothing jumps */
-#journey{position:relative;height:2145vh;height:2145lvh}
+#journey{position:relative;height:2460vh;height:2460lvh}
 #stage{position:sticky;top:0;height:100vh;height:100lvh;overflow:hidden;background:var(--plum)}
 #vprobe{position:fixed;left:0;top:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none;
   padding:var(--sat) var(--sar) var(--sab) var(--sal)}
@@ -183,7 +183,7 @@ a{color:inherit}
 .halo .ping{animation:ping 2s ease-out infinite}
 @keyframes ping{from{transform:scale(.85);opacity:1}to{transform:scale(1.12);opacity:0}}
 #stage.h-space .halo.for-space,#stage.h-hills .halo.for-hills,#stage.h-jungle .halo.for-jungle,
-#stage.h-dunes .halo.for-dunes,#stage.h-beach .halo.for-beach,#stage.h-reef .halo.for-reef,#stage.h-chimes .halo.for-chimes{opacity:1}
+#stage.h-dunes .halo.for-dunes,#stage.h-beach .halo.for-beach,#stage.h-reef .halo.for-reef,#stage.h-reef2 .halo.for-reef2,#stage.h-deep .halo.for-deep,#stage.h-chimes .halo.for-chimes{opacity:1}
 /* 3D tap targets: positioned every frame over the 3D objects, never smaller than 44 px */
 #hot{position:absolute;inset:0;z-index:6;pointer-events:none;display:none}
 #stage.s3e #hot,#stage.s3d #hot{display:block}
@@ -277,6 +277,8 @@ a{color:inherit}
 #shigost.st-land .chute{transform:translateY(62%) scale(.08,.14);opacity:0;transition:transform .8s cubic-bezier(.5,0,.8,.4), opacity .5s ease-in .3s}
 #shigost.st-walk .chute{opacity:0;transition:none}
 #shigost:not(.st-stand) .aura{display:none}
+/* under water her hood puffs up into a clear bubble helmet */
+#shigost .bubble{display:none} #shigost.uw .bubble{display:inline}
 /* one arm layer per pose: down, up (jump, fall, parachute), and the portal gun arm */
 #shigost .arms-up,#shigost .arm-gun{display:none}
 #shigost.st-stand .arm-gun{display:inline} #shigost.st-stand .armR-down{display:none}
@@ -433,7 +435,7 @@ footer{text-align:center;padding:30px 20px calc(50px + var(--sab));color:var(--m
       <li data-name="Jungle" class="built"></li>
       <li data-name="Sand dunes" class="built"></li>
       <li data-name="Beach" class="built"></li>
-      <li data-name="Reef (coming soon)"></li>
+      <li data-name="Reef" class="built"></li>
       <li data-name="Deep ocean (coming soon)"></li>
       <li data-name="The island (coming soon)"></li>
     </ol>
@@ -930,7 +932,8 @@ halo(7540, 15500, 520, 'jungle');
 let actx = null;
 // small Web Audio voices: 'vine' (jungle harp), 'dune' (singing sand hum), 'shell' (glassy bell),
 // 'bloop' (tide pool), 'chirp' (critters), 'clack' (crab claws), 'chime' (litter cleared),
-// 'baa' (the sheep choir: a soft, sung baa), 'windchime' (the hills wind chimes: long, airy metal)
+// 'baa' (the sheep choir: a soft, sung baa), 'windchime' (the hills wind chimes: long, airy metal),
+// 'xylo' (the coral xylophone: a round, soft mallet note), 'anemone' (the glowing anemones: a glassy chime that bends up like a bubble)
 function tone(freq, voice = 'vine'){
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
@@ -952,6 +955,13 @@ function tone(freq, voice = 'vine'){
     } else if (voice === 'windchime'){
       os = [osc('sine', freq), osc('sine', freq*2.01), osc('sine', freq*2.76)]; lp.frequency.value = 7000;
       g.gain.linearRampToValueAtTime(.13, t + .003); g.gain.exponentialRampToValueAtTime(.001, t + 3); end = 3.1;
+    } else if (voice === 'xylo'){
+      os = [osc('sine', freq), osc('triangle', freq*2.01), osc('sine', freq*3.98)]; lp.frequency.setValueAtTime(3000, t); lp.frequency.exponentialRampToValueAtTime(900, t + .4);
+      g.gain.linearRampToValueAtTime(.24, t + .004); g.gain.exponentialRampToValueAtTime(.001, t + 1); end = 1.05;
+    } else if (voice === 'anemone'){
+      os = [osc('sine', freq), osc('sine', freq*2.4), osc('triangle', freq*.5)]; lp.frequency.value = 5200;
+      os.forEach((o, k) => { const f = [freq, freq*2.4, freq*.5][k]; o.frequency.setValueAtTime(f*.94, t); o.frequency.exponentialRampToValueAtTime(f, t + .09); });
+      g.gain.linearRampToValueAtTime(.15, t + .012); g.gain.exponentialRampToValueAtTime(.001, t + 1.8); end = 1.9;
     } else if (voice === 'shell'){
       os = [osc('sine', freq), osc('sine', freq*2.76), osc('sine', freq*5.4)]; lp.frequency.value = 6000;
       g.gain.linearRampToValueAtTime(.2, t + .004); g.gain.exponentialRampToValueAtTime(.001, t + 1.3); end = 1.4;
@@ -1083,6 +1093,7 @@ sh.innerHTML = `
     <circle cx="206" cy="114" r="6.5" fill="#fff" stroke="${LINE}" stroke-width="4"/>
     <path d="M193 101L202 100L204 127L195 127Z" fill="${SHADE}" stroke="${LINE}" stroke-width="4" stroke-linejoin="round"/></g>
   ${hw.strings}${hw.hood}${hw.face}
+  <g class="bubble"><circle cx="100" cy="66" r="92" fill="#dff8ff" fill-opacity=".14" stroke="#bfeef2" stroke-width="5"/><path d="M36 38Q56 4 98 -2" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none" opacity=".85"/><ellipse cx="100" cy="138" rx="66" ry="12" fill="none" stroke="#f4f1fb" stroke-width="11"/><ellipse cx="100" cy="138" rx="66" ry="12" fill="none" stroke="${LINE}" stroke-width="2.5" opacity=".6"/></g>
   <g class="arms-up">${sleeveUp('sg')}${mirror(sleeveUp('sg'))}</g>
 </svg>`;
 sh.style.zIndex = 5;
@@ -1112,7 +1123,18 @@ function dunesH(x, z){
 }
 const shoreZ = x => -470 + 40*Math.sin(x*.0013) + 620*smooth(29300, 31300, x); // waterline along the beach
 const beachH = (x, z) => { const d = z - shoreZ(x); return Math.max(WL - 240, WL + 4 + (d < 700 ? d : 700 + (d - 700)*.15)*.1 + 5*Math.sin(x*.004 + z*.003)); };
-const earthH = (x, z) => lerp(dunesH(x, z), beachH(x, z), smooth(22700, 24300, x));
+// the reef: past the beach the sea floor slopes down to a coral reef REEF_D below the surface, with soft bumps along
+// Shigost's path, hazy ridges rising behind it (the berm, always under water), and at DROP_X a
+// drop-off into the deep ocean. In front (toward the camera) the floor dips a little, so nothing rises between the camera
+// and Shigost on any screen shape
+const REEF_D = -1250, DROP_X = 42700, REEF_SAND = '#d6e6dc';
+function reefH(x, z){
+  const slope = lerp(WL + 6, REEF_D, smooth(30500, 34300, x)), on = smooth(31000, 33000, x);
+  const bumps = 70*Math.sin(x*.0011 + z*.0007) + 40*Math.sin(x*.0029 - z*.0021) + 22*Math.sin(x*.007 + z*.005);
+  const back = 700*smooth(-700, -4200, z) + 200*Math.sin(x*.0007 + z*.0004)*smooth(-2500, -6000, z), front = -160*smooth(1200, 5000, z);
+  return slope + (bumps*smooth(31500, 33500, x) + back + front)*on - 3600*smooth(DROP_X - 300, DROP_X + 900, x + 260*Math.sin(z*.0011));
+}
+const earthH = (x, z) => { const b = lerp(dunesH(x, z), beachH(x, z), smooth(22700, 24300, x)); return x < 30300 ? b : lerp(b, reefH(x, z), smooth(30300, 32000, x)); };
 const pathY = x => GE - earthH(x, 0);
 // hills and jungle ground for the 3D land: along Shigost's path (z = 0) it follows the same lines as the 2D
 // hills (frontTop) and jungle floor (jFloor); behind her, rolling hills rise into the haze; at LAND_X1 it has
@@ -1132,23 +1154,39 @@ function landH(x, z){
 const groundH = (x, z) => x < LAND_X1 ? landH(x, z) : earthH(x, z);
 const groundY = x => GE - groundH(x, 0); // 2D world y of the ground on Shigost's path, anywhere after the fall
 // scroll beats after the jungle (p runs past 1 now)
-const PMAX = 1.43, J_FLASH = 1.03;
+const PMAX = 1.64, J_FLASH = 1.03;
 const EP = { R0: 1.11, R1: 1.16, C: 1.205, B: 1.25, BR0: 1.29, BR1: 1.34, END: 1.39 };
 const EX = { start: 14000, rest: 16350, crest: 21300, beach: 24700, brest: 26300, end: 30200 };
+// the reef: she wades in and dives at DIVE, rests by the coral xylophone (R1 to R1E), rests on the moss bed by the
+// glowing anemones (R2 to R2E), and crosses the reef to the drop-off and the deep ocean sign (END)
+const RP = { IN: EP.END, DIVE: 1.425, R1: 1.455, R1E: 1.49, R2: 1.525, R2E: 1.56, END: 1.6 };
+const RFX = { dive: 32400, r1: 34700, r2: 37600, end: 41900 };
 // 2D fallback for the dunes and beach (no WebGL): simple silhouettes, hidden once the 3D scene is ready
 chapterGroup('earth');
 { const tile = (x0, x1, y0, y1, draw, o) => { for (let a = x0; a < x1; a += 6000){ const b = Math.min(x1, a + 6000), cx = (a + b)/2, cy = (y0 + y1)/2; place(svgBox(cx, cy, b - a + 4, y1 - y0, draw(a - 2, b + 2)), cx, cy, b - a + 4, y1 - y0, o); } };
   const prof = (fn, a, b, bottom) => { let d = `M${a} ${bottom}`; for (let x = a; x <= b; x += 80) d += `L${x} ${fn(x).toFixed(0)}`; return d + `L${b} ${bottom}Z`; };
-  tile(21500, 34000, GE - 900, GE + 400, (a, b) => `<rect x="${a}" y="${GE - 420}" width="${b - a}" height="820" fill="#5aa7c8"/>`, {cls:'art2e', z:1});
+  tile(21500, 31000, GE - 900, GE + 400, (a, b) => `<rect x="${a}" y="${GE - 420}" width="${b - a}" height="820" fill="#5aa7c8"/>`, {cls:'art2e', z:1});
   tile(9000, 24800, GE - 1500, GE + 4200, (a, b) => `<path d="${prof(x => GE - dunesH(x, -1500)*.9, a, b, GE + 4200)}" fill="#e9b8a2"/>`, {cls:'art2e', z:1});
-  tile(9000, 34000, GE - 1300, GE + 4200, (a, b) => `<path d="${prof(pathY, a, b, GE + 4200)}" fill="#f1c79f"/>`, {cls:'art2e', z:2});
-  place(svgBox(0,0,560,620,`<g stroke="${INK}" stroke-width="9" stroke-linejoin="round"><rect x="-18" y="-120" width="36" height="420" rx="8" fill="#8a5a3a"/>
-    <path d="M-200 -210h320l60 52 -60 52h-320z" fill="#f3e3c2"/><path d="M-180 -40h300l-50 46 50 46h-300z" fill="#9fd8c9"/></g>
-    <text x="-30" y="-143" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="56" fill="${INK}">The reef</text>
-    <text x="-30" y="22" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="700" font-size="40" fill="${INK}">coming soon</text>`), 30700, pathY(30700) - 420, 840, 930, {cls:'clickable art2e', z:5})
+  tile(9000, 31500, GE - 1300, GE + 4200, (a, b) => `<path d="${prof(pathY, a, b, GE + 4200)}" fill="#f1c79f"/>`, {cls:'art2e', z:2});
+  const sign2 = (x, y, top, bottom, c1, c2) => svgBox(0,0,560,620,`<g stroke="${INK}" stroke-width="9" stroke-linejoin="round"><rect x="-18" y="-120" width="36" height="420" rx="8" fill="#8a5a3a"/>
+    <path d="M-200 -210h320l60 52 -60 52h-320z" fill="${c1}"/><path d="M-180 -40h300l-50 46 50 46h-300z" fill="${c2}"/></g>
+    <text x="-30" y="-143" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="${top.length > 10 ? 44 : 56}" fill="${INK}">${top}</text>
+    <text x="-30" y="22" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="700" font-size="40" fill="${INK}">${bottom}</text>`);
+  place(sign2(0, 0, 'The reef', 'this way', '#f3e3c2', '#9fd8c9'), 29700, pathY(29700) - 420, 840, 930, {cls:'clickable art2e', z:5})
     .addEventListener('click', () => reefCard());
+  // the reef (without WebGL): deep teal water from the surface down, the sea floor, soft coral silhouettes, and the sign
+  chapterGroup('reef');
+  tile(31000, 47000, GE - WL - 30, GE + 5400, (a, b) => `<defs><linearGradient id="rw${Math.round(a)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd8dc"/><stop offset=".45" stop-color="#3a95b2"/><stop offset="1" stop-color="#14466e"/></linearGradient></defs><rect x="${a}" y="${GE - WL - 30}" width="${b - a}" height="5430" fill="url(#rw${Math.round(a)})"/>`, {cls:'art2e', z:1});
+  tile(31400, 47000, GE - 1300, GE + 5400, (a, b) => {
+    let s = `<path d="${prof(x => GE - reefH(x, -900), a, b, GE + 5400)}" fill="#7fb7bf" opacity=".7"/>`;
+    for (let x = Math.ceil(a/430)*430; x < Math.min(b, DROP_X - 300); x += 430){ if (x < 32600) continue; const y = pathY(x), r = 50 + (x*7 % 90), c = ['#7fd6cf','#5fc4c0','#9fe3d6','#4fb3b8'][(x/430 | 0) % 4];
+      s += `<ellipse cx="${x}" cy="${y - r*.5}" rx="${r}" ry="${r*.8}" fill="${c}"/><circle cx="${x + r*.7}" cy="${y - r*1.3}" r="16" fill="${(x/430 | 0) % 2 ? '#ff8fc8' : '#b98cff'}"/>`; }
+    return s + `<path d="${prof(pathY, a, b, GE + 5400)}" fill="#d6e6dc"/>`; }, {cls:'art2e', z:2});
+  place(sign2(0, 0, 'The deep ocean', 'coming soon', '#cfeee9', '#c9bdf5'), RFX.end + 420, pathY(RFX.end + 420) - 420, 840, 930, {cls:'clickable art2e', z:5})
+    .addEventListener('click', () => deepCard());
 }
-const reefCard = () => showCard('The reef','Coming soon','Next, Shigost dives under the waves: down through the reef, into the deep ocean, and on to the island.','See the games','#games');
+const reefCard = () => showCard('The reef','Next up','Keep scrolling: Shigost wades into the waves, her hood puffs up into a bubble helmet, and she dives down to the reef.','See the games','#games');
+const deepCard = () => showCard('The deep ocean','Coming soon','Past the reef’s edge the water turns deep blue and the light fades. That’s where Shigost heads next, and on to the island after that.','See the games','#games');
 group = groups[0];
 
 /* ================= TIMELINE ================= */
@@ -1197,7 +1235,24 @@ function earthAt(p){
   if (p < EP.BR0) return walk(EX.beach, EX.brest, EP.B, EP.BR0);
   if (p < EP.BR1) return rest(EX.brest);
   if (p < EP.END) return walk(EX.brest, EX.end, EP.BR1, EP.END);
-  return rest(EX.end);
+  return reefAt(p);
+}
+// Under water she walks the sea floor in slow, floaty steps with a gentle hop now and then (the 3D side adds her glide
+// above the reef when the visitor scrolls fast). w is 1 once her head is under the surface: her hood puffs up into
+// a bubble helmet then.
+function reefAt(p){
+  const sub = y => y - 110 > GE - WL ? 1 : 0;
+  const go = (x0, x1, p0, p1) => { const t = clamp((p - p0)/(p1 - p0), 0, 1), x = lerp(x0, x1, t), y = groundY(x) - SG_FOOT, w = sub(y);
+    const n = Math.max(1, Math.round((x1 - x0)/1100)), f = (t*n) % 1, hop = w && f > .55 ? 95*Math.sin((f - .55)/.45*Math.PI) : 0;
+    return { x, y: y - hop, r: 0, s: 'st-walk', e: 1, w }; };
+  const rest = x => { const y = groundY(x) - SG_FOOT; return { x, y, r: 0, s: 'st-land', e: 1, w: sub(y) }; };
+  if (p < RP.DIVE) return go(EX.end, RFX.dive, RP.IN, RP.DIVE);
+  if (p < RP.R1) return go(RFX.dive, RFX.r1, RP.DIVE, RP.R1);
+  if (p < RP.R1E) return rest(RFX.r1);
+  if (p < RP.R2) return go(RFX.r1, RFX.r2, RP.R1E, RP.R2);
+  if (p < RP.R2E) return rest(RFX.r2);
+  if (p < RP.END) return go(RFX.r2, RFX.end, RP.R2E, RP.END);
+  return rest(RFX.end);
 }
 
 /* ================= CAMERA ================= */
@@ -1309,8 +1364,31 @@ function relayout(vw, vh){
   const bRest = fit3(tall ? {x0:25500, x1:27600, y0:GE - 640, y1:GE + 60} : {x0:25450, x1:27900, y0:GE - 640, y1:GE + 60}, .22, 0);
   stops.push([EP.BR0, bRest], [EP.BR1, bRest]);
   for (let q = 1.35; q <= 1.3801; q += .01) stops.push([q, follow(q, .2, -.05), 1]);
-  const eRest = fit3(tall ? {x0:29900, x1:31500, y0:GE - 900, y1:GE + 60} : {x0:29600, x1:32000, y0:GE - 900, y1:GE + 60}, .16, -.14);
-  stops.push([EP.END + .005, eRest], [PMAX, eRest]);
+  // beach to reef in one move: the camera follows her into the waves and down through the surface. sub() sets the
+  // camera's height against the water (positive above it, negative below); uw() keeps every view under water below
+  // the surface and above the sea floor, whatever the screen shape
+  const TN = Math.tan(15*Math.PI/180), WY = WL - GE, camY3 = c => -c.y + vh/c.z/2/TN*Math.sin(c.pitch);
+  const sub = (q, hc, yaw, zk = 1, dx = 240) => { const s = shigostAt(q), z = zW*zk, c = at(s.x + dx, s.y - (tall ? .2 : .1)*F.h/z, z);
+    return Object.assign(c, { pitch: Math.asin(clamp((WY + hc + c.y)/(vh/z/2/TN), -.6, .9)), yaw }); };
+  const uw = c => { const D = vh/c.z/2/TN, cx = c.x + D*Math.sin(c.yaw)*Math.cos(c.pitch), cz = D*Math.cos(c.yaw)*Math.cos(c.pitch);
+    const hi = WY - 200, lo = Math.min(hi, earthH(cx, cz) - GE + 160), y = clamp(camY3(c), lo, hi);
+    c.pitch = Math.asin(clamp((y + c.y)/D, -.6, .9)); return c; };
+  stops.push([RP.IN, follow(RP.IN, .18, -.08), 1]);
+  // (from the open sea's side, so the shore stays behind her as she walks down into the reef)
+  [[1.4, 520, -.02], [1.408, 330, .04], [1.416, 150, .09], [1.422, 40, .12], [1.427, -150, .12], [1.433, -330, .1], [1.441, -480, .06]]
+    .forEach(([q, hc, yw]) => { const c = sub(q, hc, yw, tall ? 1.5 : 1.05); stops.push([q, hc < 0 ? uw(c) : c, 1]); });
+  stops.push([1.449, uw(follow(1.449, .1, .02, zW*(tall ? 1.2 : .95), 260)), 1]);
+  // the reef rests: a view of her resting place, then (on narrow screens) a closer one where the toys are 44 px apart
+  const fl = GE - REEF_D, rBox = (x0, x1, up = 1150) => ({ x0, x1, y0: fl - up, y1: fl + 140 }), XZ = 50/105, AZ = 50/125;
+  const r1w = uw(fit3(tall ? rBox(RFX.r1 - 450, RFX.r1 + 1050) : rBox(RFX.r1 - 800, RFX.r1 + 1500), .1, -.05)), r1x = r1w.z < XZ ? uw(fit3(rBox(34575, 35975, 550), .08, -.03, XZ)) : r1w;
+  stops.push([RP.R1, r1w], [RP.R1 + .012, r1w], [RP.R1 + .02, r1x], [RP.R1E, r1x]);
+  for (let q = RP.R1E + .007; q <= RP.R2 - .006; q += .007) stops.push([q, uw(follow(q, .12, lerp(-.05, .12, (q - RP.R1E)/(RP.R2 - RP.R1E)), zW*.9, 260)), 1]);
+  const r2w = uw(fit3(tall ? rBox(RFX.r2 - 450, RFX.r2 + 1000) : rBox(RFX.r2 - 800, RFX.r2 + 1500), .12, .06)), r2x = r2w.z < AZ ? uw(fit3(rBox(37540, 38940, 550), .1, .04, AZ)) : r2w;
+  stops.push([RP.R2, r2w], [RP.R2 + .012, r2w], [RP.R2 + .02, r2x], [RP.R2E, r2x]);
+  for (let q = RP.R2E + .007; q <= RP.END - .006; q += .008) stops.push([q, uw(follow(q, .1, lerp(.08, -.12, (q - RP.R2E)/(RP.END - RP.R2E)), zW*.85, 300)), 1]);
+  // the drop-off: the deep ocean sign at the reef's edge, with the dark blue depths beyond
+  const dEnd = uw(fit3(tall ? rBox(RFX.end - 300, RFX.end + 900, 1300) : rBox(RFX.end - 900, RFX.end + 1500, 1400), .14, -.12));
+  stops.push([RP.END + .006, dEnd], [PMAX, dEnd]);
   const focus = fit({x0:STAND.x - 300, x1:PORTAL.x + 450, y0:PORTAL.y - 450, y1:STAND.y + 220});
   return { vw, vh, F, hero, stops, seq, focus, zCover };
 }
@@ -1333,7 +1411,13 @@ const hex = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 const mix = (a,b,t) => { const A=hex(a),B=hex(b); return `rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],t))).join(',')})`; };
 // dunes: clear blue to peach; beach: late-day lavender to coral (never a yellow field behind Shigost)
 const DUNES_SKY = ['#78b8e8', '#ffd8c8'], BEACH_SKY = ['#7080d4', '#ffb9a6'], JUNGLE_SKY = ['#5e9f8a', '#cfeedd'];
-function skyFor(p, y){
+// under water the "sky" is the water itself: bright aqua toward the surface, teal haze all around, deepening toward
+// the darker blues of the deep ocean at the reef's edge (the 3D side blends to it as the camera dips under the surface)
+const REEF_SKY = ['#8fe0e4', '#2a86a6'], DEEP_SKY = ['#5aaecb', '#134272'];
+const toHex = c => c[0] === '#' ? c : '#' + c.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join('');
+const reefSky = p => { const k = smooth(RP.R2E, PMAX - .02, p); return [toHex(mix(REEF_SKY[0], DEEP_SKY[0], k)), toHex(mix(REEF_SKY[1], DEEP_SKY[1], k))]; };
+function skyFor(p, y, water = true){
+  if (water && p > RP.DIVE) return reefSky(p);
   if (!s3.L3){
     if (p < J_FLASH) return skyAt(y);
     const k = smooth(1.2, 1.27, p); return [mix(DUNES_SKY[0], BEACH_SKY[0], k), mix(DUNES_SKY[1], BEACH_SKY[1], k)];
@@ -1390,8 +1474,13 @@ const CHAPTERS = [
   {until:S+.243, cls:'ch-jungle', name:'The jungle', n:3, rest:S+.218, rest2:S+.25},
   {until:1.035, cls:'ch-jungle', name:'The jungle', n:3, rest:S+.27, rest2:1},
   {until:1.215, cls:'ch-dunes', name:'Sand dunes', n:4, rest:1.135},
-  {until:1.37, cls:'ch-beach', name:'The beach', n:5, rest:1.315},
-  {until:9, cls:'ch-beach', name:'The beach', n:5, rest:PMAX},
+  {until:RP.DIVE, cls:'ch-beach', name:'The beach', n:5, rest:1.315},
+  // each reef rest: its wide view, then (on narrow screens) the close-up where the toys are 44 px apart
+  {until:1.472, cls:'ch-reef', name:'The reef', n:6, rest:1.462},
+  {until:1.508, cls:'ch-reef', name:'The reef', n:6, rest:1.482},
+  {until:1.541, cls:'ch-reef', name:'The reef', n:6, rest:1.533},
+  {until:1.58, cls:'ch-reef', name:'The reef', n:6, rest:1.552},
+  {until:9, cls:'ch-reef', name:'The reef', n:6, rest:PMAX},
 ];
 const chapterOf = p => CHAPTERS.find(c => p < c.until);
 const railItems = [...document.querySelectorAll('#rail li')];
@@ -1448,6 +1537,9 @@ const LORE = {
   'dune-hopper':   { name: 'Dune hopper',  kind: 'Critter', text: LORE_SOON },
   'coral-crab':    { name: 'Coral crab',   kind: 'Critter', text: LORE_SOON },
   'pink-crab':     { name: 'Pink crab',    kind: 'Critter', text: LORE_SOON },
+  'sea-turtle':    { name: 'Sea turtle',   kind: 'Critter', text: LORE_SOON },
+  'reef-octopus':  { name: 'Little octopus', kind: 'Critter', text: LORE_SOON },
+  'reef-fish':     { name: 'Reef fish',    kind: 'Critters', text: LORE_SOON },
   // Womps (placeholder names until Alyssa names them)
   'womp-asteroid': { name: 'Asteroid Womp',      kind: 'Womp', text: LORE_SOON },
   'womp-drifter':  { name: 'Drifting Womp',      kind: 'Womp', text: LORE_SOON },
@@ -1469,6 +1561,8 @@ const LORE = {
   'womp-shell':    { name: 'Shell keeper',       kind: 'Womp', text: LORE_SOON },
   'womp-pool':     { name: 'Tide pool Womp',     kind: 'Womp', text: LORE_SOON },
   'womp-reef':     { name: 'Reef watcher',       kind: 'Womp', text: LORE_SOON },
+  'womp-diver':    { name: 'Reef diver',         kind: 'Womp', text: LORE_SOON },
+  'womp-bubble':   { name: 'Little bubble Womp', kind: 'Womp', text: LORE_SOON },
 };
 
 /* ================= WOMPS ================= */
@@ -1477,7 +1571,8 @@ const LORE = {
 // and the 3D side draws them all with shared geometry (see wompSet), so swapping in real models later only means
 // changing how a set is drawn. ch: the chapter group; x and z: where it stands (z = 0 is Shigost's path, negative is
 // farther away); slot: stands on a floating asteroid instead (SPACE_SLOTS); h: height in world units (Shigost is about
-// 260, the painter about 880, a Kiki about 100); mood: its idle behavior (sway, wave, dance, or cheer).
+// 260, the painter about 880, a Kiki about 100); mood: its idle behavior (sway, wave, dance, or cheer); helmet: a little
+// bubble helmet (under water).
 const WOMPS = [
   { id: 'womp-asteroid', ch: 'space',  x: -520,  z: -170, h: 175, color: '#f4f2ee', mood: 'wave' },
   { id: 'womp-drifter',  ch: 'space',  slot: 'rock-a', h: 150, color: '#f4f2ee', mood: 'sway' },
@@ -1499,6 +1594,9 @@ const WOMPS = [
   { id: 'womp-shell',    ch: 'earth',  x: 26700, z: 560,  h: 110, color: '#f4f2ee', mood: 'cheer' },
   { id: 'womp-pool',     ch: 'earth',  x: 27750, z: 980,  h: 240, color: '#f4f2ee', mood: 'sway' },
   { id: 'womp-reef',     ch: 'earth',  x: 30250, z: 330,  h: 170, color: '#f4f2ee', mood: 'wave' },
+  // under water, Womps wear little bubble helmets of their own (helmet: true)
+  { id: 'womp-diver',    ch: 'reef',   x: 34120, z: 300,  h: 215, color: '#f4f2ee', mood: 'wave', helmet: true },
+  { id: 'womp-bubble',   ch: 'reef',   x: 38780, z: 260,  h: 125, color: '#f4f2ee', mood: 'dance', helmet: true },
 ];
 // Space is a preview of the space explorer game: little floating asteroids, each a slot with Womps on it. To drop in
 // a 3D model of one of Alyssa's creatures later, set model to its .glb path (and height to how tall it should stand):
@@ -1513,8 +1611,8 @@ const SPACE_SLOTS = [
 // Fills in as visitors meet characters (tap them), play the musical toys, and clean up litter. Saved in this browser
 // for now. The saved record is plain JSON ({ v, met, played, cleaned, updated }, each entry an id with the time it
 // happened), so a later round can sync it to an account and a public leaderboard without changing how it's collected.
-const TOYS = { 'sheep-choir': 'Sheep choir', 'wind-chimes': 'Wind chimes', 'vine-harp': 'Vine harp', 'singing-ridge': 'Singing ridge', 'shell-bells': 'Shell bells', 'tide-pool': 'Tide pool' };
-const LITTER_SPOTS = { 'wrapper': 'Candy wrapper in the hills', 'jungle-bag': 'Bag on a jungle vine', 'can': 'Can in the dunes', 'bottle': 'Bottle on the beach', 'beach-bag': 'Bag on the beach', 'net': 'Tangled net' };
+const TOYS = { 'sheep-choir': 'Sheep choir', 'wind-chimes': 'Wind chimes', 'vine-harp': 'Vine harp', 'singing-ridge': 'Singing ridge', 'shell-bells': 'Shell bells', 'tide-pool': 'Tide pool', 'coral-xylophone': 'Coral xylophone', 'glow-anemones': 'Glowing anemones' };
+const LITTER_SPOTS = { 'wrapper': 'Candy wrapper in the hills', 'jungle-bag': 'Bag on a jungle vine', 'can': 'Can in the dunes', 'bottle': 'Bottle on the beach', 'beach-bag': 'Bag on the beach', 'net': 'Tangled net on the beach', 'reef-net': 'Fishing net on the coral' };
 const JOURNAL = (() => {
   const KEY = 'recklyss-journal';
   let data = { v: 1, met: {}, played: {}, cleaned: {}, updated: 0 };
@@ -1641,9 +1739,10 @@ function build3D(){
      finish, big flat matte black eyes like Shigost's (no shine or highlights), and stubby little limbs ---- */
   // spirit(): a soft lavender rim at the silhouette, so white spirits stay readable against white clouds, sand, and plants
   // (and glow a little against dark space and the jungle); paired with soft contact shadows under every character
-  const RIM = { value: C('#a395dd') };
+  // (three.js r128 has no output_fragment chunk: shader patches hook OUT_FRAG, the line that writes the final color)
+  const RIM = { value: C('#a395dd') }, OUT_FRAG = 'gl_FragColor = vec4( outgoingLight, diffuseColor.a );';
   function spirit(m){ m.onBeforeCompile = sh => { sh.uniforms.rimTint = RIM;
-    sh.fragmentShader = 'uniform vec3 rimTint;\n' + sh.fragmentShader.replace('#include <output_fragment>', '{ float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))); outgoingLight = mix(outgoingLight, rimTint*0.85, smoothstep(0.42, 0.98, rim)*0.5); }\n#include <output_fragment>'); };
+    sh.fragmentShader = 'uniform vec3 rimTint;\n' + sh.fragmentShader.replace(OUT_FRAG, '{ float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))); outgoingLight = mix(outgoingLight, rimTint*0.85, smoothstep(0.42, 0.98, rim)*0.5); }\n' + OUT_FRAG); };
     m.customProgramCacheKey = () => 'spirit'; return m; }
   const matCache = {}, matte = (hex, glowK = 0) => matCache[hex + glowK] || (matCache[hex + glowK] = spirit(std(hex, { roughness: .92, emissive: C(hex), emissiveIntensity: glowK })));
   const eyeM = new T.MeshStandardMaterial({ color: C('#0d0b12'), roughness: 1, metalness: 0 });
@@ -1655,7 +1754,8 @@ function build3D(){
 
   /* ---- lighting: one rig for the whole journey, blended between chapter presets as the camera travels.
      Space: soft key, gentle fill, two rims so shapes pop. Fall: pastel daylight. Hills: warm light under a rose haze.
-     Jungle: dim mint light from the canopy. Dunes and beach: the sun, warming toward late day. ---- */
+     Jungle: dim mint light from the canopy. Dunes and beach: the sun, warming toward late day. Reef: soft aqua light from
+     the surface with violet and pink rims; under water the sky dome and fog turn to the water's color. ---- */
   const hemi = new T.HemisphereLight(), amb = new T.AmbientLight(), key = new T.DirectionalLight(), rimA = new T.DirectionalLight(), rimB = new T.DirectionalLight();
   root.add(hemi, amb, key, rimA, rimB);
   const LP = (hemiS, hemiG, hemiI, ambC, ambI, keyC, keyI, keyD, aC, aI, aD, bC, bI, bD, fog, sunC, sunO) => ({ hemiS: C(hemiS), hemiG: C(hemiG), hemiI, ambC: C(ambC), ambI,
@@ -1666,11 +1766,12 @@ function build3D(){
   const L_JUNGLE = LP('#c8f2dc','#2e5a40',.78, '#3c6a58',.24, '#eafff1',.8,[-.25,1,.35], '#a6ecc9',.32,[.4,.3,1], '#ffd2ef',.28,[1,.2,-1], [1,.55,1.2,7000], '#e9fff2',0);
   const L_DUNES = LP('#d9e9ff','#f2b896',.78, '#6a5a8a',.16, '#fff0e2',1.15,[-.42,.62,-.66], '#ffd6e4',.38,[.4,.3,1], '#ffffff',0,[0,1,0], [1,.85,1.7,15000], '#fff4ea',.55);
   const L_BEACH = LP('#d9e9ff','#e9a0a0',.78, '#6a5a8a',.16, '#ffc6a0',1.0,[.5,.2,-.84], '#ffd6e4',.38,[.4,.3,1], '#ffffff',0,[0,1,0], [1,.85,1.7,15000], '#ffc9a8',.55);
-  const RIG = { sunDir: V(0,1,0), top: '#000', bot: '#000', near: 1e7, far: 1.1e7 }, _la = {}, _lb = {};
+  const L_REEF = LP('#d2f7f2','#2f6584',.95, '#4a7a9a',.3, '#f0fffc',1.0,[-.2,1,.3], '#c4b2ff',.42,[.4,.3,1], '#ff9ad5',.3,[-1,.2,-.6], [1,.12,1.9,2600], '#f0fffc',0);
+  const RIG = { sunDir: V(0,1,0), top: '#000', bot: '#000', near: 1e7, far: 1.1e7, uw: 0 }, _la = {}, _lb = {};
   const sunGlow = glow('#fff4ea', 5200, 0), sunCore = glow('#ffffff', 1400, 0); sunGlow.material.fog = sunCore.material.fog = false; root.add(sunGlow, sunCore);
   function rig(p, D, camY){
-    const keys = s3.L3 ? [[0, L_SPACE], [.4*S, L_SPACE], [.5*S, L_FALL], [.86*S, L_FALL], [.93*S, L_HILLS], [S + .1, L_HILLS], [S + .135, L_JUNGLE], [1.025, L_JUNGLE], [1.065, L_DUNES], [1.2, L_DUNES], [1.27, L_BEACH]]
-      : [[0, L_SPACE], [J_FLASH, L_SPACE], [J_FLASH + 1e-4, L_DUNES], [1.2, L_DUNES], [1.27, L_BEACH]];
+    const keys = s3.L3 ? [[0, L_SPACE], [.4*S, L_SPACE], [.5*S, L_FALL], [.86*S, L_FALL], [.93*S, L_HILLS], [S + .1, L_HILLS], [S + .135, L_JUNGLE], [1.025, L_JUNGLE], [1.065, L_DUNES], [1.2, L_DUNES], [1.27, L_BEACH], [RP.IN, L_BEACH], [1.43, L_REEF]]
+      : [[0, L_SPACE], [J_FLASH, L_SPACE], [J_FLASH + 1e-4, L_DUNES], [1.2, L_DUNES], [1.27, L_BEACH], [RP.IN, L_BEACH], [1.43, L_REEF]];
     let i = 1; while (i < keys.length - 1 && p > keys[i][0]) i++;
     const [pa, a] = keys[i - 1], [pb, b] = keys[i], t = clamp((p - pa)/(pb - pa), 0, 1);
     hemi.color.copy(a.hemiS).lerp(b.hemiS, t); hemi.groundColor.copy(a.hemiG).lerp(b.hemiG, t); hemi.intensity = lerp(a.hemiI, b.hemiI, t);
@@ -1681,12 +1782,16 @@ function build3D(){
     RIG.sunDir.copy(key.position);
     const fk = lerp(a.fog[0], b.fog[0], t);
     RIG.near = fk > .001 ? D*lerp(a.fog[1], b.fog[1], t)/fk : 1e7; RIG.far = fk > .001 ? (D*lerp(a.fog[2], b.fog[2], t) + lerp(a.fog[3], b.fog[3], t))/fk : 1.1e7;
-    const [top, bot] = skyFor(p, camY); RIG.top = top; RIG.bot = bot; skyU.top.value.set(top); skyU.bot.value.set(bot);
+    // under water (the camera below the surface) the dome and fog take the water's color; a short blend as it crosses
+    const uw = RIG.uw = clamp((WL - GE - camera.position.y)/90 + .5, 0, 1);
+    let [top, bot] = skyFor(p, camY, false); if (uw > 0){ const [wt, wb] = reefSky(p); top = mix(toHex(top), wt, uw); bot = mix(toHex(bot), wb, uw); }
+    RIG.top = top; RIG.bot = bot; skyU.top.value.set(top); skyU.bot.value.set(bot);
+    if (uw > 0){ RIG.near = lerp(RIG.near, D*.12, uw); RIG.far = lerp(RIG.far, D*1.9 + 2600, uw); }
     skyQ.position.copy(camera.position); skyQ.scale.setScalar(camera.far*.9);
     const sa = starAlpha(camY); starU.alpha.value = sa; starU.time.value = reduce.matches ? 0 : performance.now()/1000; stars.visible = sa > .002;
     nebs.forEach(n => { n.material.opacity = n.userData.o*sa; n.visible = sa > .002; });
     root.fog.color.set(bot).convertSRGBToLinear(); root.fog.near = RIG.near; root.fog.far = RIG.far;
-    const so = lerp(a.sunO, b.sunO, t); sunGlow.visible = sunCore.visible = so > .01;
+    const so = lerp(a.sunO, b.sunO, t)*(1 - uw); sunGlow.visible = sunCore.visible = so > .01;
     if (so > .01){ sunGlow.position.copy(camera.position).addScaledVector(RIG.sunDir, 26000); sunCore.position.copy(sunGlow.position);
       sunGlow.material.color.copy(a.sunC).lerp(b.sunC, t); sunGlow.material.opacity = so; sunCore.material.opacity = so*1.45; }
   }
@@ -1978,6 +2083,34 @@ function build3D(){
     m.customProgramCacheKey = () => 'balloon';
     bal = new T.Mesh(bake(parts), m); bal.frustumCulled = false; bal.matrixAutoUpdate = false; chute.add(bal);
   }
+  // The bubble helmet: under water her hood puffs up into a clear bubble around her head. The hood's edge stays as a
+  // soft fabric collar, with the hood's seam arching over the top and the drawstrings at the front, so it reads as the
+  // same hoodie trick, and her matte black eyes show clearly through it. It deflates when she leaves the water.
+  // bubbleM() is the clear bubble with a soft rim and one small highlight away from the eyes (the Womps' helmets too).
+  const bubbleM = () => { const m = new T.MeshStandardMaterial({ color: C('#e9fbff'), transparent: true, roughness: .1, metalness: 0, depthWrite: false });
+    m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace(OUT_FRAG, `{ vec3 bn = normalize(vNormal); float f = 1.0 - abs(dot(bn, normalize(vViewPosition)));
+      outgoingLight = mix(outgoingLight, vec3(0.85, 0.97, 1.0), smoothstep(0.5, 1.0, f)*0.7); diffuseColor.a *= mix(0.05, 0.6, smoothstep(0.35, 1.0, f));
+      float hl = smoothstep(0.9, 0.97, dot(bn, normalize(vec3(-0.5, 0.65, 0.58)))); outgoingLight += vec3(hl*0.9); diffuseColor.a = max(diffuseColor.a, hl*0.7*opacity); }
+      ${OUT_FRAG}`); };
+    m.customProgramCacheKey = () => 'bubble'; return m; };
+  const bubM = bubbleM(), helmM = bubbleM(), helm = new T.Group(), helmBub = new T.Mesh(new T.SphereGeometry(1, 36, 24), helmM), HEAD = { off: V(0, 0, 0), r: 60, q: new T.Quaternion(), ok: false };
+  helm.visible = false; helm.add(helmBub); root.add(helm);
+  { const fab = matte('#f4f1fb');
+    helm.add(new T.Mesh(new T.TorusGeometry(.55, .11, 10, 36).rotateX(Math.PI/2).translate(0, -.86, 0), fab)); // the hood's edge, now a soft collar
+    const arc = []; for (let k = 0; k <= 24; k++){ const a = .95 + k/24*(Math.PI + 1.0 - .95); arc.push(V(0, Math.sin(a)*1.012, Math.cos(a)*1.012)); }
+    helm.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(arc), 40, .04, 6), fab)); // the hood's seam, over the top
+    [-1, 1].forEach(sd => { const c = new T.Mesh(new T.CylinderGeometry(.022, .022, .4, 6), fab); c.position.set(sd*.13, -1.08, .5); c.rotation.z = sd*.08; helm.add(c);
+      const ag = new T.Mesh(new T.CylinderGeometry(.04, .04, .1, 8), matte('#d9d0f2')); ag.position.set(sd*.145, -1.3, .5); helm.add(ag); }); }
+  let helmK = 0, helmV = 0;
+  s3.helmTop = v => { if (!helm.visible) return false; v.set(0, 1, 0).applyMatrix4(helm.matrixWorld); return true; };
+  // where her hood sits, measured once from the model's own head vertices: the helmet's center in the head bone's
+  // frame, its radius, and how the bone's axes turn to hers
+  function measureHead(model){ const hb = model.getObjectByName('head'); if (!hb) return; SG.b.head = hb; SG.wrap.updateMatrixWorld(true); const pts = [];
+    model.traverse(o => { if (!o.isSkinnedMesh) return; const bi = o.skeleton.bones.indexOf(hb), si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight; if (bi < 0 || !si) return;
+      for (let i = 0; i < si.count; i++){ const ix = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)], wx = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)];
+        if (ix.reduce((a, j, k) => a + (j === bi ? wx[k] : 0), 0) > .5) pts.push(o.boneTransform(i, V(0, 0, 0)).applyMatrix4(o.matrixWorld)); } });
+    if (pts.length < 8) return; const box = new T.Box3().setFromPoints(pts), c = box.getCenter(V(0, 0, 0)), sz = box.getSize(V(0, 0, 0));
+    HEAD.r = Math.max(sz.x, sz.y, sz.z)*.5*1.18; HEAD.off.copy(hb.worldToLocal(c.clone())); hb.getWorldQuaternion(HEAD.q).invert(); HEAD.ok = true; }
   const _A = V(0,0,0), _B = V(0,0,0), _Cv = V(0,0,0), _E = V(0,0,0), _T = V(0,0,0), _d = V(0,0,0), _pv = V(0,0,0), _v1 = V(0,0,0), _v2 = V(0,0,0), _w = V(0,0,0);
   const _q = new T.Quaternion(), _qw = new T.Quaternion(), _qp = new T.Quaternion(), _qx = new T.Quaternion(), _eu = new T.Euler();
   const poleL = V(30, -8, -10), poleR = V(-30, -8, -10);
@@ -2001,7 +2134,7 @@ function build3D(){
       tex.flipY = false; tex.encoding = T.sRGBEncoding; tex.anisotropy = 4;
       root.traverse(o => { if (o.isMesh){ o.material.map = tex; o.material.color.set(0xffffff); o.material.roughness = .96; o.material.metalness = 0; o.material.needsUpdate = true; o.frustumCulled = false; } });
       SG.b = {}; ['body','body_top0','neck','arm_left_top','arm_left_bot','arm_left_hand','arm_right_top','arm_right_bot','arm_right_hand','leg_left_top','leg_right_top','leg_left_bot','leg_right_bot'].forEach(n => SG.b[n] = root.getObjectByName(n));
-      SG.bind = []; root.traverse(o => { if (o.isBone) SG.bind.push([o, o.position.clone(), o.quaternion.clone()]); });
+      SG.bind = []; root.traverse(o => { if (o.isBone) SG.bind.push([o, o.position.clone(), o.quaternion.clone()]); }); measureHead(root);
       SGA.mixer = new T.AnimationMixer(root); SGA.add(gltf.animations, 'vb_'); SGA.load('space');
     }, err => console.warn('Shigost model failed to parse', err)))
     .catch(err => console.warn('Shigost model could not load, keeping the 2D Shigost in space', err));
@@ -2029,13 +2162,20 @@ function build3D(){
   };
   s3.loadClips = url => new Promise((res, rej) => new T.GLTFLoader().load(url, g => res(SGA.add(g.animations)), undefined, rej));
   // what she's doing: posture ('stand', 'lying', or 'sitting'), dancing for a toy, a happy tap reaction, the zombie walk
-  const BR = { posture: 'stand', going: '', dance: 0, react: 0, airT: 0, landT: 0, wasAir: false, spd: 0, lastX: null, slowT: 0, zombie: false };
+  const BR = { posture: 'stand', going: '', dance: 0, react: 0, airT: 0, landT: 0, wasAir: false, spd: 0, lastX: null, slowT: 0, zombie: false, swim: 0, swimOn: false };
+  // Under water, fast scrolling lifts her off the sea floor into a glide above the reef. She has no swim clip yet, so the
+  // glide is posed on top of an existing clip (jump_fall, pitched forward, with a flutter kick and her arms reaching
+  // ahead). Once a clip named 'swim' is in her library and bundle, it plays instead, by name. pitch: how far she tips
+  // forward over the procedural glide; clipPitch: the same for the real clip (0 if it's animated lying flat already).
+  const SWIM = { clip: 'swim', pitch: 1.25, clipPitch: 0, lift: 300 };
   // low boughs in the jungle that she crouch-walks under
   const LOW_BOUGHS = [[5520, 5930]];
   function chooseClip(s, p, dt, idleT){
     const st = s.s, air = st === 'st-jump' || st === 'st-fall' || st === 'st-chute', rm = reduce.matches;
     if (BR.lastX !== null && Math.abs(s.x - BR.lastX) < 4000) BR.spd += (Math.abs(s.x - BR.lastX)/Math.max(dt, 1e-3) - BR.spd)*Math.min(1, dt*6); BR.lastX = s.x;
     BR.dance = Math.max(0, BR.dance - dt); BR.react = Math.max(0, BR.react - dt);
+    const wet = !!s.w; BR.swimOn = wet && !rm && !air && BR.spd > 30 && idleT < .6 && BR.spd > (BR.swimOn ? 380 : 820);
+    BR.swim += ((BR.swimOn ? 1 : 0) - BR.swim)*Math.min(1, dt*(BR.swimOn ? 2.2 : 1.4));
     if (rm){ BR.posture = 'stand'; return { name: air ? 'jump_fall' : 'idle' }; } // reduced motion: calm idles only
     // in the air: crouch, spring (jump_start), leap (jump), then float under the parachute (jump_fall); land with jump_end
     if (air){ BR.wasAir = true; BR.posture = 'stand'; BR.airT += dt;
@@ -2053,13 +2193,16 @@ function build3D(){
       if (BR.going !== 'up'){ BR.going = 'up'; } const up = BR.posture === 'lying' ? 'get_up_from_lying_down' : 'get_up_from_sitting';
       if (SGA.curName === up && SGA.done()){ BR.posture = 'stand'; BR.going = ''; } else return { name: up, once: true, speed: 1.6 }; }
     if (moving){ const sp = BR.spd;
+      if (BR.swimOn) return SGA.has(SWIM.clip) ? { name: SWIM.clip } : { name: 'jump_fall', speed: .6 };
       if (BR.zombie) return { name: 'zombie_walk', speed: clamp(sp/200*1.43, .5, 1.6) };
       if (LOW_BOUGHS.some(([a, b]) => s.x > a && s.x < b)) return { name: 'crouch_walk', speed: clamp(sp/220*1.37, .5, 2.2) };
+      if (wet) return { name: 'walk', speed: clamp(sp/260*1.1, .5, 2.2)*.72 }; // slow, floaty steps on the sea floor
       const run = st === 'st-run' || sp > (SGA.curName === 'run' ? 650 : 900);
       return run ? { name: 'run', speed: clamp(sp/380*.7, .6, 2.4) } : { name: 'walk', speed: clamp(sp/260*1.1, .5, 2.2) }; }
     if (BR.dance > 0 || BR.react > 0) return { name: 'dance' };
-    // resting: lie in the hills grass to watch the clouds, sit on the dunes, have a snack on the beach
-    const rest = p > .93*S && p < HP.W2 + .01 ? 'lying' : p > EP.R0 - .02 && p < EP.B ? 'sitting' : p >= EP.B ? 'snack' : '';
+    // resting: lie in the hills grass to watch the clouds, sit on the dunes, have a snack on the beach; on the reef, sit,
+    // or lie on the soft moss bed by the anemones to watch the fish and the light
+    const rest = p > .93*S && p < HP.W2 + .01 ? 'lying' : wet ? (p > RP.R2 - .015 && p < RP.R2E + .01 ? 'lying' : 'sitting') : p > EP.R0 - .02 && p < EP.B ? 'sitting' : p >= EP.B ? 'snack' : '';
     if (rest && idleT > 1.2){
       const posture = rest === 'lying' ? 'lying' : 'sitting', down = rest === 'lying' ? 'lie_down' : 'sit', loop = rest === 'lying' ? 'lying_down_idle' : rest === 'snack' ? 'sitting_eat' : 'sitting_idle';
       if (BR.posture !== posture){ if (SGA.curName === down && SGA.done()){ BR.posture = posture; return { name: loop }; } return { name: down, once: true }; }
@@ -2068,7 +2211,7 @@ function build3D(){
   }
   s3.cheerShigost = () => { BR.react = 1.4; };
   // ?debug: a read-only peek at her clip and gaze, for testing (the angle is how far her head points from the target)
-  if (/[?&]debug(&|=|$)/.test(location.search)) window.recklyssDebug = () => { const out = { clip: SGA.curName, posture: BR.posture, loaded: Object.keys(SGA.actions).length, spd: Math.round(BR.spd), zombie: BR.zombie }; { const v = SG.wrap.getWorldPosition(V(0,0,0)).add(V(0, 130, 0)).project(camera), r = canvas.getBoundingClientRect(); out.sx = Math.round(r.left + (v.x + 1)/2*r.width); out.sy = Math.round(r.top + (1 - v.y)/2*r.height); }
+  if (/[?&]debug(&|=|$)/.test(location.search)) window.recklyssDebug = () => { const out = { clip: SGA.curName, posture: BR.posture, loaded: Object.keys(SGA.actions).length, spd: Math.round(BR.spd), zombie: BR.zombie, swim: +BR.swim.toFixed(2), helm: +helmK.toFixed(2), uw: +RIG.uw.toFixed(2) }; { const v = SG.wrap.getWorldPosition(V(0,0,0)).add(V(0, 130, 0)).project(camera), r = canvas.getBoundingClientRect(); out.sx = Math.round(r.left + (v.x + 1)/2*r.width); out.sy = Math.round(r.top + (1 - v.y)/2*r.height); }
     if (SG.neckFwd && GZ.w){ SG.b.neck.getWorldPosition(_gh); _gn.copy(GZ.pt).sub(_gh).normalize(); SG.b.neck.getWorldQuaternion(_qw); _gb.copy(SG.neckFwd).applyQuaternion(_qw).normalize();
       out.gazeOff = +(Math.acos(clamp(_gb.dot(_gn), -1, 1))*57.3).toFixed(1); out.lookX = +_gb.x.toFixed(2); out.targetX = +_gn.x.toFixed(2); } return out; };
   const handL = V(0,0,0), handR = V(0,0,0), muzzle = V(0,0,0), portalW = W3(PORTAL.x, PORTAL.y, 0);
@@ -2114,8 +2257,9 @@ function build3D(){
     const w = SG.wrap, b = SG.b, st = s.s, earth = !!s.e, stand = st === 'st-stand', run = st === 'st-run', walk = st === 'st-walk' || run, air = st === 'st-jump' || st === 'st-fall' || st === 'st-chute';
     // she faces the way she's actually moving: scrolling back turns her around (a quick, smooth turn)
     const dir = s.dir || 1;
-    SG.ry += ((stand ? .45 : earth ? (walk || air ? 1.1 : .3)*dir : 0) - SG.ry)*Math.min(1, dt*8);
-    w.position.set(s.x, -(s.y + SG_FOOT), 0); w.rotation.set(0, SG.ry, -s.r*Math.PI/180);
+    SG.ry += ((stand ? .45 : earth ? (walk || air ? 1.1 + .45*BR.swim : .3)*dir : 0) - SG.ry)*Math.min(1, dt*8);
+    w.position.set(s.x, -(s.y + SG_FOOT) + BR.swim*(SWIM.lift + Math.sin(t*1.6)*14*(reduce.matches ? 0 : 1)), 0); w.rotation.set(0, SG.ry, -s.r*Math.PI/180);
+    SG.body.rotation.x = BR.swim*(SGA.curName === SWIM.clip ? SWIM.clipPitch : SWIM.pitch); // tipped forward into the glide
     // which clip: chosen by the brain, crossfaded in; the procedural pose fills in until a clip has loaded
     const idleT = idle ? (performance.now() - lastScroll)/1000 : 0, sel = SGA.mixer ? chooseClip(s, cur, dt, idleT) : null;
     if (sel && SGA.play(sel.name, !!sel.once)){ if (sel.speed) SGA.cur.timeScale = sel.speed; } else if (SGA.mixer) SGA.stop();
@@ -2134,6 +2278,8 @@ function build3D(){
       if (b.body) b.body.position.y += Math.abs(Math.cos(ph))*1.4*k;
       boneTurn(b.arm_left_top, -.4*k*sw, 0, 0); boneTurn(b.arm_right_top, .4*k*sw, 0, 0); }
     if (cw) SGA.mixIn(SG.bind, cw);
+    // the glide: a gentle flutter kick on top of whatever clip is playing (a real swim clip replaces it)
+    if (BR.swim > .05 && SGA.curName !== SWIM.clip){ const kick = Math.sin(t*5.5)*.3*BR.swim*calm; boneTurn(b.leg_left_top, kick, 0, 0); boneTurn(b.leg_right_top, -kick, 0, 0); }
     w.updateMatrixWorld(true);
     // layers on top of any clip: the portal gun arm, the parachute cords, a wave at a Womp, and the gaze
     if (stand){ // portal gun in her left hand, aimed at the portal; she waves with the other when idle
@@ -2144,10 +2290,20 @@ function build3D(){
       const f = st === 'st-fall' ? Math.sin(t*16)*4*calm : 0;
       ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, _v1.set(15 + f, 46, 3), poleL);
       ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2.set(-15 - f, 46, 3), poleR);
+    } else if (BR.swim > .4 && SGA.curName !== SWIM.clip){ // gliding: arms reaching ahead, sweeping softly
+      const f = Math.sin(t*2.2)*3*calm;
+      ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, _v1.set(14 + f, 46, 7), poleL); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2.set(-14 - f, 46, 7), poleR);
     } else if (earth && idle && calm && (!clipped || SGA.curName === 'idle') && (GZ.wave || (!GZ.w && Math.sin(t*.45) > .7))){ // resting: a little wave, usually at a Womp she's looking at
       _v2.set(-21 + Math.sin(t*14)*2.5, 8.5, 8 + Math.cos(t*14)*1.5); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2, poleR);
     }
     lookLayer();
+    // the bubble helmet: under water her hood puffs up around her head with a springy pop, and deflates when she leaves it
+    const wetH = !!s.w && HEAD.ok;
+    helmV += ((wetH ? 1 : 0) - helmK)*80*dt; helmV *= Math.exp(-8*dt); helmK = Math.max(0, helmK + helmV*dt); if (!wetH && helmK < .03) helmK = helmV = 0;
+    if (helm.visible && !helmK) burst(helm.position.clone(), ['#ffffff', '#c9fff8'], 10, 180, 260);
+    helm.visible = helmK > .02;
+    if (helm.visible){ const hb = SG.b.head; hb.getWorldQuaternion(helm.quaternion).multiply(HEAD.q); hb.localToWorld(helm.position.copy(HEAD.off));
+      const k = Math.min(1.15, helmK); helm.scale.setScalar(HEAD.r*(.86 + .14*k)); helmBub.scale.setScalar((.8 + .2*k)*(1 + Math.sin(t*3.1)*.015*calm)); helmM.opacity = clamp(k, 0, 1); }
     b.arm_left_hand.getWorldPosition(handL); b.arm_right_hand.getWorldPosition(handR);
     gun.visible = stand; if (stand){ gun.position.copy(handL); gun.lookAt(portalW); gun.updateMatrixWorld(); gun.localToWorld(muzzle.set(0, 0, 84)); }
     // the hoodie balloon pops open with a stretchy overshoot and billows; on landing it deflates down into her hoodie
@@ -2658,7 +2814,10 @@ function build3D(){
       arm: bake([[new T.SphereGeometry(1, 14, 10), S(0, -.13, 0, .075, .17, .085), '#ffffff', 0, .2]]),
       eyes: bake([[new T.SphereGeometry(1, 18, 12), S(.12, .72, .222, .09, .1, .045, .45), '#ffffff'], [new T.SphereGeometry(1, 18, 12), S(-.12, .72, .222, .09, .1, .045, -.45), '#ffffff']]),
       shadow: new T.PlaneGeometry(1, 1).rotateX(-Math.PI/2), mat: spirit(std('#ffffff', { vertexColors: true, roughness: .92 })),
-      shadowM: new T.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, toneMapped: false }) };
+      shadowM: new T.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, toneMapped: false }),
+      // a little bubble helmet with a soft fabric collar, for Womps under water
+      helm: new T.SphereGeometry(1, 24, 16), collar: new T.TorusGeometry(1, .2, 8, 24).rotateX(Math.PI/2),
+      helmAt: new T.Matrix4().compose(V(0, .79, .03), new T.Quaternion(), V(.35, .35, .34)), collarAt: new T.Matrix4().compose(V(0, .49, .02), new T.Quaternion(), V(.27, .27, .25)) };
     return WG; }
   // One set of Womps per chapter group: four InstancedMeshes (body, arms, eyes, shadows) that every Womp in the
   // chapter shares. w.pos is where its feet are; w.anchor (optional) moves it with a floating rock.
@@ -2667,6 +2826,7 @@ function build3D(){
   function wompSet(grp, list, hotFn){ const G = wompGeo(), n = list.length; if (!n) return;
     const mk = (geo, mat, k) => { const m = new T.InstancedMesh(geo, mat, k); m.frustumCulled = false; grp.add(m); return m; };
     const S = { grp, list, body: mk(G.body, G.mat, n), arms: mk(G.arm, G.mat, n*2), eyes: mk(G.eyes, eyeM, n), sh: mk(G.shadow, G.shadowM, n) };
+    if (list.some(w => w.helmet)){ S.helm = mk(G.helm, bubM, n); S.collar = mk(G.collar, matte('#f4f1fb'), n); }
     list.forEach((w, i) => { const c = C(w.color); S.body.setColorAt(i, c); S.arms.setColorAt(i*2, c); S.arms.setColorAt(i*2 + 1, c);
       Object.assign(w, { s: w.h/1.045, t: -1, cheer: 0, ph: i*1.7 + w.h*.01, local: w.pos.clone() });
       w.tgt = new T.Object3D(); w.tgt.position.copy(w.pos).add(V(0, w.h*.5, 0)); grp.add(w.tgt);
@@ -2684,17 +2844,19 @@ function build3D(){
           else if (w.mood === 'dance'){ y = Math.abs(Math.sin(T_*4))*.06; yaw += Math.sin(T_*2)*.45; aL = .6 + Math.sin(T_*8)*.6; aR = -(.6 + Math.sin(T_*8 + Math.PI)*.6); }
           else if (w.mood === 'cheer'){ const k = (T_*.55) % 1.7; if (k < .5){ y = Math.sin(k/.5*Math.PI)*.15; aL = 2.6; aR = -2.6; } } }
         if (w.cheer > 0){ w.cheer -= dt; y = Math.max(y, Math.abs(Math.sin(t*8 + w.ph))*.17*Math.min(1, w.cheer)); aL = 2.5 + Math.sin(t*12 + w.ph)*.25; aR = -aL; }
+        if (w.helmet) y += Math.sin(t*1.1 + w.ph)*.025*cm; // a slow bob under water
         if (w.t >= 0){ w.t += dt; const k = Math.min(1, w.t/.6); y = Math.max(y, Math.sin(k*Math.PI)*.24); sq = 1 + .1*Math.sin(k*Math.PI*2); aL = Math.max(aL, 1.6*Math.sin(k*Math.PI)); aR = Math.min(aR, -1.6*Math.sin(k*Math.PI)); if (k >= 1) w.t = -1; }
         _wp.copy(w.pos); _wp.y += y*w.h; _wq.setFromEuler(_we.set(0, yaw, rz)); _ws.set(s/Math.sqrt(sq), s*sq, s/Math.sqrt(sq)); _wm.compose(_wp, _wq, _ws);
         S.body.setMatrixAt(i, _wm); S.eyes.setMatrixAt(i, _wm);
+        if (S.helm){ const G = WG; if (w.helmet){ S.helm.setMatrixAt(i, _wa.copy(G.helmAt).premultiply(_wm)); S.collar.setMatrixAt(i, _wa.copy(G.collarAt).premultiply(_wm)); } else { _wa.makeScale(0, 0, 0); S.helm.setMatrixAt(i, _wa); S.collar.setMatrixAt(i, _wa); } }
         _wa.compose(_wo.set(.31, .58, 0), _wq2.setFromEuler(_we.set(0, 0, aL)), _one); S.arms.setMatrixAt(i*2, _wa.premultiply(_wm));
         _wa.compose(_wo.set(-.31, .58, 0), _wq2.setFromEuler(_we.set(0, 0, aR)), _one); S.arms.setMatrixAt(i*2 + 1, _wa.premultiply(_wm));
         const k = 1/(1 + y*4); _wa.compose(_wp.copy(w.pos).add(_wo.set(0, 2, 0)), _wq2.identity(), _wo.set(s*.66*k, 1, s*.5*k)); S.sh.setMatrixAt(i, _wa); });
-      ['body', 'arms', 'eyes', 'sh'].forEach(k => S[k].instanceMatrix.needsUpdate = true); });
+      ['body', 'arms', 'eyes', 'sh', 'helm', 'collar'].forEach(k => { if (S[k]) S[k].instanceMatrix.needsUpdate = true; }); });
   }
   // when a musical toy plays, the Womps nearby become Shigost's crowd and cheer
   s3.onToy = (at, id) => { WSETS.forEach(S => { if (!shown(S.grp)) return; S.list.forEach(w => { if (!at || w.pos.distanceTo(at) < 3600) w.cheer = 2.6; }); });
-    if (id === 'vine-harp' || id === 'shell-bells') BR.dance = 3.2; }; // she dances while the harp or the shell bells play
+    if (['vine-harp', 'shell-bells', 'coral-xylophone', 'glow-anemones'].includes(id)) BR.dance = 3.2; }; // she dances while these toys play
   // critters and others Shigost likes to glance at when nobody is steering her gaze
   const gazeAt = (grp, obj, lift = 0) => GAZE.push({ grp, at: v => obj.getWorldPosition(v).add(_wo.set(0, lift, 0)) });
 
@@ -2705,20 +2867,20 @@ function build3D(){
     const hot = (t, r, o = {}) => hotAt(t, r, Object.assign({ grp: es }, o)), litter = (o, p, r, m, c, h, id) => litterAt(o, p, r, m, c, h, es, id);
 
     /* terrain: sculpted dunes that flatten into the beach, with wind ripples from a tiny bump texture */
-    const X0 = s3.L3 ? LAND_X1 : 9000, X1 = 40000, Z0 = -4400, Z1 = 7000, NXs = LITE ? 190 : 270, NZs = LITE ? 64 : 92;
+    const X0 = s3.L3 ? LAND_X1 : 9000, X1 = 32000, Z0 = -4400, Z1 = 7000, NXs = LITE ? 140 : 200, NZs = LITE ? 64 : 92; // the reef's floor takes over at X1
     const tg = new T.PlaneGeometry(X1 - X0, Z1 - Z0, NXs, NZs); tg.rotateX(-Math.PI/2);
     { const pos = tg.attributes.position, col = new Float32Array(pos.count*3), tmp = C('#000');
-      const cHi = C('#f7d4ab'), cLo = C('#e3a37c'), cVal = C('#c48fa2'), cBeach = C('#f6dcc2'), cWet = C('#c9a091');
+      const cHi = C('#f7d4ab'), cLo = C('#e3a37c'), cVal = C('#c48fa2'), cBeach = C('#f6dcc2'), cWet = C('#c9a091'), cReef = C(REEF_SAND);
       for (let i = 0; i < pos.count; i++){
         const x = pos.getX(i) + (X0 + X1)/2, z = pos.getZ(i) + (Z0 + Z1)/2, h = earthH(x, z); pos.setXYZ(i, x, Y(h), z);
         const dune = cLo.clone().lerp(cHi, clamp(h/850, 0, 1)).lerp(cVal, clamp((260 - h)/600, 0, 1)*.5*smooth(-200, -1800, z));
         const d = z - shoreZ(x), beach = cBeach.clone().lerp(cWet, clamp(1 - d/150, 0, 1)*.85);
-        tmp.copy(dune).lerp(beach, smooth(22700, 24300, x)); col.set([tmp.r, tmp.g, tmp.b], i*3); }
+        tmp.copy(dune).lerp(beach, smooth(22700, 24300, x)).lerp(cReef, smooth(30300, 31800, x)); col.set([tmp.r, tmp.g, tmp.b], i*3); }
       tg.setAttribute('color', new T.BufferAttribute(col, 3)); tg.computeVertexNormals(); }
     const ripple = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const g = cv.getContext('2d'), im = g.createImageData(256, 256);
       for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++){ const v = .5 + .5*Math.sin((y + 7*Math.sin(x/256*Math.PI*4) + 3*Math.sin(x/256*Math.PI*10 + y*.05))/256*Math.PI*2*14); const k = (i => i*4)(y*256 + x); im.data[k] = im.data[k + 1] = im.data[k + 2] = 90 + v*130; im.data[k + 3] = 255; }
       g.putImageData(im, 0, 0); const t = new T.CanvasTexture(cv); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set((X1 - X0)/430, (Z1 - Z0)/430); return t; })();
-    es.add(new T.Mesh(tg, new T.MeshStandardMaterial({ vertexColors: true, roughness: .95, metalness: 0, bumpMap: ripple, bumpScale: 1.6 })));
+    es.add(new T.Mesh(tg, underwater(new T.MeshStandardMaterial({ vertexColors: true, roughness: .95, metalness: 0, bumpMap: ripple, bumpScale: 1.6 })))); // tinted under the water, like the reef
     // the berm: big distant dunes rising behind the desert into the haze (and sinking under the sea past the coast), so
     // the end of the world never shows, even from high over the jungle canopy
     { const xs = [], zs = [-4400, -5200, -6400, -8000, -10000, -12500, -15500, -19000, -24000, -31000];
@@ -2737,13 +2899,20 @@ function build3D(){
     const seaU = { time: { value: 0 }, lvl: { value: 0 }, camPos: { value: V(0,0,0) }, sunDir: { value: V(0,1,0) }, skyTop: { value: new T.Color() }, skyBot: { value: new T.Color() },
       fogR: { value: new T.Vector2(4000, 30000) }, deep: { value: new T.Color('#3d6bb3') }, shallow: { value: new T.Color('#56c7c3') }, ring: { value: new T.Vector4(0, 0, -9, 0) } };
     const SHORE_GLSL = 'float shoreZ(float x){ return -470.0 + 40.0*sin(x*0.0013) + 620.0*smoothstep(29300.0, 31300.0, x); }';
-    const sea = new T.Mesh(new T.PlaneGeometry(26000, 34900, LITE ? 80 : 130, LITE ? 50 : 80).rotateX(-Math.PI/2).translate(34000, Y(WL), -16550), new T.ShaderMaterial({ uniforms: seaU,
+    seaU.uw = { value: 0 }; seaU.uwTop = { value: new T.Color() }; seaU.uwFog = { value: new T.Color() };
+    // the sea is shared by the beach and the reef: from above, waves and a clear patch over the shallows where Shigost
+    // wades in; from below (adapted from Vibe Booth's makeWaterSurface), a bright rippling window straight up that
+    // fades into the water's haze at a slant
+    const sea = new T.Mesh(new T.PlaneGeometry(35000, 46000, LITE ? 90 : 140, LITE ? 60 : 90).rotateX(-Math.PI/2).translate(38500, Y(WL), -11000), new T.ShaderMaterial({ uniforms: seaU, side: T.DoubleSide,
       vertexShader: SHORE_GLSL + 'uniform float time, lvl; varying vec3 vW; varying float vD; void main(){ vec4 w = modelMatrix*vec4(position, 1.0); float d = w.z - shoreZ(w.x); float sw = sin(w.x*0.004 + time*1.1)*4.0 + sin(w.z*0.006 - time*1.6)*5.0; w.y += sw*smoothstep(-4000.0, -250.0, d)*0.8 + lvl; vW = w.xyz; vD = d; gl_Position = projectionMatrix*viewMatrix*w; }',
-      fragmentShader: 'uniform float time; uniform vec3 camPos, sunDir, skyTop, skyBot, deep, shallow; uniform vec2 fogR; varying vec3 vW; varying float vD; void main(){ vec3 Vd = normalize(camPos - vW); float ph = vD*0.012 + time*1.4; float dist = length(camPos - vW), near = 1.0 - smoothstep(1500.0, 6500.0, dist); vec3 N = normalize(vec3((0.04*sin(vW.x*0.01 + time) + 0.03*sin(vW.x*0.023 - time*0.7 + vW.z*0.004))*near, 1.0, (0.045*cos(ph + sin(vW.x*0.003)*2.0) + 0.03*sin(vW.z*0.02 + vW.x*0.006 + time))*near)); float fres = pow(1.0 - max(dot(N, Vd), 0.0), 3.0); vec3 water = mix(shallow, deep, smoothstep(-150.0, -3800.0, vD)); vec3 R = reflect(-Vd, N); vec3 sky = mix(skyBot, skyTop, clamp(R.y*1.6, 0.0, 1.0)); vec3 c = mix(water, sky, 0.22 + 0.6*fres); c += pow(max(dot(R, sunDir), 0.0), 140.0)*vec3(1.0, 0.93, 0.86); float crest = smoothstep(0.93, 1.0, sin(vD*0.011 + time*1.3))*smoothstep(-1100.0, -140.0, vD); float swash = smoothstep(-95.0, -20.0, vD)*(0.65 + 0.35*sin(vW.x*0.021 + time*2.0)); c = mix(c, vec3(1.0, 0.985, 0.975), max(crest*0.7, swash*0.9)); float a = smoothstep(21400.0, 24200.0, vW.x)*(1.0 - smoothstep(fogR.x, fogR.y*1.15, dist)); gl_FragColor = vec4(c, a); }', transparent: true }));
-    sea.frustumCulled = false; sea.renderOrder = -1; es.add(sea);
+      fragmentShader: 'uniform float time, uw; uniform vec3 camPos, sunDir, skyTop, skyBot, deep, shallow, uwTop, uwFog; uniform vec2 fogR; varying vec3 vW; varying float vD; void main(){ if (!gl_FrontFacing){ vec3 Vu = normalize(vW - camPos); float win = smoothstep(0.5, 0.92, Vu.y), rip = 0.5 + 0.5*sin(vW.x*0.011 + time*1.3 + sin(vW.z*0.007 - time*0.8)*2.0)*sin(vW.z*0.013 - time*0.9); vec3 cu = mix(uwFog*1.3, uwTop, win*(0.75 + 0.35*rip)) + vec3(0.14)*smoothstep(0.62, 1.0, rip)*win; cu = mix(cu, uwFog, smoothstep(fogR.x, fogR.y, length(camPos - vW))*(1.0 - win*0.5)); gl_FragColor = vec4(cu, 0.96); return; } vec3 Vd = normalize(camPos - vW); float ph = vD*0.012 + time*1.4; float dist = length(camPos - vW), near = 1.0 - smoothstep(1500.0, 6500.0, dist); vec3 N = normalize(vec3((0.04*sin(vW.x*0.01 + time) + 0.03*sin(vW.x*0.023 - time*0.7 + vW.z*0.004))*near, 1.0, (0.045*cos(ph + sin(vW.x*0.003)*2.0) + 0.03*sin(vW.z*0.02 + vW.x*0.006 + time))*near)); float fres = pow(1.0 - max(dot(N, Vd), 0.0), 3.0); vec3 water = mix(shallow, deep, smoothstep(-150.0, -3800.0, vD)); vec3 R = reflect(-Vd, N); vec3 sky = mix(skyBot, skyTop, clamp(R.y*1.6, 0.0, 1.0)); vec3 c = mix(water, sky, 0.22 + 0.6*fres); c += pow(max(dot(R, sunDir), 0.0), 140.0)*vec3(1.0, 0.93, 0.86); float crest = smoothstep(0.93, 1.0, sin(vD*0.011 + time*1.3))*smoothstep(-1100.0, -140.0, vD); float swash = smoothstep(-95.0, -20.0, vD)*(0.65 + 0.35*sin(vW.x*0.021 + time*2.0)); c = mix(c, vec3(1.0, 0.985, 0.975), max(crest*0.7, swash*0.9)); float a = smoothstep(21400.0, 24200.0, vW.x)*(1.0 - smoothstep(fogR.x, fogR.y*1.15, dist)); a *= 1.0 - 0.7*smoothstep(30300.0, 31400.0, vW.x)*(1.0 - smoothstep(-1500.0, -5000.0, vW.z))*(1.0 - smoothstep(6000.0, 18000.0, dist)); gl_FragColor = vec4(c, a); }', transparent: true }));
+    sea.frustumCulled = false; sea.renderOrder = -1; root.add(sea); EARTH.sea = sea;
+    EARTH.seaFrame = t => { seaU.time.value = t; seaU.lvl.value = Math.sin(t*.7)*6; seaU.camPos.value.copy(camera.position); seaU.sunDir.value.copy(RIG.sunDir);
+      seaU.skyTop.value.set(RIG.top); seaU.skyBot.value.set(RIG.bot); seaU.fogR.value.set(RIG.near, RIG.far); seaU.uw.value = RIG.uw;
+      const [wt, wb] = reefSky(cur); seaU.uwTop.value.set(wt); seaU.uwFog.value.set(wb); };
     // wet sand along the waterline reflects the sky
     { const NS = LITE ? 120 : 180, NJ = 5, pos = [], idx = [];
-      for (let i = 0; i <= NS; i++){ const x = 22800 + i*(34200 - 22800)/NS; for (let j = 0; j <= NJ; j++){ const d = -40 + j*44, z = shoreZ(x) + d; pos.push(x, Y(beachH(x, z)) + 1.5, z); } }
+      for (let i = 0; i <= NS; i++){ const x = 22800 + i*(30600 - 22800)/NS; for (let j = 0; j <= NJ; j++){ const d = -40 + j*44, z = shoreZ(x) + d; pos.push(x, Y(beachH(x, z)) + 1.5, z); } }
       for (let i = 0; i < NS; i++) for (let j = 0; j < NJ; j++){ const a = i*(NJ + 1) + j, b = a + NJ + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
       const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
       const wet = new T.Mesh(g, new T.ShaderMaterial({ uniforms: seaU, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
@@ -2792,7 +2961,7 @@ function build3D(){
     puff(19400, -360, 1.2, '#b4d2b0'); barrel(20300, 340, 1.2, '#9cc58a', '#c6e6b4'); curly(21900, -380, 1.3, '#9cc58a', '#f29aa8'); puff(22700, 420, 1.1, '#a9ccb0');
     // beach: curly dune grass and two Seussian palms
     const grassM = plantM('#8fc79a');
-    for (let i = 0; i < 16; i++){ const x = 23800 + i*620 + Math.sin(i*7)*160, z = 640 + Math.sin(i*3.1)*160, b = at3(x, z, -4), g = new T.Group(); g.position.copy(b); es.add(g);
+    for (let i = 0; i < 11; i++){ const x = 23800 + i*620 + Math.sin(i*7)*160, z = 640 + Math.sin(i*3.1)*160, b = at3(x, z, -4), g = new T.Group(); g.position.copy(b); es.add(g);
       for (let k = 0; k < 5; k++){ const a = (k - 2)*.32, pts = [V(0,0,0), V(Math.sin(a)*40, 70, 0), V(Math.sin(a)*90, 120, 10), V(Math.sin(a)*120 + 18, 136, 12), V(Math.sin(a)*112 + 22, 118, 12)];
         g.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 14, 5, 5), grassM)); } }
     function palm(x, z, s, lean){ const g = new T.Group(); g.position.copy(at3(x, z, -10)); g.scale.setScalar(s); g.rotation.y = lean; es.add(g);
@@ -2889,19 +3058,9 @@ function build3D(){
       hot(g, 110, { label: LORE[id].name, halo: halo ? 'beach' : null, tap: () => { meet(id); if (C_.t < 0){ C_.t = 0; tone(1700, 'clack'); setTimeout(() => tone(1500, 'clack'), 130); setTimeout(() => tone(1800, 'clack'), 260); } } }); }
     crab(25880, 250, '#f6a08f', 0, true, 'coral-crab'); crab(27500, 150, '#f7b0c8', 2.1, false, 'pink-crab');
 
-    /* the far end: the waterline leads toward the reef, with corals breaking the surface and a fish now and then */
-    { const post = std('#8a5a3a', { roughness: .8 }), sp = at3(30700, 40, -10);
-      const sign = new T.Group(); sign.position.copy(sp); sign.rotation.y = -.18; es.add(sign); sign.add(rod(V(0,0,0), V(0, 430, 0), 18, post, 10));
-      const board = (txt, bg, w, h, y, fs) => { const tex = cvTex(512, Math.round(512*h/w), (g, cw, ch) => { g.fillStyle = bg; g.fillRect(0, 0, cw, ch); g.fillStyle = '#24163a'; g.font = `800 ${fs}px "Bricolage Grotesque", system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, cw/2, ch/2 + 4); });
-        const m = new T.Mesh(new T.BoxGeometry(w, h, 18), [std('#d9c7a8'), std('#d9c7a8'), std('#d9c7a8'), std('#d9c7a8'), new T.MeshStandardMaterial({ map: tex, roughness: .8 }), std('#d9c7a8')]); m.position.set(20, y, 14); sign.add(m); return m; };
-      board('The reef', '#f3e3c2', 380, 104, 380, 84); board('coming soon', '#9fd8c9', 320, 82, 260, 58);
-      const cs = contact(260, 56); cs.position.set(0, 6, 30); sign.add(cs);
-      hot(sp.clone().add(V(20, 330, 0)), 210, { label: 'The reef, coming soon', halo: 'reef', tap: () => reefCard() }); }
-    const coralCols = ['#f29ab5','#5fd3c8','#b6a4f2','#f2a7a0','#9fd8c9'];
-    for (let i = 0; i < 9; i++){ const x = 31150 + i*170 + Math.sin(i*5)*60, z = shoreZ(x) - 160 - (i % 3)*170, c = coralCols[i % 5], g = new T.Group(); g.position.set(x, Y(WL) - 50, z); es.add(g);
-      const m = std(c, { roughness: .55, emissive: C(c), emissiveIntensity: .18 });
-      if (i % 2){ const b = new T.Mesh(new T.SphereGeometry(56, 16, 12), m); b.scale.y = .8; b.position.y = 40; g.add(b); }
-      else for (let k = 0; k < 5; k++){ const a = k/5*Math.PI*2, tip = V(Math.cos(a)*40, 90 + k*14, Math.sin(a)*30); g.add(rod(V(0,0,0), tip, 11, m, 8)); const t2 = new T.Mesh(new T.SphereGeometry(16, 10, 8), m); t2.position.copy(tip); g.add(t2); } }
+    /* the far end: a sign by the waterline points into the waves, toward the reef, and a fish leaps now and then */
+    { const rs = signpost(es, 29700, -280, [['The reef', '#f3e3c2', 330, 100, 380, 80], ['this way', '#9fd8c9', 300, 78, 268, 54]], -.18);
+      hot(rs.top, 200, { label: 'The reef, this way', tap: () => reefCard() }); }
     const fish = new T.Group(); { const fm = matte('#f4f2ee'); const b = new T.Mesh(new T.SphereGeometry(1, 14, 10), fm); b.scale.set(44, 22, 14); fish.add(b);
       const tl = new T.Mesh(new T.ConeGeometry(20, 34, 10), matte('#f4f2ee')); tl.rotation.z = Math.PI/2; tl.position.x = 52; fish.add(tl); fish.visible = false; es.add(fish); }
     let fishT = 0;
@@ -2912,8 +3071,6 @@ function build3D(){
     /* ---- per frame ---- */
     EARTH.frame = (p, cam, s, vw, H, t, dt, D) => {
       const dk = 1 - smooth(1.19, 1.24, p);
-      seaU.time.value = t; seaU.lvl.value = Math.sin(t*.7)*6; seaU.camPos.value.copy(camera.position); seaU.sunDir.value.copy(RIG.sunDir);
-      seaU.skyTop.value.set(RIG.top); seaU.skyBot.value.set(RIG.bot); seaU.fogR.value.set(RIG.near, RIG.far);
       clouds.forEach((c, i) => { c.position.x += dt*(18 + i*3); if (c.position.x > 36000) c.position.x -= 27000; });
       shimU.time.value = t; shimU.k.value = dk; shimmer.visible = dk > .01;
       // drifting sand stays around the camera
@@ -2942,6 +3099,270 @@ function build3D(){
     };
     s3.earth = true;
   }
+  /* ================= 3D REEF ================= */
+  // Past the beach the sea floor slopes down to a coral reef. Soft aqua and teal corals and sea plants are the main
+  // family, with glowing pink and violet flowers and alien plants as the accent, leading toward the darker blues of the
+  // deep ocean. Built lazily as the journey nears the end of the beach and drawn only while the camera is near. Under
+  // water the sky dome and fog take the water's color (rig()), so every edge melts into the haze; the berm is the hazy
+  // ridges and mounds behind the reef, a plain sea floor beside the beach, and the deep drop-off at the far end.
+  // Adapted from Vibe Booth's underwater work (app.js) and redrawn in the site's matte, wompified style: the depth tint
+  // and caustics (applyUnderwater), the light shafts and rising bubbles, the underside of the water surface
+  // (makeWaterSurface, in the sea's shader), and the coral and critter shapes (coralGeos, critterGeos, FISH). Every
+  // animal here is a white spirit with matte black eyes.
+  const REEF = { built: false, boost: 0 }, reefU = { t: { value: 0 } }, WLY = (WL - GE).toFixed(1);
+  // the underwater look for the sea floor, rocks, corals, and plants: light absorption tints them toward aqua and then
+  // blue with depth, and soft caustics dance over them, fading with depth. Chains onto a material's own shader patch.
+  function underwater(m){ const prev = m.onBeforeCompile;
+    m.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); sh.uniforms.uUwT = reefU.t;
+      sh.vertexShader = 'varying vec3 vUwP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n{ vec4 uwp = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\n uwp = instanceMatrix*uwp;\n#endif\n vUwP = (modelMatrix*uwp).xyz; }');
+      sh.fragmentShader = 'varying vec3 vUwP; uniform float uUwT;\nfloat uwCaus(vec2 p, float t){ vec2 q = p; float c = 0.0; for (int i = 0; i < 3; i++){ q += vec2(sin(q.y*1.3 + t*0.8), cos(q.x*1.1 - t*0.6))*0.5; c += abs(sin(q.x + q.y*0.7 + t*0.5)); q = q*1.6 + vec2(1.7, 9.2); } return pow(max(0.0, 1.0 - c*0.38), 4.0); }\n' + sh.fragmentShader
+        .replace('#include <color_fragment>', `#include <color_fragment>\n float uwD = max(0.0, ${WLY} - vUwP.y); diffuseColor.rgb *= mix(vec3(1.0), mix(vec3(0.82, 0.97, 0.97), vec3(0.5, 0.7, 0.88), smoothstep(300.0, 3200.0, uwD)), smoothstep(0.0, 80.0, uwD));`)
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n if (uwD > 2.0) totalEmissiveRadiance += vec3(0.78, 1.0, 0.95)*uwCaus(vUwP.xz*0.0062, uUwT)*smoothstep(2.0, 120.0, uwD)*(1.0 - smoothstep(1700.0, 3600.0, uwD))*0.38;'); };
+    m.customProgramCacheKey = () => 'uw|' + (prev ? prev.toString().length : 0); return m; }
+  function buildReef(){
+    REEF.built = true; const rf = new T.Group(); root.add(rf); REEF.group = rf;
+    const hot = (t, r, o = {}) => hotAt(t, r, Object.assign({ grp: rf }, o)), litter = (o, p, r, m, c, h, id) => litterAt(o, p, r, m, c, h, rf, id), R = rng(77);
+    const uwStd = o => underwater(std('#ffffff', Object.assign({ vertexColors: true, roughness: .85 }, o)));
+    const AQUA = ['#7fd6cf', '#5fc4c0', '#9fe3d6', '#4fb3b8', '#86d0e0', '#a8e6df', '#6cc7b6', '#8fd9c8'], GLOWC = ['#ff8fc8', '#b98cff', '#f29ab5', '#c9a6ff'];
+    // keep Shigost's path and the spots of the toys, critters, and signs clear when scattering things
+    const CLEAR = [[34000, 36250, -520, 420], [37350, 38700, -470, 380], [41500, 42700, -520, 360]];
+    const free = (x, z, pad = 0) => Math.abs(z) > 230 + pad && !CLEAR.some(([a, b, c, d]) => x > a - pad && x < b + pad && z > c - pad && z < d + pad);
+    const glowParts = []; // the glowing accent, baked into one swaying mesh at the end
+
+    /* the sea floor: pale cool sand with soft ripples, rocky and mossy patches, bluer behind the reef and past its edge */
+    { const X0 = 31800, X1 = 52000, Z0 = -9000, Z1 = 9000, NX = LITE ? 110 : 160, NZ = LITE ? 64 : 90;
+      const g = new T.PlaneGeometry(X1 - X0, Z1 - Z0, NX, NZ); g.rotateX(-Math.PI/2);
+      const pos = g.attributes.position, col = new Float32Array(pos.count*3), cS = C(REEF_SAND), cD = C('#9fc4c6'), cR = C('#8db3b6'), cM = C('#93cdb8'), tmp = C('#000');
+      for (let i = 0; i < pos.count; i++){ const x = pos.getX(i) + (X0 + X1)/2, z = pos.getZ(i) + (Z0 + Z1)/2; pos.setXYZ(i, x, Y(earthH(x, z)), z);
+        const n = .5 + .5*Math.sin(x*.0023 + Math.sin(z*.0017)*2)*Math.sin(z*.0031 - x*.0009);
+        tmp.copy(cS).lerp(cD, clamp(smooth(-600, -4000, z)*.7 + smooth(DROP_X - 200, DROP_X + 1200, x)*.8, 0, 1)).lerp(cR, smooth(.62, .82, n)*.55).lerp(cM, smooth(.22, .06, n)*.45);
+        col.set([tmp.r, tmp.g, tmp.b], i*3); }
+      g.setAttribute('color', new T.BufferAttribute(col, 3)); g.computeVertexNormals();
+      const rip = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d'), im = c.createImageData(128, 128);
+        for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++){ const v = .5 + .5*Math.sin((y + 5*Math.sin(x/128*Math.PI*4))/128*Math.PI*2*9), k = (y*128 + x)*4; im.data[k] = im.data[k + 1] = im.data[k + 2] = 100 + v*120; im.data[k + 3] = 255; }
+        c.putImageData(im, 0, 0); const t = new T.CanvasTexture(cv); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set((X1 - X0)/380, (Z1 - Z0)/380); return t; })();
+      // a polygon offset lets the beach's own ground win where the two overlap at the shore
+      rf.add(new T.Mesh(g, underwater(new T.MeshStandardMaterial({ vertexColors: true, roughness: .95, metalness: 0, bumpMap: rip, bumpScale: 1.2, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }))));
+      // beside the beach, under the open sea, a plain sea floor, so the view back toward the shore never finds an edge
+      rf.add(new T.Mesh(new T.PlaneGeometry(12000, 16000, 2, 2).rotateX(-Math.PI/2).translate(25850, Y(WL - 300), -12300), underwater(std('#9fc4c6', { roughness: 1 })))); }
+
+    /* rocks: rounded boulders along the reef, and big hazy mounds and pillars behind it and out past the drop-off */
+    const rockG = (() => { const g = new T.SphereGeometry(1, 18, 12), p = g.attributes.position; for (let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), z = p.getZ(i), n = 1 + .13*Math.sin(x*4 + 1)*Math.sin(y*3.4 + 2)*Math.sin(z*5) + .06*Math.sin(x*9 + z*7); p.setXYZ(i, x*n, y*n, z*n); } return smoothNormals(g); })();
+    { const L = [];
+      for (let i = 0; L.length < (LITE ? 34 : 50) && i < 600; i++){ const x = 32300 + R()*10300, z = -2600 + R()*3600; if (!free(x, z, 60)) continue; const s = 60 + R()*200; L.push([x, z, s, s*(.45 + R()*.35), s*(.8 + R()*.5)]); }
+      for (let i = 0; i < (LITE ? 18 : 26); i++){ const s = 500 + R()*1300; L.push([31500 + R()*19000, -3600 - R()*5000, s, s*(.5 + R()*.8), s]); }
+      for (let i = 0; i < 8; i++){ const s = 400 + R()*500; L.push([DROP_X + 1800 + R()*6000, -800 - R()*5000, s, 1400 + R()*1600, s]); } // pillars rising from the deep
+      const im = new T.InstancedMesh(rockG, underwater(std('#ffffff', { roughness: .92 })), L.length), o = new T.Object3D(), RC = ['#7fa9b0', '#8fb8b9', '#6f9aa6', '#86b3b0'];
+      // nothing breaks the surface: every rock's top stays a little under the water
+      L.forEach(([x, z, sx, sy, sz], i) => { sy = Math.min(sy, (WL - 160 - earthH(x, z))/.84); o.position.copy(at3(x, z, -sy*.3)); o.rotation.set(0, R()*6.28, 0); o.scale.set(sx, sy, sz); o.updateMatrix(); im.setMatrixAt(i, o.matrix); im.setColorAt(i, C(RC[i % 4])); });
+      im.frustumCulled = false; rf.add(im); }
+
+    /* corals: brain, branching, tube sponges, pom clusters, and lattice fans, in the aqua and teal family (one InstancedMesh each) */
+    const brainG = (() => { const g = new T.SphereGeometry(1, 28, 14, 0, Math.PI*2, 0, Math.PI/2), p = g.attributes.position; for (let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), z = p.getZ(i), r = 1 + .07*Math.sin(x*16 + Math.sin(z*13)*2)*Math.min(1, y*6); p.setXYZ(i, x*r, y*r*.8, z*r); } g.computeVertexNormals(); return bake([[g, I4, '#ffffff', 0, .35]]); })();
+    const stagG = (() => { const parts = [], CR = rng(5);
+      const grow = (a, d, len, rad, depth) => { const e = a.clone().addScaledVector(d, len); parts.push([new T.CylinderGeometry(rad*.75, rad, len, 7), new T.Matrix4().compose(a.clone().add(e).multiplyScalar(.5), new T.Quaternion().setFromUnitVectors(V(0, 1, 0), d), V(1, 1, 1)), '#ffffff', 0, .3]);
+        if (depth > 0) for (let k = 0; k < 2; k++){ const an = CR()*6.28; grow(e, V(d.x + Math.cos(an)*.7, d.y + .3, d.z + Math.sin(an)*.7).normalize(), len*.72, rad*.72, depth - 1); }
+        else parts.push([new T.SphereGeometry(1, 8, 6), S4(e.x, e.y, e.z, rad*1.05, rad*1.05, rad*1.05), '#ffffff', 0, .3]); };
+      for (let k = 0; k < 4; k++){ const an = k*1.57 + .3; grow(V(0, 0, 0), V(Math.cos(an)*.4, 1, Math.sin(an)*.4).normalize(), .42, .07, 2); }
+      return bake(parts); })();
+    const tubeG = (() => { const parts = []; for (let k = 0; k < 6; k++){ const a = k*1.1, r = k ? .2 : 0, h = .45 + ((k*37) % 10)/10*.5, x = Math.cos(a)*r, z = Math.sin(a)*r;
+      parts.push([new T.CylinderGeometry(.09, .11, h, 12), M4(x, h/2, z), '#ffffff', 0, .3], [new T.CylinderGeometry(.075, .075, .01, 12), M4(x, h + .002, z), '#58848c'], [new T.TorusGeometry(.085, .022, 6, 14), S4(x, h, z, 1, 1, 1, Math.PI/2), '#ffffff', 0, .2]); } return bake(parts); })();
+    const puffG = bake([[0, .55, 0, .26], [.28, .4, .1, .2], [-.25, .42, -.08, .21], [.06, .34, .3, .17], [-.08, .78, -.05, .18]].flatMap(([x, y, z, r]) => [[new T.CylinderGeometry(.035, .05, y, 6), M4(x*.6, y/2, z*.6), '#ffffff', 0, .2], [new T.SphereGeometry(1, 14, 10), S4(x, y, z, r, r, r), '#ffffff', 0, .35]]));
+    const fanTex = cvTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.strokeStyle = '#fff'; g.lineCap = 'round'; g.lineWidth = 3;
+      for (let k = 0; k <= 12; k++){ const a = Math.PI + k/12*Math.PI; g.beginPath(); g.moveTo(64, 64); g.lineTo(64 + Math.cos(a)*62, 64 + Math.sin(a)*62); g.stroke(); }
+      g.lineWidth = 2.4; for (let r = 14; r <= 62; r += 9){ g.beginPath(); g.arc(64, 64, r, Math.PI, 0); g.stroke(); } g.lineWidth = 5; g.beginPath(); g.arc(64, 64, 61, Math.PI, 0); g.stroke(); });
+    const coralSet = (geo, mat, n, sMin, sMax, o = {}) => { const im = new T.InstancedMesh(geo, mat, n), ob = new T.Object3D(); let k = 0;
+      for (let i = 0; k < n && i < n*40; i++){ const x = 32200 + R()*10300, z = -2700 + R()*3600; if (!free(x, z, 40)) continue; const s = sMin + R()*(sMax - sMin);
+        ob.position.copy(at3(x, z, -s*.06)); ob.rotation.set(0, o.face ? (R() - .5)*1.2 : R()*6.28, 0); ob.scale.set(s, s*(.85 + R()*.3), s); ob.updateMatrix(); im.setMatrixAt(k, ob.matrix); im.setColorAt(k, C(AQUA[Math.floor(R()*AQUA.length)])); k++; }
+      im.count = k; im.frustumCulled = false; rf.add(im); return im; };
+    const coralM = uwStd({ roughness: .75 });
+    coralSet(brainG, coralM, LITE ? 24 : 34, 60, 170); coralSet(stagG, coralM, LITE ? 20 : 30, 110, 240); coralSet(tubeG, coralM, LITE ? 18 : 26, 90, 200);
+    coralSet(puffG, coralM, LITE ? 14 : 22, 90, 180); coralSet(new T.CircleGeometry(1, 20, 0, Math.PI), underwater(std('#ffffff', { map: fanTex, alphaTest: .45, side: T.DoubleSide, roughness: .7 })), LITE ? 12 : 18, 130, 260, { face: true });
+
+    /* sea plants that sway in the current: tall kelp behind the reef and seagrass tufts along the path (sea greens),
+       plus the glowing accent: curly stalks with pink and violet pom bulbs, and little glowing puffs on the sand */
+    { const parts = [], KC = ['#5fb8a6', '#6fc2a9', '#57a99c'];
+      for (let i = 0, n = 0; n < (LITE ? 16 : 26) && i < 300; i++){ const x = 32000 + R()*10600, z = -700 - R()*2600; if (!free(x, z)) continue; n++;
+        const b = at3(x, z, -10), H = Math.min(600 + R()*900, WL - 130 - earthH(x, z)), ph = R()*6, sw = [5, H, -b.y], c = KC[n % 3]; // kelp stays under the surface
+        const pts = [0, .25, .5, .75, 1].map(k => V(b.x + Math.sin(k*3 + ph)*60*k, b.y + H*k, b.z + Math.cos(k*2 + ph)*30*k)), cv = new T.CatmullRomCurve3(pts);
+        parts.push([taper(pts, 16, 6, 16, 7), I4, c, sw, .25]);
+        for (let k = 1; k < 7; k++){ const p = cv.getPoint(k/7), sd = k % 2 ? 1 : -1, leaf = new T.SphereGeometry(1, 10, 6); leaf.applyMatrix4(S4(p.x + sd*34, p.y, p.z, 40, 13, 20, 0, 0, sd*.6)); parts.push([leaf, I4, c, sw, .3]); } }
+      for (let i = 0; i < (LITE ? 30 : 48); i++){ const x = 31800 + R()*10800, z = (R() < .5 ? -1 : 1)*(260 + R()*900), b = at3(x, z, -4);
+        for (let k = 0; k < 5; k++){ const a = (k - 2)*.35 + R()*.2, h = 90 + R()*90; parts.push([taper([V(b.x, b.y, b.z), V(b.x + Math.sin(a)*30, b.y + h*.5, b.z + Math.cos(a)*6), V(b.x + Math.sin(a)*60, b.y + h, b.z + 10)], 6, 4, 6, 2), I4, KC[(i + k) % 3], [2.2, h, -b.y], .2]); } }
+      for (let i = 0, n = 0; n < (LITE ? 12 : 18) && i < 300; i++){ const x = 32400 + R()*10000, z = R() < .7 ? -300 - R()*1500 : 300 + R()*700; if (!free(x, z, 30)) continue; n++;
+        const b = at3(x, z, -6), H = 220 + R()*260, sw = [1.4, H + 90, -b.y], pts = [];
+        for (let k = 0; k <= 8; k++) pts.push(V(b.x + Math.sin(k*.4)*14, b.y + k/8*H, b.z));
+        const top = pts[8], cx = top.x - 46; for (let k = 1; k <= 10; k++){ const a = k/10*Math.PI*2.2, r = 46*(1 - k/12); pts.push(V(cx + r*Math.cos(a), top.y + r*Math.sin(a), b.z)); }
+        parts.push([taper(pts, 40, 6, 9, 5), I4, '#6cc7b6', sw, .25]); const e = pts[pts.length - 1];
+        glowParts.push([new T.SphereGeometry(1, 14, 10), S4(e.x, e.y + 12, e.z, 26, 26, 26), GLOWC[n % 4], sw, .2]); }
+      for (let i = 0, n = 0; n < (LITE ? 14 : 22) && i < 300; i++){ const x = 32300 + R()*10200, z = -260 - R()*1600; if (!free(x, z, 20)) continue; n++; const b = at3(x, z, 0);
+        for (let k = 0; k < 4; k++){ const r = 10 + R()*12; glowParts.push([new T.SphereGeometry(1, 10, 8), S4(b.x + (R() - .5)*90, b.y + r*.6, b.z + (R() - .5)*60, r, r, r), GLOWC[(n + k) % 4], 0, .2]); } }
+      rf.add(new T.Mesh(bake(parts), underwater(swayMat({ roughness: .8 })))); }
+
+    /* the coral xylophone: seven coral bars on two coral rails; tap them or drag across them */
+    const XNOTES = [392, 440, 493.88, 587.33, 659.25, 783.99, 880], XCOL = ['#4fb3b8', '#5fc4c0', '#6cc7b6', '#7fd6cf', '#8fd9c8', '#9fe3d6', '#a8e6df'], bars = [], XZ0 = -170;
+    { const parts = [], gy = Math.max(...[34900, 35100, 35300, 35500, 35650].flatMap(x => [at3(x, XZ0 - 72).y, at3(x, XZ0 + 72).y])), yr = gy + 46;
+      [-1, 1].forEach(sd => { const zz = XZ0 + sd*72;
+        parts.push([taper([V(34860, yr, zz), V(35100, yr + 4, zz + 4), V(35400, yr - 3, zz - 3), V(35690, yr, zz)], 30, 10, 20, 17), I4, '#5a9fa3', 0, .3]);
+        [34920, 35275, 35630].forEach(x => { const g = at3(x, zz).y; parts.push([new T.CylinderGeometry(14, 22, yr - g + 10, 8), M4(x, (yr + g)/2 - 5, zz), '#5a9fa3', 0, .2]); });
+        for (let k = 0; k < 6; k++) glowParts.push([new T.SphereGeometry(1, 10, 8), S4(34900 + k*140 + 30, yr + 14, zz + sd*16, 9, 9, 9), GLOWC[k % 2], 0, .2]); });
+      rf.add(new T.Mesh(bake(parts), uwStd()));
+      XNOTES.forEach((f, i) => { const x = 34960 + i*105, L = 236 - i*14, bar = new T.Mesh(sph(20, 12), underwater(std(XCOL[i], { roughness: .5, emissive: C(XCOL[i]), emissiveIntensity: .12 })));
+        bar.scale.set(38, 17, L/2); bar.position.set(x, yr + 37, XZ0); rf.add(bar); const base = bar.position.clone(); bars.push({ m: bar, base, t: -1 });
+        const h = hot(bar, 46, { cls: 'vine', label: 'Coral xylophone, note ' + (i + 1) }); h.el.dataset.freq = f; h.el.dataset.voice = 'xylo'; h.el.dataset.toy = 'coral-xylophone'; strummable(h.el);
+        h.el._fx = () => { bars[i].t = 0; REEF.boost = 1; burst(base.clone().add(V(0, 40, 0)), [XCOL[i], '#ffffff', GLOWC[i % 2]], 10, 220, 300); }; });
+      hot(V(35275, yr + 40, XZ0), 360, { noHit: true, halo: 'reef', haloK: 1.25 }); }
+
+    /* a little white octopus hiding in a coral nook: it peeks out now and then, and pops out when tapped */
+    const OCT = { x: 34260, z: -360, t: -1 }, octBase = at3(OCT.x, OCT.z), oct = new T.Group(); oct.position.copy(octBase); rf.add(oct);
+    rf.add(new T.Mesh(bake([[rockG.clone(), S4(OCT.x - 130, octBase.y + 20, OCT.z - 40, 120, 110, 110), '#7fa9b0', 0, .3], [rockG.clone(), S4(OCT.x + 140, octBase.y + 10, OCT.z - 30, 110, 95, 100, 0, 1), '#86b3b0', 0, .3],
+      [rockG.clone(), S4(OCT.x, octBase.y - 10, OCT.z - 150, 190, 130, 90), '#7fa9b0', 0, .3], [brainG.clone(), S4(OCT.x + 60, octBase.y + 70, OCT.z - 120, 80, 70, 70), '#9fe3d6', 0, .2]]), uwStd({ roughness: .9 })));
+    { const P = [[sph(18, 14), S4(0, 70, 0, 62, 70, 58), '#f4f2ee', 0, .3]]; eyePair(P, 0, 74, 48, 17, 22, 0); oct.add(folk(P)); oct.userData.arms = [];
+      for (let k = 0; k < 6; k++){ const a = k/6*Math.PI*2 + .3, piv = new T.Group(); piv.position.set(Math.cos(a)*36, 20, Math.sin(a)*32); piv.rotation.y = -a; oct.add(piv);
+        piv.add(folk([[taper([V(0, 0, 0), V(30, -12, 0), V(62, -14, 0), V(84, 0, 0), V(86, 18, 0), V(72, 22, 0)], 18, 8, 15, 5), I4, '#f4f2ee', 0, .2]])); oct.userData.arms.push(piv); } }
+    gazeAt(rf, oct, 80);
+    hot(V(OCT.x, octBase.y + 60, OCT.z), 120, { label: LORE['reef-octopus'].name, halo: 'reef', tap: () => { meet('reef-octopus');
+      if (OCT.t < 0){ OCT.t = 0; tone(740, 'chirp'); setTimeout(() => tone(988, 'chirp'), 150); burst(octBase.clone().add(V(0, 130, 40)), ['#c9a6ff', '#ff9ad5', '#ffffff'], 18, 260, 340); } } });
+
+    /* cleanup: a fishing net tangled on a brain coral; tap it to clear it away */
+    { const nb = at3(35980, -330), coral = new T.Mesh(brainG, uwStd({ roughness: .8 })); coral.position.copy(nb).add(V(0, -10, 0)); coral.scale.set(170, 150, 150); coral.material.color.copy(C('#6cc7b6')); rf.add(coral);
+      const tex = cvTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.strokeStyle = '#fff'; g.lineWidth = 5; for (let k = -128; k < 256; k += 22){ g.beginPath(); g.moveTo(k, 0); g.lineTo(k + 128, 128); g.stroke(); g.beginPath(); g.moveTo(k + 128, 0); g.lineTo(k, 128); g.stroke(); } });
+      tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(3, 3);
+      const g = new T.PlaneGeometry(420, 340, 18, 16); g.rotateX(-Math.PI/2); const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++){ const x = p.getX(i), z = p.getZ(i), d = Math.hypot(x/175, z/155); p.setY(i, (d < 1 ? 122*Math.sqrt(1 - d*d) + 8 : Math.max(-4, 8 - (d - 1)*80)) + 6*Math.sin(x*.05 + z*.04)); }
+      g.computeVertexNormals();
+      const net = new T.Group(); net.add(new T.Mesh(g, new T.MeshStandardMaterial({ color: C('#e2ae94'), map: tex, alphaTest: .4, side: T.DoubleSide, roughness: .9 })));
+      [[-170, 30, 110], [150, 24, -100], [40, 70, 150]].forEach(([x, y, z]) => { const f = new T.Mesh(sph(12, 10), std('#f2a7a0', { roughness: .5 })); f.position.set(x, y, z); f.scale.setScalar(22); net.add(f); });
+      litter(net, nb.clone().add(V(0, -10, 0)), 170, 'The coral can breathe again. Thank you for helping Shigost!', 'reef', true, 'reef-net'); }
+
+    /* the cozy spot: a soft moss bed where she lies down to watch the fish and the light, beside the glowing anemones */
+    { const b = at3(RFX.r2, 0), parts = [[sph(24, 10), S4(RFX.r2 - 20, b.y - 14, 10, 260, 22, 170), '#8ccab5', 0, .25]];
+      for (let k = 0; k < 14; k++){ const a = k*2.4, r = 60 + (k*37 % 150); parts.push([sph(10, 8), S4(RFX.r2 - 20 + Math.cos(a)*r*1.4, b.y + 2, 10 + Math.sin(a)*r*.8, 26, 12, 22), k % 2 ? '#9fd6bf' : '#7fc0a8', 0, .2]); }
+      rf.add(new T.Mesh(bake(parts), uwStd())); }
+
+    /* glowing anemones: they lean toward a finger or the mouse, and chime when touched (tap, drag, or brush the mouse through) */
+    const ANOTES = [659.25, 783.99, 880, 1046.5, 1318.51], anems = [];
+    const glowMat = k => { const m = underwater(swayMat({ roughness: .5 })), prev = m.onBeforeCompile;
+      m.onBeforeCompile = (sh, r) => { prev(sh, r); sh.uniforms.uGlowK = k; sh.fragmentShader = 'uniform float uGlowK;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vColor.rgb*uGlowK;'); };
+      m.customProgramCacheKey = () => 'glowuw'; return m; };
+    ANOTES.forEach((f, i) => { const x = 37990 + i*125, z = -210 - 50*Math.sin(i*1.4), g = new T.Group(), c = i % 2 ? '#b98cff' : '#ff8fc8'; g.position.copy(at3(x, z, -6)); rf.add(g);
+      g.add(new T.Mesh(bake([[new T.CylinderGeometry(30, 40, 44, 14), M4(0, 22, 0), '#5fb3a8', 0, .3], [sph(14, 8), S4(0, 44, 0, 30, 8, 30), '#7fc7b8']]), uwStd()));
+      const tp = []; for (let k = 0; k < 16; k++){ const a = k*2.4, r = 6 + (k % 3)*9, len = 70 + (k % 4)*14, d = V(Math.cos(a)*.55, 1, Math.sin(a)*.55).normalize(), s0 = V(Math.cos(a)*r, 0, Math.sin(a)*r), e = s0.clone().addScaledVector(d, len);
+        tp.push([taper([s0, s0.clone().addScaledVector(d, len*.5).add(V(0, 6, 0)), e], 6, 6, 7, 3.5), I4, c, 0, .2], [sph(8, 6), S4(e.x, e.y, e.z, 7, 7, 7), '#ffe9f6']); }
+      const A = { g, gk: { value: .5 }, t: -1, last: 0, tent: new T.Group() }; A.tent.position.y = 40; g.add(A.tent); A.tent.add(new T.Mesh(bake(tp), glowMat(A.gk)));
+      A.gs = glow(c, 300, .2); A.gs.position.y = 110; g.add(A.gs); anems.push(A);
+      const top = new T.Object3D(); top.position.y = 90; g.add(top);
+      const h = hot(top, 58, { cls: 'vine', label: 'Glowing anemone, note ' + (i + 1) }); h.el.dataset.freq = f; h.el.dataset.voice = 'anemone'; h.el.dataset.toy = 'glow-anemones'; strummable(h.el);
+      h.el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !e.buttons && performance.now() - A.last > 700) pluck(h.el); }); // a mouse brushing through plays them too
+      h.el._fx = () => { A.t = 0; A.last = performance.now(); REEF.boost = 1; burst(g.position.clone().add(V(0, 120, 0)), [c, '#ffffff', '#c9fff8'], 12, 200, 280); }; });
+    hot(at3(38240, -210, 80), 340, { noHit: true, halo: 'reef2', haloK: 1.25 });
+
+    /* a white spirit sea turtle gliding slowly past on a long loop; tap it for a happy barrel roll */
+    const tur = new T.Group(), TUR = { t: -1 }; tur.rotation.order = 'YXZ'; rf.add(tur);
+    { const P = [[sph(24, 14), S4(0, 0, 0, 170, 70, 135), '#ebe6f2', 0, .35], [sph(18, 12), S4(0, -22, 0, 150, 36, 120), '#f4f2ee', 0, .2], [sph(18, 14), S4(195, 6, 0, 56, 50, 50), '#f4f2ee', 0, .3]];
+      for (let k = 0; k < 7; k++){ const a = k/6*Math.PI*2, r = k < 6 ? 82 : 0; P.push([sph(12, 8), S4(Math.cos(a)*r*1.05, k < 6 ? 50 : 64, Math.sin(a)*r*.85, 46, 14, 40), '#e2dcef', 0, .2]); }
+      eyePair(P, 240, 18, 0, 15, 20, Math.PI/2); tur.add(folk(P)); tur.userData.fl = [];
+      [[90, 1, 1], [90, -1, 1], [-120, 1, .55], [-120, -1, .55]].forEach(([x, sd, k]) => { const piv = new T.Group(); piv.position.set(x, -14, sd*100); tur.add(piv);
+        piv.add(folk([[sph(14, 10), S4(30*k, 0, sd*70*k, 70*k, 12, 36*k, 0, -sd*.5, 0), '#f4f2ee', 0, .25]])); tur.userData.fl.push([piv, sd, k]); }); }
+    gazeAt(rf, tur, 0);
+    hot(tur, 210, { label: LORE['sea-turtle'].name, tap: () => { meet('sea-turtle'); if (TUR.t < 0){ TUR.t = 0; tone(262, 'bloop'); setTimeout(() => tone(392, 'bloop'), 180); burst(tur.position.clone().add(V(0, 120, 0)), ['#ffffff', '#c9fff8'], 14, 200, 260); } } });
+
+    /* reef fish: white spirit schools swirling in loose loops (a slim shape and a round one; one InstancedMesh per school,
+       plus one for the eyes). Tap the school by the coral xylophone and it scatters. */
+    const fishU = { t: { value: 0 } }, fishM = spirit(std('#ffffff', { vertexColors: true, roughness: .9 })), fsp = fishM.onBeforeCompile;
+    fishM.onBeforeCompile = sh => { fsp(sh); sh.uniforms.fT = fishU.t; sh.vertexShader = 'uniform float fT;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n float fph = instanceMatrix[3].x*0.013 + instanceMatrix[3].z*0.017; transformed.z += sin(fT*9.0 + fph - position.x*5.0)*0.1*smoothstep(0.1, -0.7, position.x);'); };
+    fishM.customProgramCacheKey = () => 'fish';
+    const fishGeo = h => bake([[sph(16, 12), S4(0, 0, 0, .5, h, .21), '#ffffff', 0, .3], [sph(10, 8), S4(-.56, .1, 0, .22, .13, .035, 0, 0, .55), '#ffffff', 0, .2], [sph(10, 8), S4(-.56, -.1, 0, .22, .13, .035, 0, 0, -.55), '#ffffff', 0, .2],
+      [sph(10, 8), S4(-.04, h*.95, 0, .2, .11, .03, 0, 0, -.3), '#ffffff', 0, .2], [sph(8, 6), S4(.1, -h*.35, .19, .12, .06, .05, 0, -.5, 0), '#ffffff', 0, .2], [sph(8, 6), S4(.1, -h*.35, -.19, .12, .06, .05, 0, .5, 0), '#ffffff', 0, .2]]);
+    const eyeGeo = h => bake([[sph(14, 10), S4(.3, h*.22, .16, .085, .095, .045, 0, -.3, 0), '#ffffff'], [sph(14, 10), S4(.3, h*.22, -.16, .085, .095, .045, 0, .3, 0), '#ffffff']]);
+    const FG = { slim: [fishGeo(.3), eyeGeo(.3)], round: [fishGeo(.42), eyeGeo(.42)] }, fl = Y(REEF_D);
+    const SCHOOLS = [{ c: V(35300, fl + 540, -720), rx: 950, rz: 380, ry: 90, sp: .16, n: LITE ? 10 : 14, kind: 'slim', spread: 150 },
+      { c: V(38250, fl + 640, -820), rx: 800, rz: 420, ry: 110, sp: .13, n: LITE ? 8 : 12, kind: 'round', spread: 170 },
+      { c: V(40400, fl + 560, -560), rx: 1100, rz: 300, ry: 80, sp: .19, n: LITE ? 8 : 11, kind: 'slim', spread: 140 }];
+    SCHOOLS.forEach((S, si) => { const [bg, eg] = FG[S.kind]; S.body = new T.InstancedMesh(bg, fishM, S.n); S.eyes = new T.InstancedMesh(eg, eyeM, S.n); S.body.frustumCulled = S.eyes.frustumCulled = false; rf.add(S.body, S.eyes);
+      S.clk = si*.3; S.scare = 0; S.o = Array.from({ length: S.n }, () => [V(R() - .5, (R() - .5)*.6, R() - .5).multiplyScalar(2), 75 + R()*35, R()*6]); S.tgt = new T.Object3D(); rf.add(S.tgt); });
+    gazeAt(rf, SCHOOLS[0].tgt, 0);
+    hot(SCHOOLS[0].tgt, 260, { label: LORE['reef-fish'].name, tap: () => { meet('reef-fish'); SCHOOLS[0].scare = 1; tone(520, 'bloop'); setTimeout(() => tone(700, 'bloop'), 110); } });
+
+    /* light shafts slanting down from the surface, and bubbles rising (some from Shigost's bubble helmet) */
+    const shaftTex = numTex(32, 128, (u, v) => [255, 255, 255, Math.pow(Math.max(0, 1 - Math.abs(u - .5)*2), 1.6)*Math.pow(v, 1.3)*.9]), shafts = [];
+    for (let i = 0; i < (LITE ? 6 : 9); i++){ const m = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: shaftTex, color: C('#dcfff8'), transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false, side: T.DoubleSide }));
+      const x = 32600 + i*1150 + R()*400, z = -300 - R()*1600, H = 1700; m.scale.set(260 + R()*260, H, 1); m.position.set(x, Y(WL) - H/2 + 60, z); m.userData = { x, z, ph: R()*6, o: .09 + R()*.07 }; rf.add(m); shafts.push(m); }
+    const bubTex = numTex(32, 32, (u, v) => { const r = Math.hypot(u - .5, v - .5)*2; return [255, 255, 255, r > 1 ? 0 : clamp((r - .55)/.3, 0, 1)*(1 - smooth(.85, 1, r)) + (Math.hypot(u - .38, v - .62) < .1 ? .9 : 0)]; });
+    const NB = LITE ? 70 : 120, bP = new Float32Array(NB*3).fill(-1e6), bS = Array.from({ length: NB }, () => ({ v: 50 + R()*90, ph: R()*6, live: false }));
+    const bG = new T.BufferGeometry(); bG.setAttribute('position', new T.BufferAttribute(bP, 3));
+    const bub = new T.Points(bG, new T.PointsMaterial({ size: 34, map: bubTex, color: C('#e6fffb'), transparent: true, opacity: .75, depthWrite: false, toneMapped: false })); bub.frustumCulled = false; rf.add(bub);
+    let helmBubT = 0;
+
+    /* the drop-off: the deep ocean sign at the reef's edge, a soft violet lantern, and faint glowing specks down in the deep */
+    { const ds = signpost(rf, RFX.end + 420, -240, [['The deep ocean', '#cfeee9', 400, 100, 380, 64], ['coming soon', '#c9bdf5', 320, 78, 268, 52]], -.1);
+      const lamp = glow('#b98cff', 420, .35); lamp.position.copy(ds.top).add(V(0, 170, 0)); rf.add(lamp); REEF.lamp = lamp;
+      const b = at3(RFX.end + 420, -240); for (let k = 0; k < 5; k++) glowParts.push([new T.SphereGeometry(1, 10, 8), S4(b.x - 60 + k*30, b.y + 8 + (k % 2)*10, b.z + 30 - (k % 3)*20, 12, 12, 12), GLOWC[k % 4], 0, .2]);
+      hot(ds.top, 210, { label: 'The deep ocean, coming soon', halo: 'deep', tap: () => deepCard() }); }
+    const NDS = 46, dsP = new Float32Array(NDS*3), dsC = new Float32Array(NDS*3), dsO = [];
+    for (let i = 0; i < NDS; i++){ const x = DROP_X + 300 + R()*5200, y = Y(REEF_D - 500 - R()*2600), z = -2600 + R()*3200, c = C(['#b98cff', '#7fe0ff', '#ff8fc8'][i % 3]); dsO.push([x, y, z, R()*6]); dsC.set([c.r, c.g, c.b], i*3); }
+    const dsG = new T.BufferGeometry(); dsG.setAttribute('position', new T.BufferAttribute(dsP, 3)); dsG.setAttribute('color', new T.BufferAttribute(dsC, 3));
+    const deepSpecks = new T.Points(dsG, new T.PointsMaterial({ size: 46, map: glowTex, vertexColors: true, transparent: true, opacity: .8, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false, fog: false })); deepSpecks.frustumCulled = false; rf.add(deepSpecks);
+
+    /* the glowing accent, in one mesh that sways with the plants and pulses softly */
+    const glowU = { k: { value: .55 } }; rf.add(new T.Mesh(bake(glowParts), glowMat(glowU.k)));
+
+    /* ---- Womps exploring the reef, with little bubble helmets ---- */
+    wompSet(rf, WOMPS.filter(w => w.ch === 'reef').map(w => Object.assign(w, { pos: at3(w.x, w.z) })), hot);
+
+    /* ---- per frame ---- */
+    const _rv = V(0, 0, 0), _rp = V(0, 0, 0), _fo = new T.Object3D(), _ht = V(0, 0, 0); _fo.rotation.order = 'YXZ';
+    REEF.frame = (p, cam, s, t, dt) => {
+      const rm = reduce.matches, uw = RIG.uw; reefU.t.value = t; fishU.t.value = t;
+      // the living light: a slow, soft pulse, brighter for a moment when a toy plays (nothing pulses with reduced motion)
+      REEF.boost = Math.max(0, REEF.boost - dt*.8); glowU.k.value = .55 + (rm ? 0 : .12*Math.sin(t*1.6)) + REEF.boost*.5;
+      REEF.lamp.material.opacity = .3 + (rm ? 0 : .08*Math.sin(t*1.3));
+      bars.forEach(B => { if (B.t < 0) return; B.t += dt; const k = Math.min(1, B.t/.6); B.m.position.y = B.base.y - 14*Math.sin(k*Math.PI*2)*(1 - k); B.m.material.emissiveIntensity = .12 + .9*(1 - k); if (k >= 1){ B.t = -1; B.m.position.y = B.base.y; } });
+      // the octopus peeks over the rim now and then; a tap pops it all the way out, waving
+      { const cyc = (t*.15 + .3) % 1, peek = rm ? .6 : smooth(0, .07, cyc)*(1 - smooth(.36, .44, cyc)); let up = -95 + 58*peek, out = 0;
+        if (OCT.t >= 0){ OCT.t += dt; out = smooth(0, .25, OCT.t)*(1 - smooth(1.9, 2.4, OCT.t)); if (OCT.t > 2.5) OCT.t = -1; }
+        oct.position.y = octBase.y + lerp(up, 22, out); oct.rotation.y = out*Math.sin(OCT.t*3)*.5;
+        oct.userData.arms.forEach((a, k) => a.rotation.z = Math.sin(t*2.4 + k*1.1)*.18 + out*Math.sin(dt + OCT.t*14 + k)*.45); }
+      // the anemones lean toward a finger or the mouse near them, and pull in and flare when touched
+      let pr = PTR.down || performance.now() - PTR.t < 1800, d = 0;
+      if (pr){ const r = canvas.getBoundingClientRect(); _rv.set((PTR.x - r.left)/r.width*2 - 1, -((PTR.y - r.top)/r.height)*2 + 1, .5).unproject(camera).sub(camera.position).normalize();
+        d = Math.abs(_rv.z) > .02 ? (-210 - camera.position.z)/_rv.z : -1; pr = d > 0; if (pr) _rp.copy(camera.position).addScaledVector(_rv, d); }
+      anems.forEach((A, i) => { let lx = 0, lz = 0, s = 1, gl = .5;
+        if (pr){ const dx = _rp.x - A.g.position.x, dist = Math.hypot(dx, _rp.y - A.g.position.y - 90), k = 1 - smooth(120, 900, dist); lx = clamp(dx/400, -1, 1)*.55*k; lz = .25*k; }
+        lx += rm ? 0 : Math.sin(t*1.3 + i)*.05;
+        A.tent.rotation.z += (-lx - A.tent.rotation.z)*Math.min(1, dt*5); A.tent.rotation.x += (lz - A.tent.rotation.x)*Math.min(1, dt*5);
+        if (A.t >= 0){ A.t += dt; s = 1 - .3*Math.sin(Math.min(1, A.t/.5)*Math.PI); gl = .5 + 1.3*(1 - smooth(0, 1.2, A.t)); if (A.t > 1.3) A.t = -1; }
+        A.tent.scale.set(1, s, 1); A.gk.value = gl*glowU.k.value/.55; A.gs.material.opacity = .16 + .28*(gl - .5); });
+      // the turtle glides along its loop, flippers rowing slowly; a tap sends it into a happy barrel roll
+      { const ph = t*.06 + 1.2, dx = -Math.sin(ph)*3300, dz = Math.cos(ph)*650;
+        tur.position.set(36900 + Math.cos(ph)*3300, Y(REEF_D) + 520 + Math.sin(ph*2.3)*90, -1000 + Math.sin(ph)*650);
+        let roll = 0; if (TUR.t >= 0){ TUR.t += dt; roll = ease(Math.min(1, TUR.t/1.6))*Math.PI*2; if (TUR.t > 1.6) TUR.t = -1; }
+        tur.rotation.set(roll, Math.atan2(-dz, dx), Math.sin(t*.6)*.05);
+        tur.userData.fl.forEach(([f, sd, k]) => f.rotation.x = sd*Math.sin(t*1.6 + (k < 1 ? Math.PI : 0))*.45); }
+      // fish: each school swirls along its loop; a scared school spreads out and speeds up for a moment
+      SCHOOLS.forEach(S => { S.scare = Math.max(0, S.scare - dt*.4); S.clk += (rm ? 0 : dt)*S.sp*(1 + 2*S.scare);
+        const a = S.clk*Math.PI*2, tx = -Math.sin(a)*S.rx, ty = 2*Math.cos(a*2)*S.ry, tz = Math.cos(a)*S.rz, sp = S.spread*(1 + 1.8*S.scare);
+        S.tgt.position.set(S.c.x + Math.cos(a)*S.rx, S.c.y + Math.sin(a*2)*S.ry, S.c.z + Math.sin(a)*S.rz);
+        S.o.forEach(([o, sc, ph], i) => { _fo.position.set(S.tgt.position.x + (o.x + Math.sin(i*2.3 + S.clk*4.1)*.5)*sp, S.tgt.position.y + (o.y + Math.cos(i*1.7 + S.clk*3.3)*.3)*sp, S.tgt.position.z + (o.z + Math.sin(i*3.1 + S.clk*2.7)*.4)*sp);
+          _fo.rotation.set(0, Math.atan2(-tz, tx) + Math.sin(S.clk*7 + ph)*.15, Math.atan2(ty, Math.hypot(tx, tz))*.6); _fo.scale.setScalar(sc); _fo.updateMatrix(); S.body.setMatrixAt(i, _fo.matrix); S.eyes.setMatrixAt(i, _fo.matrix); });
+        S.body.instanceMatrix.needsUpdate = S.eyes.instanceMatrix.needsUpdate = true; });
+      // light shafts turn to face the camera and sway; only under water
+      shafts.forEach(m => { m.visible = uw > .02; if (!m.visible) return; const u = m.userData; m.rotation.set(0, Math.atan2(camera.position.x - u.x, camera.position.z - u.z), .16 + (rm ? 0 : Math.sin(t*.25 + u.ph)*.05)); m.material.opacity = u.o*(rm ? 1 : .8 + .2*Math.sin(t*.6 + u.ph))*uw; });
+      // bubbles rise around the view (they hold still with reduced motion); a few come from Shigost's helmet now and then
+      bub.visible = uw > .02;
+      if (bub.visible && !rm){ const cx = cam.x, pa = bG.attributes.position; helmBubT -= dt;
+        const fromHelm = helmBubT <= 0 && s3.helmTop && s3.helmTop(_ht); if (fromHelm) helmBubT = 1.4 + Math.random();
+        for (let i = 0; i < NB; i++){ const b = bS[i]; let x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i);
+          if (fromHelm && i < 3){ x = _ht.x + (Math.random() - .5)*30; y = _ht.y + i*26; z = _ht.z + 20; b.v = 150 + Math.random()*60; b.live = true; }
+          else if (!b.live || y > Y(WL) - 40 || Math.abs(x - cx) > 3200){ x = cx + (Math.random() - .5)*5000; z = -200 - Math.random()*1800; y = Y(earthH(x, z)) + 20 + Math.random()*900; b.live = true; b.v = 50 + Math.random()*90; }
+          y += b.v*dt; x += Math.sin(t*2.2 + b.ph)*14*dt; pa.setXYZ(i, x, y, z); }
+        pa.needsUpdate = true; }
+      // faint glowing specks drift in the deep past the edge
+      if (!rm || !deepSpecks.userData.set){ deepSpecks.userData.set = true; const pa = dsG.attributes.position; dsO.forEach(([x, y, z, ph], i) => pa.setXYZ(i, x + Math.sin(t*.2 + ph)*80, y + Math.sin(t*.3 + ph*2)*60, z)); pa.needsUpdate = true; }
+      deepSpecks.material.opacity = .55 + (rm ? 0 : .25*Math.sin(t*.9));
+    };
+    s3.reef = true;
+  }
   // build the next chapters shortly after the space scene, while the visitor is still reading the hero:
   // the fall, hills, and jungle first, then the dunes and beach (each is also built on demand if needed sooner)
   const later = window.requestIdleCallback || (fn => setTimeout(fn, 1500));
@@ -2966,6 +3387,9 @@ function build3D(){
     if (L3 && !LAND.built && p > .3*S && p < 1.1) buildLand();
     if (p > .3*S) SGA.load('world'); // her walking, resting, and dancing clips, fetched as the journey nears the hills
     if (!EARTH.built && p > (L3 ? .97 : J_FLASH)) buildEarth();
+    // the reef: built in an idle moment once the journey reaches the beach (or right away if needed sooner)
+    if (EARTH.built && !REEF.built && !REEF.queued && p > 1.2){ REEF.queued = true; later(() => { if (!REEF.built) buildReef(); }, { timeout: 2500 }); }
+    if (EARTH.built && !REEF.built && p > 1.33) buildReef();
     if (canvas.style.display === 'none') canvas.style.display = '';
     const t = reduce.matches ? 0 : now/1000, dt = Math.min(.1, Math.max(0, (now - lastT)/1000)); lastT = now;
     if (vw !== lastW || H !== lastH || vhS !== lastVh){ lastW = vw; lastH = H; lastVh = vhS; renderer.setSize(vw, H, false); camera.aspect = vw/vhS; camera.setViewOffset(vw, vhS, 0, 0, vw, H); }
@@ -2973,13 +3397,16 @@ function build3D(){
     // which chapters are near enough to draw
     scene.visible = p < (L3 ? .62*S : HANDOFF);
     if (LAND.built){ LAND.fall.visible = L3 && p > .38*S && p < S + .02; LAND.hills.visible = L3 && p > .49*S && p < S + .17; LAND.jungle.visible = L3 && p > S + .07 && p < 1.09; LAND.ground.visible = LAND.hills.visible || LAND.jungle.visible; /* only once the haze is in, so it never shows as a slab from space */ }
-    if (EARTH.built) EARTH.group.visible = p > (L3 ? .985 : J_FLASH - 1e-4);
+    if (EARTH.built){ EARTH.sea.visible = p > (L3 ? .985 : J_FLASH - 1e-4); EARTH.group.visible = EARTH.sea.visible && p < 1.47; }
+    if (REEF.built) REEF.group.visible = p > 1.37;
     rig(p, D, cam.y); windU.time.value = t;
     if (LAND.built && L3 && p > .38*S && p < 1.09) LAND.frame(p, cam, s, t, dt, idle);
     if (EARTH.built && EARTH.group.visible) EARTH.frame(p, cam, s, vw, H, t, dt, D);
+    if (EARTH.built && EARTH.sea.visible) EARTH.seaFrame(t);
+    if (REEF.built && REEF.group.visible) REEF.frame(p, cam, s, t, dt);
     updateFx(dt);
     // Shigost's soft shadow once she's on the ground
-    sgGround.visible = SG.ready && !!s.e; if (sgGround.visible){ const gy = Y(groundH(s.x, 0)), sk = s.s === 'st-jump' ? .55 : 1; sgGround.position.set(s.x, gy + 2, 50); sgGround.scale.set(sk, sk, 1); }
+    sgGround.visible = SG.ready && !!s.e; if (sgGround.visible){ const gy = Y(groundH(s.x, 0)), sk = (s.s === 'st-jump' ? .55 : 1)*(1 - .45*BR.swim); sgGround.position.set(s.x, gy + 2, 50); sgGround.scale.set(sk, sk, 1); }
     if (scene.visible){ spaceFrame(p, cam, vw, vhS, now, t, dt, heroA); spaceFolk(t); }
     updateWomps(t, dt, reduce.matches ? 0 : 1);
     SG.wrap.visible = SG.ready; if (SG.ready && SG.root){ gazeFrame(p, s, now, dt, idle, D); poseShigost(s, t, idle, dt); }
@@ -3093,7 +3520,8 @@ const topBar = $('.top');
 readScroll(); cur = target;
 
 const TIPS = { 'h-space':'Tap Shigost, the snail, or a Womp', 'h-hills':'Tap the painter or the sheep', 'h-jungle':'Drag across the vines to play them',
-  'h-dunes':'Drag along the ridge to make the sand sing', 'h-beach':'Tap the shells, the crabs, or the litter', 'h-reef':'Tap the sign to see what’s next' };
+  'h-dunes':'Drag along the ridge to make the sand sing', 'h-beach':'Tap the shells, the crabs, or the litter',
+  'h-reef':'Drag across the coral xylophone, or tap the net', 'h-reef2':'Touch the glowing anemones', 'h-deep':'Tap the sign to see what’s next' };
 const TIPS3 = { 'h-hills':'Tap the sheep to sing, or the painter’s canvas', 'h-chimes':'Tap or drag across the wind chimes', 'h-jungle':'Drag across the vines, or tap the lemur' };
 let tipHold = 0;
 // achievement messages never stack up or come back to back: inside the cooldown, the journal counter says it instead
@@ -3140,16 +3568,17 @@ function frame(time){
     $('#chapter').innerHTML = `${ch.name}<small>Chapter ${ch.n} of 8</small>`;
     railItems.forEach((li,i)=>li.classList.toggle('on', i === ch.n-1));
     if (ch.cls !== 'ch-space') $('#portal').classList.remove('open');
-    if (ch.cls === 'ch-beach') $('#chapter').innerHTML = `${ch.name}<small>Chapter 5 of 8, the reef is next</small>`;
+    if (ch.cls === 'ch-reef' && p > RP.R2E) $('#chapter').innerHTML = `${ch.name}<small>Chapter 6 of 8, the deep ocean is next</small>`;
   }
   const idle = performance.now() - lastScroll > 380 && Math.abs(target - cur) < .0005;
   stage.classList.toggle('idle', idle);
   const L3 = s3.L3, harpOn = L3 ? (p > S + .205 && p < S + .235) || (p > (LY.seq ? S + .255 : S + .235) && p < .996) : LY.seq ? (p > S + .228 && p < S + .272) : p > S + .2;
-  const e3 = s3.earth && p >= J_FLASH;
+  const e3 = s3.earth && p >= J_FLASH, r3 = s3.reef && p >= J_FLASH;
   const hk = (p > .235*S && p < .345*S && !firing) ? 'h-space' : (ch.cls === 'ch-hills' && p > .95*S && p < (L3 ? HP.L1 - .002 : S + .02)) ? 'h-hills' : (L3 && p > HP.W1 + .006 && p < HP.C1 - .002) ? 'h-chimes'
     : (ch.cls === 'ch-jungle' && harpOn && p < 1.005) ? 'h-jungle'
-    : (e3 && p > EP.R0 + .006 && p < EP.R1 - .002) ? 'h-dunes' : (e3 && p > EP.BR0 + .006 && p < EP.BR1 - .002) ? 'h-beach' : (e3 && p > EP.END + .004) ? 'h-reef' : '';
-  ['h-space','h-hills','h-chimes','h-jungle','h-dunes','h-beach','h-reef'].forEach(k => stage.classList.toggle(k, k === hk));
+    : (e3 && p > EP.R0 + .006 && p < EP.R1 - .002) ? 'h-dunes' : (e3 && p > EP.BR0 + .006 && p < EP.BR1 - .002) ? 'h-beach'
+    : (r3 && p > RP.R1 + .006 && p < RP.R1E - .002) ? 'h-reef' : (r3 && p > RP.R2 + .006 && p < RP.R2E - .002) ? 'h-reef2' : (r3 && p > RP.END + .004) ? 'h-deep' : '';
+  ['h-space','h-hills','h-chimes','h-jungle','h-dunes','h-beach','h-reef','h-reef2','h-deep'].forEach(k => stage.classList.toggle(k, k === hk));
   if (performance.now() > tipHold && hk !== tipKey){ tipKey = hk; if (hk){ tip.textContent = (L3 && TIPS3[hk]) || TIPS[hk]; } tip.classList.toggle('show', !!hk); }
 
   let cam = camAt(p);
@@ -3168,7 +3597,8 @@ function frame(time){
   const s = shigostAt(p); s.dir = moveDir;
   const flip = s.e && moveDir < 0 && s.s !== 'st-land' ? ' scale(-1,1)' : '';
   sh.style.transform = `translate(${px(s.x-110)},${px(s.y-(s.bob || 0)-143)}) rotate(${s.r}deg)${flip}`;
-  if (sh.dataset.s !== s.s){ sh.className = (s.s === 'st-run' ? 'st-walk' : s.s) + ' clickable'; sh.dataset.s = s.s; }
+  const shK = s.s + (s.w ? ' uw' : '');
+  if (sh.dataset.s !== shK){ sh.className = (s.s === 'st-run' ? 'st-walk' : s.s) + (s.w ? ' uw' : '') + ' clickable'; sh.dataset.s = shK; }
 
   const [top, bot] = skyFor(p, cam.y);
   if (top + bot !== lastSky){ sky.style.background = `linear-gradient(${top}, ${bot})`; lastSky = top + bot; }
