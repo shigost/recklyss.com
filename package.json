@@ -1,0 +1,8 @@
+{
+  "name": "recklyss-site-tools",
+  "private": true,
+  "description": "Local tools for the Recklyss Studios site (not part of the website). The site itself has no build step.",
+  "devDependencies": {
+    "ffmpeg-static": "^5.2.0"
+  }
+}
