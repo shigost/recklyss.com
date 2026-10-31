@@ -589,7 +589,8 @@ let uid = 0; const gid = p => `${p}${++uid}`;
 /* ---------- billboard face ---------- */
 const eqBars = Array.from({length:22},(_,i)=>`<i style="animation-delay:${(-(i*137)%1000)/1000}s;animation-duration:${(0.55+((i*53)%50)/100).toFixed(2)}s"></i>`).join('');
 // The island loop playing behind the ad: a short, muted, looping video pre-rendered from Vibe Booth's island.
-// To swap in another recording, replace these files (keep them short, about 10 seconds, and small for phones);
+// The MP4 (H.264) plays everywhere, older iPhones included; the WebM is the fallback. To swap in another recording,
+// replace these files (keep them short, about 10 seconds, and small for phones);
 // the poster shows until the video can play.
 const AD_VIDEO = { webm: 'assets/ad/island.webm', mp4: 'assets/ad/island.mp4', poster: 'assets/ad/island.jpg' };
 // a bass speaker whose cones bump to the beat
@@ -623,7 +624,7 @@ overlay.innerHTML = faceHTML(true);
 // the island loop only plays while the ad or the billboard can be seen, and never with reduced motion (it holds still)
 const adVid = overlay.querySelector('video.isle');
 // its sources are attached after the page loads, so the video never holds up the page (or the 3D) while it buffers
-if (adVid){ const attach = () => { adVid.innerHTML = `<source src="${AD_VIDEO.webm}" type="video/webm"><source src="${AD_VIDEO.mp4}" type="video/mp4">`; adVid.preload = 'auto'; adVid.load(); };
+if (adVid){ const attach = () => { adVid.innerHTML = `<source src="${AD_VIDEO.mp4}" type="video/mp4"><source src="${AD_VIDEO.webm}" type="video/webm">`; adVid.preload = 'auto'; adVid.load(); };
   if (document.readyState === 'complete') attach(); else addEventListener('load', attach, { once: true }); }
 
 /* ================= OUTER SPACE ================= */
@@ -1177,9 +1178,7 @@ function earthAt(p){
   if (p < EP.R0) return walk(DUNES_IN, EX.rest, HP.LAND, EP.R0);
   if (p < EP.R1) return rest(EX.rest);
   if (p < EP.C) return walk(EX.rest, EX.crest, EP.R1, EP.C);
-  if (p < EP.B){ // three hops down the big dune toward the sea
-    const t = (p - EP.C)/(EP.B - EP.C), x = lerp(EX.crest, EX.beach, t), arc = Math.abs(Math.sin(t*Math.PI*3))*300;
-    return { x, y: pathY(x) - SG_FOOT - arc, r: 0, s: arc > 45 ? 'st-jump' : 'st-walk', e: 1 }; }
+  if (p < EP.B) return walk(EX.crest, EX.beach, EP.C, EP.B, 'st-run'); // a run down the big dune toward the sea
   if (p < EP.BR0) return walk(EX.beach, EX.brest, EP.B, EP.BR0);
   if (p < EP.BR1) return rest(EX.brest);
   if (p < EP.END) return walk(EX.brest, EX.end, EP.BR1, EP.END);
@@ -1556,7 +1555,7 @@ function meet(id, why = 'tap'){
   loreEl.classList.add('show'); clearTimeout(loreT); const fade = () => { if (loreEl.matches(':hover')) loreT = setTimeout(fade, 1500); else loreEl.classList.remove('show'); }; loreT = setTimeout(fade, 4500);
 }
 // a musical toy was played: note it in the journal, and let nearby Womps react (see s3.onToy)
-function playedToy(id, at){ if (id) JOURNAL.add('played', id); if (s3.onToy) s3.onToy(at); }
+function playedToy(id, at){ if (id) JOURNAL.add('played', id); if (s3.onToy) s3.onToy(at, id); }
 
 /* ================= 3D OUTER SPACE ================= */
 // The space chapter is real 3D (three.js r128 and GLTFLoader 0.128.0, the same builds Vibe Booth loads).
@@ -1949,32 +1948,83 @@ function build3D(){
       root.traverse(o => { if (o.isMesh){ o.material.map = tex; o.material.color.set(0xffffff); o.material.roughness = .96; o.material.metalness = 0; o.material.needsUpdate = true; o.frustumCulled = false; } });
       SG.b = {}; ['body','body_top0','neck','arm_left_top','arm_left_bot','arm_left_hand','arm_right_top','arm_right_bot','arm_right_hand','leg_left_top','leg_right_top','leg_left_bot','leg_right_bot'].forEach(n => SG.b[n] = root.getObjectByName(n));
       SG.bind = []; root.traverse(o => { if (o.isBone) SG.bind.push([o, o.position.clone(), o.quaternion.clone()]); });
-      SGA.mixer = new T.AnimationMixer(root); SGA.add(gltf.animations, 'vb_');
+      SGA.mixer = new T.AnimationMixer(root); SGA.add(gltf.animations, 'vb_'); SGA.load('space');
     }, err => console.warn('Shigost model failed to parse', err)))
     .catch(err => console.warn('Shigost model could not load, keeping the 2D Shigost in space', err));
-  // Named animation clips. Shigost's shared library (same rig and clip names in Vibe Booth, the game, and here:
-  // idle, walk, run, jump_start, jump, jump_fall, jump_end, crouch, dance, and more) drops in through s3.loadClips(url).
-  // Where a clip exists for her current state it crossfades in over the procedural pose; where it doesn't, the
-  // procedural pose shows. Clips play in place (root position tracks are dropped); the journey moves her.
+  // Shigost's real animations: her shared clip library (the same rig and clip names as Vibe Booth and the game). The
+  // master files live in the private shigost-assets repo; the site only ships trimmed bundles of the clips it uses
+  // (assets/anims/shigost-moves-*.glb), each loaded as the journey gets near the chapters that use it. A small "brain"
+  // picks her clip from the chapter, the scroll, idle time, and the toys; clips crossfade, and where a clip isn't
+  // loaded yet the procedural pose shows. On top of any clip: her head follows the gaze, the portal gun arm aims, and
+  // her hands hold the parachute cords. Clips play in place; the journey moves her.
   const SGA = {
-    mixer: null, actions: {}, cur: null, w: 0, snap: [],
-    map: { 'st-walk': 'walk', 'st-run': 'run', 'st-land': 'idle', 'st-jump': 'jump', 'st-fall': 'jump_fall' },
-    add(clips, prefix = ''){ if (!this.mixer) return []; return clips.map(c => { const clip = c.clone(); clip.name = prefix + c.name;
+    mixer: null, actions: {}, cur: null, curName: '', once: false, w: 0, snap: [], req: {},
+    add(clips, prefix = ''){ if (!this.mixer) return []; return clips.map(c => { const clip = c.clone(); clip.name = prefix + c.name.split('|').pop();
       clip.tracks = clip.tracks.filter(tr => !/^(root|rig|model)\.position$/.test(tr.name)); this.actions[clip.name] = this.mixer.clipAction(clip); return clip.name; }); },
-    step(state, dt){ const want = this.actions[this.map[state]] || null;
-      if (want !== this.cur){ if (this.cur) this.cur.fadeOut(.3); if (want) want.reset().fadeIn(.3).play(); this.cur = want; }
-      this.w += ((this.cur ? 1 : 0) - this.w)*Math.min(1, dt*5);
-      if (this.w < .002) return 0; this.mixer.update(dt); return this.w; },
+    has(n){ return !!this.actions[n]; },
+    // crossfade to a clip; once: play it one time and hold its last frame
+    play(name, once = false, fade = .3){ const a = this.actions[name]; if (!a) return false; if (a === this.cur) return true;
+      a.reset(); a.setLoop(once ? T.LoopOnce : T.LoopRepeat, Infinity); a.clampWhenFinished = once; a.timeScale = 1;
+      if (this.cur) this.cur.fadeOut(fade); a.fadeIn(fade).play(); this.cur = a; this.curName = name; this.once = once; return true; },
+    stop(){ if (this.cur){ this.cur.fadeOut(.3); this.cur = null; this.curName = ''; } },
+    done(){ return !!this.cur && this.once && this.cur.time >= this.cur.getClip().duration - .04; },
+    step(dt){ this.w += ((this.cur ? 1 : 0) - this.w)*Math.min(1, dt*5); if (this.w < .002) return 0; this.mixer.update(dt); return this.w; },
     grab(bind){ bind.forEach(([o], i) => { const q = this.snap[i] || (this.snap[i] = { p: V(0,0,0), q: new T.Quaternion() }); q.p.copy(o.position); q.q.copy(o.quaternion); }); },
-    mixIn(bind, w){ bind.forEach(([o], i) => { const q = this.snap[i]; o.position.lerp(q.p, w); o.quaternion.slerp(q.q, w); }); }
+    mixIn(bind, w){ bind.forEach(([o], i) => { const q = this.snap[i]; o.position.lerp(q.p, w); o.quaternion.slerp(q.q, w); }); },
+    load(bundle){ if (this.req[bundle] || !this.mixer) return; this.req[bundle] = 1; s3.loadClips(`assets/anims/shigost-moves-${bundle}.glb`).catch(e => console.warn('clips failed to load', bundle, e)); }
   };
   s3.loadClips = url => new Promise((res, rej) => new T.GLTFLoader().load(url, g => res(SGA.add(g.animations)), undefined, rej));
+  // what she's doing: posture ('stand', 'lying', or 'sitting'), dancing for a toy, a happy tap reaction, the zombie walk
+  const BR = { posture: 'stand', going: '', dance: 0, react: 0, airT: 0, landT: 0, wasAir: false, spd: 0, lastX: null, slowT: 0, zombie: false };
+  // low boughs in the jungle that she crouch-walks under
+  const LOW_BOUGHS = [[5520, 5930]];
+  function chooseClip(s, p, dt, idleT){
+    const st = s.s, air = st === 'st-jump' || st === 'st-fall' || st === 'st-chute', rm = reduce.matches;
+    if (BR.lastX !== null && Math.abs(s.x - BR.lastX) < 4000) BR.spd += (Math.abs(s.x - BR.lastX)/Math.max(dt, 1e-3) - BR.spd)*Math.min(1, dt*6); BR.lastX = s.x;
+    BR.dance = Math.max(0, BR.dance - dt); BR.react = Math.max(0, BR.react - dt);
+    if (rm){ BR.posture = 'stand'; return { name: air ? 'jump_fall' : 'idle' }; } // reduced motion: calm idles only
+    // in the air: crouch, spring (jump_start), leap (jump), then float under the parachute (jump_fall); land with jump_end
+    if (air){ BR.wasAir = true; BR.posture = 'stand'; BR.airT += dt;
+      if (st === 'st-jump') return BR.airT < .4 ? { name: 'jump_start', once: true } : { name: 'jump', once: true };
+      return { name: 'jump_fall' }; }
+    BR.airT = 0; if (BR.wasAir){ BR.wasAir = false; BR.landT = .6; }
+    if (BR.landT > 0){ BR.landT -= dt; return { name: 'jump_end', once: true }; }
+    if (st === 'st-stand') return p/S > .33 ? { name: 'crouch', once: true } : BR.react > 0 ? { name: 'dance' } : { name: 'idle' };
+    const moving = BR.spd > 30 && idleT < .6;
+    // the easter egg: scroll backwards very slowly for a few seconds and she shuffles along like a zombie
+    BR.slowT = moving && (s.dir || 1) < 0 && BR.spd < 260 ? BR.slowT + dt : 0;
+    if (BR.slowT > 2.5) BR.zombie = true; if (!moving || BR.spd > 420) BR.zombie = false;
+    // sitting or lying down: get up first when the visitor scrolls again (or a toy asks for a dance)
+    if (BR.posture !== 'stand' && (moving || BR.dance > 0 || BR.react > 0)){
+      if (BR.going !== 'up'){ BR.going = 'up'; } const up = BR.posture === 'lying' ? 'get_up_from_lying_down' : 'get_up_from_sitting';
+      if (SGA.curName === up && SGA.done()){ BR.posture = 'stand'; BR.going = ''; } else return { name: up, once: true, speed: 1.6 }; }
+    if (moving){ const sp = BR.spd;
+      if (BR.zombie) return { name: 'zombie_walk', speed: clamp(sp/200*1.43, .5, 1.6) };
+      if (LOW_BOUGHS.some(([a, b]) => s.x > a && s.x < b)) return { name: 'crouch_walk', speed: clamp(sp/220*1.37, .5, 2.2) };
+      const run = st === 'st-run' || sp > (SGA.curName === 'run' ? 650 : 900);
+      return run ? { name: 'run', speed: clamp(sp/380*.7, .6, 2.4) } : { name: 'walk', speed: clamp(sp/260*1.1, .5, 2.2) }; }
+    if (BR.dance > 0 || BR.react > 0) return { name: 'dance' };
+    // resting: lie in the hills grass to watch the clouds, sit on the dunes, have a snack on the beach
+    const rest = p > .93*S && p < HP.W2 + .01 ? 'lying' : p > EP.R0 - .02 && p < EP.B ? 'sitting' : p >= EP.B ? 'snack' : '';
+    if (rest && idleT > 1.2){
+      const posture = rest === 'lying' ? 'lying' : 'sitting', down = rest === 'lying' ? 'lie_down' : 'sit', loop = rest === 'lying' ? 'lying_down_idle' : rest === 'snack' ? 'sitting_eat' : 'sitting_idle';
+      if (BR.posture !== posture){ if (SGA.curName === down && SGA.done()){ BR.posture = posture; return { name: loop }; } return { name: down, once: true }; }
+      return { name: loop }; }
+    return { name: 'idle' };
+  }
+  s3.cheerShigost = () => { BR.react = 1.4; };
+  // ?debug: a read-only peek at her clip and gaze, for testing (the angle is how far her head points from the target)
+  if (/[?&]debug(&|=|$)/.test(location.search)) window.recklyssDebug = () => { const out = { clip: SGA.curName, posture: BR.posture, loaded: Object.keys(SGA.actions).length, spd: Math.round(BR.spd), zombie: BR.zombie }; { const v = SG.wrap.getWorldPosition(V(0,0,0)).add(V(0, 130, 0)).project(camera), r = canvas.getBoundingClientRect(); out.sx = Math.round(r.left + (v.x + 1)/2*r.width); out.sy = Math.round(r.top + (1 - v.y)/2*r.height); }
+    if (SG.neckFwd && GZ.w){ SG.b.neck.getWorldPosition(_gh); _gn.copy(GZ.pt).sub(_gh).normalize(); SG.b.neck.getWorldQuaternion(_qw); _gb.copy(SG.neckFwd).applyQuaternion(_qw).normalize();
+      out.gazeOff = +(Math.acos(clamp(_gb.dot(_gn), -1, 1))*57.3).toFixed(1); out.lookX = +_gb.x.toFixed(2); out.targetX = +_gn.x.toFixed(2); } return out; };
   const handL = V(0,0,0), handR = V(0,0,0), muzzle = V(0,0,0), portalW = W3(PORTAL.x, PORTAL.y, 0);
   // Where Shigost looks. Moving the mouse, or touching and drawing on the screen, draws her gaze to the pointer;
   // scrolling makes her look where she's headed; both at once blend. When nobody steers her, she glances at the
   // critters and Womps nearby (and waves at Womps). With reduced motion she keeps a calm, steady gaze.
-  const GZ = { pt: V(0,0,0), y: 0, x: 0, w: 0, idle: null, next: 0, wave: false, mv: 0 }, _ga = V(0,0,0), _gb = V(0,0,0), _gh = V(0,0,0), _gn = V(0,0,0);
-  const NECK = { yaw: -1, pitch: -1, maxYaw: .9, up: .4, down: .2 }; // bone axes and her neck's comfortable range
+  // The look is applied in world space (turning her head from wherever the current clip holds it toward the target,
+  // within her neck's range), so it always points the right way, whichever way she's facing.
+  const GZ = { pt: V(0,0,0), sp: null, w: 0, idle: null, next: 0, wave: false, mv: 0 }, _ga = V(0,0,0), _gb = V(0,0,0), _gh = V(0,0,0), _gn = V(0,0,0);
+  const NECK = { range: .85 }; // radians: how far her head turns from where the clip holds it
   function gazeFrame(p, s, now, dt, idle, D){
     if (reduce.matches || !SG.b.neck){ GZ.w = 0; return; }
     SG.b.neck.getWorldPosition(_gh); _ga.set(0, 0, 0); let sum = 0;
@@ -1995,24 +2045,32 @@ function build3D(){
         GZ.idle = near.length && Math.random() < .8 ? near[Math.floor(Math.random()*near.length)] : null; GZ.wave = !!(GZ.idle && GZ.idle.womp && Math.random() < .6); }
       if (GZ.idle) GZ.idle.at(_gb); else _gb.copy(camera.position);
       _ga.addScaledVector(_gb, wi); sum += wi; } else GZ.wave = false;
-    GZ.pt.copy(_ga).multiplyScalar(1/sum); GZ.w = 1;
+    _ga.multiplyScalar(1/sum);
+    if (!GZ.sp) GZ.sp = _ga.clone(); else GZ.sp.lerp(_ga, Math.min(1, dt*7)); // ease toward the new target, never snap
+    GZ.pt.copy(GZ.sp); GZ.w = 1;
   }
+  const _qa = new T.Quaternion(), _qb = new T.Quaternion();
+  function lookLayer(){ const neck = SG.b.neck; if (!GZ.w || !neck || !SG.neckFwd) return;
+    neck.getWorldPosition(_gh); _gn.copy(GZ.pt).sub(_gh); if (_gn.lengthSq() < 1) return; _gn.normalize();
+    neck.getWorldQuaternion(_qw); _gb.copy(SG.neckFwd).applyQuaternion(_qw).normalize();
+    const ang = Math.acos(clamp(_gb.dot(_gn), -1, 1)); if (ang < 1e-3) return;
+    _qa.setFromUnitVectors(_gb, _gn); _qb.identity().slerp(_qa, Math.min(1, NECK.range/ang));
+    _qw.premultiply(_qb); neck.parent.getWorldQuaternion(_qp); neck.quaternion.copy(_qp.invert().multiply(_qw)); neck.updateMatrixWorld(true); }
   function poseShigost(s, t, idle, dt){
     const w = SG.wrap, b = SG.b, st = s.s, earth = !!s.e, stand = st === 'st-stand', run = st === 'st-run', walk = st === 'st-walk' || run, air = st === 'st-jump' || st === 'st-fall' || st === 'st-chute';
     // she faces the way she's actually moving: scrolling back turns her around (a quick, smooth turn)
     const dir = s.dir || 1;
     SG.ry += ((stand ? .45 : earth ? (walk || air ? 1.1 : .3)*dir : 0) - SG.ry)*Math.min(1, dt*8);
     w.position.set(s.x, -(s.y + SG_FOOT), 0); w.rotation.set(0, SG.ry, -s.r*Math.PI/180);
-    const cw = SGA.mixer ? SGA.step(st, dt) : 0; if (cw) SGA.grab(SG.bind);
+    // which clip: chosen by the brain, crossfaded in; the procedural pose fills in until a clip has loaded
+    const idleT = idle ? (performance.now() - lastScroll)/1000 : 0, sel = SGA.mixer ? chooseClip(s, cur, dt, idleT) : null;
+    if (sel && SGA.play(sel.name, !!sel.once)){ if (sel.speed) SGA.cur.timeScale = sel.speed; } else if (SGA.mixer) SGA.stop();
+    const clipped = !!SGA.cur, cw = SGA.mixer ? SGA.step(dt) : 0; if (cw) SGA.grab(SG.bind);
     SG.bind.forEach(([o, p, q]) => { o.position.copy(p); o.quaternion.copy(q); });
+    if (!SG.neckFwd){ w.updateMatrixWorld(true); b.neck.getWorldQuaternion(_qw); w.getWorldQuaternion(_qp); SG.neckFwd = V(0, 0, 1).applyQuaternion(_qp).applyQuaternion(_qw.invert()); }
     const calm = reduce.matches ? 0 : 1;
     if (b.body) b.body.position.y += Math.sin(t*1.7)*.35*calm;
     boneTurn(b.body_top0, 0, Math.sin(t*.5)*.05*calm, Math.sin(t*.9)*.02*calm);
-    let nX = Math.sin(t*1.1)*.03*calm, nY = stand ? -.25 + Math.sin(t*.31)*.15*calm : (earth && !walk && !air) ? -.2 + Math.sin(t*.31)*.45*calm : 0;
-    if (GZ.w){ w.updateMatrixWorld(true); _ga.copy(GZ.pt); w.worldToLocal(_ga); b.neck.getWorldPosition(_gb); w.worldToLocal(_gb); _ga.sub(_gb);
-      const yaw = clamp(Math.atan2(_ga.x, _ga.z), -NECK.maxYaw, NECK.maxYaw), pit = clamp(Math.atan2(_ga.y, Math.hypot(_ga.x, _ga.z)), -NECK.down, NECK.up);
-      const k = Math.min(1, dt*6); GZ.y += (yaw - GZ.y)*k; GZ.x += (pit - GZ.x)*k; nY = GZ.y*NECK.yaw; nX = GZ.x*NECK.pitch + nX*.5; }
-    boneTurn(b.neck, nX, nY, Math.sin(t*.8)*.04*calm);
     if (air){ const k = st === 'st-chute' ? Math.sin(t*2.2)*.25*calm : st === 'st-fall' ? Math.sin(t*14)*.18*calm : -.35;
       boneTurn(b.leg_left_top, k, 0, .1); boneTurn(b.leg_right_top, -k, 0, -.1); }
     if (walk){ // steps follow the distance walked, so her sneakers keep pace with the scroll; running takes longer, higher strides
@@ -2021,19 +2079,21 @@ function build3D(){
       boneTurn(b.leg_left_bot, -.55*k*Math.max(0, -Math.cos(ph)), 0, 0); boneTurn(b.leg_right_bot, -.55*k*Math.max(0, Math.cos(ph)), 0, 0);
       if (b.body) b.body.position.y += Math.abs(Math.cos(ph))*1.4*k;
       boneTurn(b.arm_left_top, -.4*k*sw, 0, 0); boneTurn(b.arm_right_top, .4*k*sw, 0, 0); }
+    if (cw) SGA.mixIn(SG.bind, cw);
     w.updateMatrixWorld(true);
+    // layers on top of any clip: the portal gun arm, the parachute cords, a wave at a Womp, and the gaze
     if (stand){ // portal gun in her left hand, aimed at the portal; she waves with the other when idle
       b.arm_left_top.getWorldPosition(_w); _v1.subVectors(portalW, _w).normalize();
       ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, SG.root.worldToLocal(_w.addScaledVector(_v1, 60*K)), poleL);
-      if (idle && calm){ _v2.set(-21 + Math.sin(t*14)*2.5, 8.5, 8 + Math.cos(t*14)*1.5); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2, poleR); }
-    } else if (air){ // arms up: jumping, flailing, or holding the parachute lines
+      if (idle && calm && !clipped){ _v2.set(-21 + Math.sin(t*14)*2.5, 8.5, 8 + Math.cos(t*14)*1.5); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2, poleR); }
+    } else if (st === 'st-chute' || (air && !clipped)){ // arms up: holding the parachute lines (and, without clips, jumping or flailing)
       const f = st === 'st-fall' ? Math.sin(t*16)*4*calm : 0;
       ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, _v1.set(15 + f, 46, 3), poleL);
       ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2.set(-15 - f, 46, 3), poleR);
-    } else if (earth && idle && calm && (GZ.wave || (!GZ.w && Math.sin(t*.45) > .7))){ // resting: a little wave, usually at a Womp she's looking at
+    } else if (earth && idle && calm && (!clipped || SGA.curName === 'idle') && (GZ.wave || (!GZ.w && Math.sin(t*.45) > .7))){ // resting: a little wave, usually at a Womp she's looking at
       _v2.set(-21 + Math.sin(t*14)*2.5, 8.5, 8 + Math.cos(t*14)*1.5); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2, poleR);
     }
-    if (cw){ SGA.mixIn(SG.bind, cw); w.updateMatrixWorld(true); }
+    lookLayer();
     b.arm_left_hand.getWorldPosition(handL); b.arm_right_hand.getWorldPosition(handR);
     gun.visible = stand; if (stand){ gun.position.copy(handL); gun.lookAt(portalW); gun.updateMatrixWorld(); gun.localToWorld(muzzle.set(0, 0, 84)); }
     // parachute opens with a springy pop and stays above her hands
@@ -2368,6 +2428,11 @@ function build3D(){
       [[4700,500,1],[5300,260,1.2],[5600,700,.9],[6080,320,1],[6950,330,1.1],[7400,560,1.2],[7700,200,.9],[8200,450,1.1],[8800,280,1],[9300,600,1.2],[9900,350,1],[10350,500,.9],
        [5000,-300,1.3],[6300,-520,1],[7550,-450,1.2],[8400,-300,1],[9100,-500,1.3]].forEach(([x, z, s]) => fern(x, z, s));
       jungle.add(new T.Mesh(bake(wp), windM)); }
+    // a low, mossy bough arching across her path: she crouch-walks under it (LOW_BOUGHS)
+    { const pts = [V(5640, Y(1150), -1100), V(5690, Y(420), -260), V(5725, Y(312), 60), V(5760, Y(380), 420), V(5810, Y(900), 1100)];
+      const parts = [[taper(pts, 30, 10, 42, 30), I4, '#6a4a3e', 0, .4]];
+      for (let k = 1; k < 4; k++){ const p = pts[k]; parts.push([sph(10, 8), S4(p.x, p.y + 30, p.z, 90, 26, 70), '#3f8a52', 0, .5]); parts.push([sph(8, 6), S4(p.x + 20, p.y - 40, p.z + 30, 26, 60, 10, 0, 0, .3), '#5fae64', .6]); }
+      jungle.add(new T.Mesh(bake(parts), softM)); }
     // glowing mushrooms
     const jShrooms = [];
     [[6020,230,'#5fd3c8',1],[6110,300,'#e98bb5',.8],[6960,260,'#b6a4f2',1.1],[7040,330,'#5fd3c8',.75],[7330,-80,'#e98bb5',1],[5400,420,'#b6a4f2',.9],[8300,300,'#5fd3c8',1],[9050,200,'#e98bb5',.9]].forEach(([x, z, c, s]) => {
@@ -2571,7 +2636,8 @@ function build3D(){
       ['body', 'arms', 'eyes', 'sh'].forEach(k => S[k].instanceMatrix.needsUpdate = true); });
   }
   // when a musical toy plays, the Womps nearby become Shigost's crowd and cheer
-  s3.onToy = at => WSETS.forEach(S => { if (!shown(S.grp)) return; S.list.forEach(w => { if (!at || w.pos.distanceTo(at) < 3600) w.cheer = 2.6; }); });
+  s3.onToy = (at, id) => { WSETS.forEach(S => { if (!shown(S.grp)) return; S.list.forEach(w => { if (!at || w.pos.distanceTo(at) < 3600) w.cheer = 2.6; }); });
+    if (id === 'vine-harp' || id === 'shell-bells') BR.dance = 3.2; }; // she dances while the harp or the shell bells play
   // critters and others Shigost likes to glance at when nobody is steering her gaze
   const gazeAt = (grp, obj, lift = 0) => GAZE.push({ grp, at: v => obj.getWorldPosition(v).add(_wo.set(0, lift, 0)) });
 
@@ -2841,6 +2907,7 @@ function build3D(){
     const L3 = s3.L3, mode = p < HANDOFF ? 'space' : (L3 || p >= J_FLASH) ? 'earth' : null;
     if (!(s3.ready && mode && journey.getBoundingClientRect().bottom > 0)){ if (canvas.style.display !== 'none') canvas.style.display = 'none'; return false; }
     if (L3 && !LAND.built && p > .3*S && p < 1.1) buildLand();
+    if (p > .3*S) SGA.load('world'); // her walking, resting, and dancing clips, fetched as the journey nears the hills
     if (!EARTH.built && p > (L3 ? .97 : J_FLASH)) buildEarth();
     if (canvas.style.display === 'none') canvas.style.display = '';
     const t = reduce.matches ? 0 : now/1000, dt = Math.min(.1, Math.max(0, (now - lastT)/1000)); lastT = now;
@@ -2913,6 +2980,8 @@ function build3D(){
   { const spun = () => stage.classList.contains('spun'), hs = (t, r, o) => hotAt(t, r, Object.assign({ grp: scene, when: spun }, o));
     hs(snail3, 150, { label: 'Moon snail', tap: () => { const el = $('#snail'); el.classList.add('hide'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('hide'), 2200); meet('moon-snail'); } });
     hs(SG.wrap, 150, { label: 'Shigost: fire the portal gun', tap: fireGun });
+    const sgT = new T.Object3D(); sgT.position.set(0, 140, 0); SG.wrap.add(sgT);
+    hotAt(sgT, 120, { label: 'Shigost', when: () => cur > HANDOFF && SG.ready, tap: () => { s3.cheerShigost(); tone(988, 'chirp'); setTimeout(() => tone(1318.51, 'chirp'), 140); } });
     hs(new T.Object3D().translateX(BBx).translateY(-BBy), FW*.42, { label: 'Play Vibe Booth', tap: () => window.open('https://play.recklyss.com', '_blank', 'noopener') }); }
   /* ---- the diorama: little landmarks all the way around the asteroid, so it looks crafted from every angle ---- */
   const dio = { crystals: [], orbit: [] };
