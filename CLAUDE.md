@@ -28,7 +28,7 @@ A scroll-driven, clickable journey through **one continuous 3D world**, from spa
 
 The journey is a **true scroll adventure**: a simple story you can watch just by scrolling, and every other action (pausing, rewinding, moving the mouse, touching, and tapping) is rewarded with more about Shigost’s world and the creatures she meets.
 
-1. **Outer space** (3D, and a preview of Alyssa's next game, a space explorer: little floating asteroids with Womps on them): hero billboard advertising Vibe Booth sits on a floating asteroid. Scrolling pulls back, Shigost fires her portal gun if tapped, jumps off, and parachutes down through the clouds (the camera swings above her to look down at the hills far below, around her side, and under her).
+1. **Outer space** (3D, and a preview of Alyssa's next game, a space explorer: little floating asteroids with Womps on them): at the very top, the Vibe Booth ad fills the whole screen like a normal website hero; scrolling pulls back to reveal it was a billboard on an asteroid all along (the “woah” moment), and visitors can drag to spin all the way around the asteroid diorama. Scrolling on, Shigost fires her portal gun if tapped, jumps off, and parachutes down through the clouds (the camera swings above her to look down at the hills far below, around her side, and under her).
 2. **Grassy hills** (3D): she lands among the painter, the easel, and the sheep choir, walks to the chime tree and rests, then hops into the jungle.
 3. **Jungle** (3D): she rests by the vine harp in a misty clearing, then runs out of the jungle and leaps into the sunlight of the dunes while the camera soars over the canopy.
 4. **Sand dunes** (3D): Shigost walks to the singing ridge and rests, then crosses the dunes and hops down the last big one.
@@ -53,13 +53,27 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 
 ## The Recklyss family look (wompified)
 
-- Alyssa's signature style: **soft, rounded, simple shapes with a matte finish, big glossy eyes, and stubby little limbs** (see Shigost's model and the Womps and Kikis in Vibe Booth's `app.js`). Every creature on the site follows it: the moon snail, puffsheep, lemur, parrot, dune hopper, crabs, and every Womp. The star whale stays as it is.
-- In code: `matte(hex)` for bodies, `eyeM` and `glintM` for the glossy eyes, `glossyEyes()` for a pair of eyes on a 3D group, and `folk(parts)` with `eyePair(parts, ...)` to bake a critter into three draw calls (matte body, glossy eyes, glints).
+- Alyssa's signature style: **soft, rounded, simple shapes, matte everything, big flat matte black eyes like Shigost's (no shine, highlights, or reflections), and stubby little limbs** (see Shigost's model and the Womps and Kikis in Vibe Booth's `app.js`). Every creature on the site follows it: the moon snail, puffsheep, lemur, parrot, dune hopper, crabs, and every Womp. The star whale stays as it is.
+- In code: `matte(hex)` for bodies, `eyeM` for the matte eyes, `matteEyes()` for a pair of eyes on a 3D group, and `folk(parts)` with `eyePair(parts, ...)` to bake a critter into two draw calls (matte body and eyes). `spirit(material)` adds the soft lavender rim.
+
+## Spirits, colors, and readability
+
+- **Gosts and Womps are beings of Alyssa's own invented spirit realm.** Keep them clearly separate from any real ancestral spirit traditions, including CHamoru ones (see Vibe Booth's guidelines: never depict taotaomo'na or ancestral skulls).
+- **All wompified humanoids are white** (they're spirits), unless Alyssa says otherwise: every Womp, and the painter (her beret stays lavender).
+- **All animals are white too** (animal spirits): the moon snail, puffsheep, lemur, parrot, dune hopper, butterflies, and the reef fish. Exceptions: the crabs keep their coral and pink, and the purple bird flock in the fall stays as it is. The star whale is unchanged.
+- **Readability**: white characters must stay readable against white or pale things (clouds, sand, white plants). Every spirit material gets a soft lavender rim at its silhouette (`spirit()`), and every character stands on a soft contact shadow.
+- **When characters vary in color in the future, tie colors to elements and materials** (gemstone, coral, moss, stone, light), never to human skin tones.
+- **Plants**: each area keeps its plants within one color family: the hills trees are the rose family (under the rose haze), the dunes plants are the sage family, the beach plants are greens, and the jungle stays green and colorful for now. Exceptions are flowers and glowing alien plants, which can be more colorful as long as they follow a palette tailored to their area (the space crystals and mushrooms: teal, violet, and rose; the jungle's living light: mint, violet, magenta, lime, and sky blue).
+
+## Brand palette (UI)
+
+- **Orange, white, and purple.** Buttons are orange (`--orange` #ff8a3d, pressed edge `--orange-deep`), labels and status chips are purple (`--purple` #8b6cff) with white text, and text on dark is white. The lilac (`--lilac`) is a soft accent.
+- **Subtle neon**: thin glowing edges, techy but minimal (`--neon-orange` on buttons and the active rail dot, `--neon-purple` on chips, and faint purple glows on the nav, tips, cards, and journal). Never yellow or gold for UI.
 
 ## Womps
 
-- **Womps** are the main characters of Alyssa's world: tall bean-shaped folks with stubby arms and legs and big glossy eyes. They're the crowd in Vibe Booth (unnamed there; their name is Womp), and the site reuses that design (`wompGeo()`, the same body profile as Vibe Booth's crowd).
-- **They live everywhere**, in every chapter, space included. Each has its own personality: sizes range from as tall as the painter (about 880) down to Kiki size (about 100; Shigost is about 260), and colors and idle moods vary (`sway`, `wave`, `dance`, `cheer`).
+- **Womps** are the main characters of Alyssa's world: tall bean-shaped folks with stubby arms and legs and big matte black eyes. They're the crowd in Vibe Booth (unnamed there; their name is Womp), and the site reuses that design (`wompGeo()`, the same body profile as Vibe Booth's crowd).
+- **They live everywhere**, in every chapter, space included. Each has its own personality: sizes range from as tall as the painter (about 880) down to Kiki size (about 100; Shigost is about 260), and idle moods vary (`sway`, `wave`, `dance`, `cheer`). For now they're all white spirits; the `color` field in `WOMPS` is there for element-based colors later.
 - **The roster is `WOMPS`** (one entry per Womp: id, chapter, where it stands, height, color, and mood). Add, move, or recolor Womps there.
 - **They're placeholders** until Alyssa builds them out. Each chapter draws its Womps with one shared set of InstancedMeshes (`wompSet`), so swapping in real models later means changing how a set is drawn, not the roster.
 - **They're Shigost's crowd**: when a visitor plays a musical toy, nearby Womps cheer and hop (`s3.onToy`, called from `playedToy`).
@@ -68,8 +82,8 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 ## Who Shigost is
 
 - Shigost is a **gost**, never a “ghost,” anywhere: copy, alt text, labels, comments, code, and this file. Definition, to use where it fits: “Shigost is a gost: a spirit who has crossed into a realm beyond, neither quite alive nor quite gone.”
-- **Her real design** (placeholders must match it): a long, oversized white hoodie that reaches about her knees, hood up. Her white face sits inside a teardrop-shaped opening in the hood that points downward, with two big, round, glossy black eyes. Drawstrings hang from the neck, long sleeves mostly cover small hands, and she wears chunky white high-top sneakers. She is **not** a sheet ghost: no wavy hem.
-- **Never put her on a yellow or gold background, and never near anything that resembles the Snapchat logo.** This covers card art, the billboard, the About art, and the world (the hills sky and sun are a rose haze, no tree near her is gold, and the jungle light is mint for this reason). Gold is fine for buttons and small accents away from her.
+- **Her real design** (placeholders must match it): a long, oversized white hoodie that reaches about her knees, hood up. Her white face sits inside a teardrop-shaped opening in the hood that points downward, with two big, round, matte black eyes (no highlights). Drawstrings hang from the neck, long sleeves mostly cover small hands, and she wears chunky white high-top sneakers. She is **not** a sheet ghost: no wavy hem.
+- **Never put her on a yellow or gold background, and never near anything that resembles the Snapchat logo.** This covers card art, the billboard, the About art, and the world (the hills sky and sun are a rose haze, no tree near her is gold, and the jungle light is mint for this reason). UI buttons are orange (see “Brand palette”), never gold.
 - She loves music, especially EDM, and wants to play it everywhere she explores.
 
 ## The game and Vibe Booth
@@ -131,7 +145,32 @@ When scrolling stops, each chapter plays an idle loop. Objects in each scene act
 
 - **Lore**: every character (each Womp, each critter, and the painter) opens a small lore card when tapped (`meet(id)`), with a name and a short description. **Alyssa writes all the lore herself.** Every name and every piece of lore lives in the one `LORE` list; for now every card says “Lore coming in the next chapter.” Womp names there are placeholders for her to replace. Keep ids stable; the journal saves them.
 - **Field journal** (`JOURNAL`, the round book button in the bottom-right corner): fills in as visitors meet characters, play the musical toys (`TOYS`, each toy tagged with `data-toy`), and clean up litter (`LITTER_SPOTS`, the last argument of `litterAt`), for example “You’ve met 6 of 28 characters.” It's saved in the visitor's browser (`localStorage`, key `recklyss-journal`) as plain JSON, `{ v, met, played, cleaned, updated }` with ids and times, so a later round can sync it to accounts and a public leaderboard (alongside the painting studio). `JOURNAL.data()` returns a copy of it.
-- Both stay small and quiet: the lore card sits at the top left, doesn't block the world (so visitors can keep playing), and fades after a few seconds.
+- Both stay small and quiet: the lore card sits at the top left and doesn't block the world (so visitors can keep playing).
+- **Calm pop-ups** (`meet()` and `toast()`): tapping a character on purpose always shows its lore card. Characters found while playing a toy (like the sheep choir) get a card only for the first couple of discoveries, and never back to back; after that the journal button's orange counter quietly says “new” instead. Every card fades away on its own after about four and a half seconds (no need to tap ×). Achievement messages (litter thank-yous) have a cooldown, so they never stack up or come back to back.
+
+## The opening: the ad is the hero
+
+- At the very top, the camera is zoomed in so far that the Vibe Booth ad fills the entire screen on every device (no frame, bulbs, or posts), like a normal website hero. Scrolling pulls back to reveal the billboard on its asteroid.
+- The ad is the HTML hero (`#heroOverlay`, `faceHTML`): it's the billboard's face clipped to the screen, so it starts as the whole screen and settles into the billboard's 16:9 shape as the camera pulls back (`cover` and `zCover` in `relayout()`, `kFull` in the frame). Its layout uses its own width and height (`cqw`, `cqh`), so it flows smoothly from any screen shape: on tall screens the copy spans the width and Shigost dances big below it. Text stays real HTML, so it stays crisp. While it fills the screen (`adfull`), phones show the whole ad; the call to action below the billboard appears once it has settled.
+- The livelier ad: two bass speakers bump to a 120 BPM beat, the cartoon Shigost dances, and an island loop plays behind everything. The 3D billboard screen (`drawScreen`) draws the same video, speakers, and dancing Shigost once the HTML ad fades into it.
+- **The billboard video**: a 10 second, muted, seamless loop pre-rendered from Vibe Booth's island (stepping its clock frame by frame in a browser, then crossfading the last two seconds into the first two). Files: `assets/ad/island.webm` (VP8, about 1 MB, plays on iOS 17.4 and later and every desktop browser) and the poster `assets/ad/island.jpg`. **To replace it**, drop in a new `island.webm` (and optionally an H.264 `island.mp4`, which the page also lists), keep it short (about 10 seconds) and small (1 to 2 MB), and update the poster; the paths are in `AD_VIDEO`. It only plays while the ad or billboard can be seen, and holds still with reduced motion. There is never a second live 3D island in the billboard.
+
+## The asteroid diorama
+
+- Once the billboard has zoomed out, visitors can drag sideways to spin the camera a full 360 degrees around the asteroid (`SPIN`). Vertical drags still scroll (the stage uses `touch-action: pan-y` in space), and while spinning, Shigost's gaze ignores the finger. The spin eases home once the journey moves on.
+- While spun, the 2D tap areas no longer line up, so 3D tap targets for the snail, Shigost, and the billboard take over (they use `hotAt(..., { when })`).
+- The diorama is crafted to look good from every side: a little stone arch, a stepping-stone path, pebbles, glowing crystal clusters, a softly glowing crater pond, hanging stones underneath, and little stones drifting in orbit.
+
+## The EDM nature forest
+
+- The jungle is a festival made entirely of nature, with no electronics, just living light: bioluminescent flowers (`blooms`), glowing mushrooms, and the harp bulbs pulse to a 120 BPM beat, the light shafts sway like stage lights in mint, violet, and rose, and fireflies flicker like strobes on the beat. Playing the vine harp makes the whole forest's glow pulse brighter (`LAND.boost`). With reduced motion nothing pulses or strobes.
+
+## The map edge rule (the berm)
+
+- The edge of the world must never be visible, from any camera angle, in any chapter (including the 360 spin). Use the “Disneyland berm” approach: distant dunes, hills, mountains, and haze that blend into the sky.
+- The sky is a dome (`skyQ`) that follows the camera and colors by the direction you look, with the haze color at and below the horizon; fog uses the same color, so distant land melts into it. Stars and nebulae live on the dome, all the way around (no flat backdrop planes).
+- The land settles onto a hazy plain that runs to the horizon; the dunes have a berm of big distant dunes behind them that sinks under the sea past the coast; the beach runs past the edge of view. The land's ground only shows once the fall's haze has faded in, so it never appears as a slab seen from space.
+- When building a new chapter, check the edges from every camera angle it uses (and from high above), and add berms or haze where the world could end.
 
 ## Characters and interactions
 
@@ -178,6 +217,10 @@ Mobile Safari ran out of graphics memory and reloaded when the world was built f
 - Touch devices get the `lite` class: no full-screen blend modes, backdrop blur, CSS filters, or sway animations inside big layers, and the star canvas is capped at 1.5x. Don’t add `filter`, `mix-blend-mode`, `backdrop-filter`, or `will-change` to world objects.
 - The stage uses `lvh` and the camera frames to `svh`, so the iOS address bar never causes jumps.
 - **Test on an iPhone 14 in Safari**: scroll from the top to the newest chapter and back up, three times in a row, with no crash and smooth motion. Before that, a Playwright pass with WebKit and iPhone 14 emulation at every size below is a good first check.
+
+## The 2D cartoon Shigost
+
+- The 2D Shigost (the game cards, the About section, the billboard art, and the 2D fallback; `hoodie()` and `#gostSym`) matches her real design: the long oversized white hoodie to her knees with the hood up, the downward teardrop face opening, big matte black eyes (no highlights), drawstrings, long sleeves over small hands, and chunky white high-tops. Soft lavender lines (`LINE`), never bold outlines, and never on a yellow background.
 
 ## Performance rules for 3D
 
