@@ -1216,7 +1216,7 @@ function shigostAt(p){
   if (p < HP.W1) return walk(LAND_X, CHIME_X, HP.L1, HP.W1, frontTop, 5);
   if (p < HP.C1) return { x:CHIME_X, y:frontTop(CHIME_X) - 118, r:0, s:'st-land', e:1 };
   if (p < HP.W2) return walk(CHIME_X, WALK_X, HP.C1, HP.W2, frontTop, 5);
-  if (p < HP.J){ const t=(p-HP.W2)/(HP.J-HP.W2), x=lerp(WALK_X, JUNGLE_IN, t), y0=frontTop(WALK_X)-118, y1=jFloor(JUNGLE_IN)-118; return { x, y: lerp(y0,y1,t) - 420*Math.sin(t*Math.PI), r: Math.sin(t*Math.PI)*12, s:'st-jump', e:1 }; }
+  if (p < HP.J){ const t=(p-HP.W2)/(HP.J-HP.W2), x=lerp(WALK_X, JUNGLE_IN, t), y0=frontTop(WALK_X)-118, y1=jFloor(JUNGLE_IN)-118; return { x, y: lerp(y0,y1,t) - 420*Math.sin(t*Math.PI), r: Math.sin(t*Math.PI)*12, s:'st-jump', e:1, d:1 }; }
   if (p < HP.JR) return walk(JUNGLE_IN, REST_X, HP.J, HP.JR, jFloor, 6);
   return { x:REST_X, y:jFloor(REST_X) - 118, r:0, s:'st-land', e:1 };
 }
@@ -1231,7 +1231,9 @@ function earthAt(p){
   if (p < EP.R0) return walk(DUNES_IN, EX.rest, HP.LAND, EP.R0);
   if (p < EP.R1) return rest(EX.rest);
   if (p < EP.C) return walk(EX.rest, EX.crest, EP.R1, EP.C);
-  if (p < EP.B) return walk(EX.crest, EX.beach, EP.C, EP.B, 'st-run'); // a run down the big dune toward the sea
+  if (p < EP.B){ // down the big dune toward the sea in three hops (short drops: d marks them for the flared hem)
+    const q = walk(EX.crest, EX.beach, EP.C, EP.B, 'st-run'), t = clamp((p - EP.C)/(EP.B - EP.C), 0, 1), arc = 230*Math.sin(((t*3) % 1)*Math.PI);
+    return arc > 40 ? Object.assign(q, { y: q.y - arc, s: 'st-jump', d: 1 }) : q; }
   if (p < EP.BR0) return walk(EX.beach, EX.brest, EP.B, EP.BR0);
   if (p < EP.BR1) return rest(EX.brest);
   if (p < EP.END) return walk(EX.brest, EX.end, EP.BR1, EP.END);
@@ -2034,21 +2036,40 @@ function build3D(){
     const grip = new T.Mesh(new T.BoxGeometry(18, 34, 18), std('#8f7cc9', { roughness: .5 })); grip.position.set(0, -26, 10); gun.add(grip);
     const gg = glow('#5fd3c8', 120, .6); gg.position.z = 84; gun.add(gg); }
   root.add(gun);
-  // The hoodie parachute: her hoodie is her one magic tool. Here it stretches up above her and fills with air like a
-  // stretchy balloon (the hood with its teardrop opening, puffed sleeves, the pocket, the ribbed hem, and dangling
-  // drawstrings), billowing and wobbling as it slows her fall while her hands hold its cords. When she lands it
-  // deflates back down into her hoodie. Built the first time it opens.
+  /* ---- her hoodie tricks for falling ----
+     Her hoodie is her one magic tool. When she falls it does one of two tricks, picked by the beat of the journey:
+     1. The hoodie flies off (long falls and flying, like the big drop from space; any beat with s: 'st-chute'): at the
+        pop it flies up off her and inflates into a big stretchy balloon (the hood with its teardrop opening, the pocket,
+        the ribbed hem, and dangling drawstrings), and she hangs below in her spirit body, holding its long stretchy
+        sleeves. On landing it deflates, floats back down onto her, and she wriggles back in. A small poof of sparkles
+        hides each swap (a simple fade with reduced motion).
+     2. The hem flares out (short, safe drops, like the hop into the jungle and the hops down the big dune; any airborne
+        beat with d: 1): the hoodie stays on her shoulders and arms while the bottom flares out into a soft billowing
+        cup that slows her down, showing her spirit legs underneath. It settles back down as she lands. ---- */
   const chute = new T.Group(); SG.wrap.add(chute); chute.visible = false;
-  const balU = { t: { value: 0 } }, HEM = [], cordM = matte('#f1edf8');
-  const cords = [0, 1, 2, 3].map(() => { const m = new T.Mesh(new T.CylinderGeometry(4, 4, 1, 6), cordM); m.visible = false; SG.wrap.add(m); return m; });
+  const balU = { t: { value: 0 } }, SLEEVE_AT = [V(-268, 312, 0), V(268, 312, 0)], sleeves = [], cuffs = [];
+  const HD = { off: false, mix: 0, wrig: 0 }; // off: the hoodie is off her; mix: which body shows (0 hoodie, 1 spirit); wrig: wriggling back in
   let chuteK = 0, chuteV = 0, bal = null;
+  // a tube whose path changes every frame, updated in place (the balloon's sleeves and the flared hem's rolled edge)
+  const _ltp = V(0,0,0);
+  function liveTube(n, rad, mat, closed = false){ const g = new T.BufferGeometry(), pos = new Float32Array((n + 1)*(rad + 1)*3), idx = [];
+    for (let i = 0; i < n; i++) for (let j = 0; j < rad; j++){ const a = i*(rad + 1) + j, b = a + rad + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+    g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setIndex(idx);
+    const m = new T.Mesh(g, mat), cv = new T.CatmullRomCurve3([V(0,0,0), V(0,1,0)], closed); m.frustumCulled = false;
+    m.userData.set = (pts, r0, r1) => { cv.points = pts; cv.needsUpdate = true; const fr = cv.computeFrenetFrames(n, closed);
+      for (let i = 0; i <= n; i++){ const u = i/n, p = cv.getPointAt(closed ? u % 1 : u, _ltp), r = lerp(r0, r1, u), N = fr.normals[i], B = fr.binormals[i];
+        for (let j = 0; j <= rad; j++){ const a = j/rad*Math.PI*2, c = -Math.cos(a), sn = Math.sin(a), k = (i*(rad + 1) + j)*3;
+          pos[k] = p.x + r*(c*N.x + sn*B.x); pos[k + 1] = p.y + r*(c*N.y + sn*B.y); pos[k + 2] = p.z + r*(c*N.z + sn*B.z); } }
+      g.attributes.position.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere(); };
+    return m; }
+  // trick 1: the balloon her hoodie becomes (built the first time it opens), with its sleeves hanging down to her hands
   function hoodieBalloon(){
     const W = '#ffffff', SH = '#efeaf8', parts = [];
     // the body: a soft bulb from the hem up to rounded shoulders (rB is its radius at a height, for things laid on it)
     const prof = [[150, 0], [178, 22], [240, 82], [288, 170], [304, 258], [292, 330], [250, 384], [172, 418], [88, 438], [0, 445]];
     const rB = y => { for (let i = 1; i < prof.length; i++) if (y <= prof[i][1]){ const [r0, y0] = prof[i - 1], [r1, y1] = prof[i]; return lerp(r0, r1, (y - y0)/(y1 - y0)); } return 0; };
     parts.push([new T.LatheGeometry(prof.map(([r, y]) => new T.Vector2(r, y)), 44).scale(1, 1, .8), I4, W, 0, .3]);
-    // the hood on top, tipped back a little; its teardrop face opening (pointing down) faces the camera
+    // the hood on top, tipped back a little; its teardrop face opening (pointing down, empty now that she's out) faces the camera
     const Mh = S4(0, 470, 78, 1, 1, 1, -.16), HR = [150, 142, 136];
     parts.push([sph(30, 20), new T.Matrix4().multiplyMatrices(Mh, new T.Matrix4().makeScale(...HR)), W, 0, .3]);
     const tear = new T.Shape(); tear.moveTo(0, -1); tear.bezierCurveTo(-.3, -.62, -.85, -.32, -.85, .2); tear.bezierCurveTo(-.85, .62, -.48, .92, 0, .92); tear.bezierCurveTo(.48, .92, .85, .62, .85, .2); tear.bezierCurveTo(.85, -.32, .3, -.62, 0, -1);
@@ -2056,14 +2077,9 @@ function build3D(){
       for (let i = 0; i < p.count; i++){ const x = p.getX(i)*rx, y = p.getY(i)*ry - 6, q = 1 - (x/HR[0])**2 - (y/HR[1])**2; p.setXYZ(i, x, y, HR[2]*Math.sqrt(Math.max(.02, q)) + lift); }
       g.computeVertexNormals(); parts.push([g, Mh, hex, 0, .15]); };
     onHood(84, 98, 2, '#f6f3fc'); onHood(70, 84, 3.5, '#d8cff0');
-    // sleeves puffing out to the sides, with ribbed cuffs
-    [-1, 1].forEach(sd => { const pts = [V(sd*220, 336, 0), V(sd*326, 318, 10), V(sd*398, 252, 18), V(sd*416, 166, 20)];
-      parts.push([taper(pts, 22, 14, 76, 58), I4, W, 0, .3]);
-      const e = pts[3], dir = e.clone().sub(pts[2]).normalize();
-      parts.push([new T.TorusGeometry(54, 16, 10, 26), new T.Matrix4().compose(e, new T.Quaternion().setFromUnitVectors(V(0, 0, 1), dir), V(1, 1, 1)), SH, 0, .2]); });
     // the kangaroo pocket, laid on the front of the bulb
-    { const s = new T.Shape(); s.moveTo(-104, 70); s.quadraticCurveTo(0, 82, 104, 70); s.lineTo(122, 162); s.quadraticCurveTo(0, 176, -122, 162); s.lineTo(-104, 70);
-      const g = new T.ShapeGeometry(s, 8), p = g.attributes.position;
+    { const sp = new T.Shape(); sp.moveTo(-104, 70); sp.quadraticCurveTo(0, 82, 104, 70); sp.lineTo(122, 162); sp.quadraticCurveTo(0, 176, -122, 162); sp.lineTo(-104, 70);
+      const g = new T.ShapeGeometry(sp, 8), p = g.attributes.position;
       for (let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), r = rB(y); p.setXYZ(i, x, y, .8*Math.sqrt(Math.max(0, r*r - x*x)) + 2.5); }
       g.computeVertexNormals(); parts.push([g, I4, SH, 0, .15]); }
     // the ribbed hem at the bottom
@@ -2074,7 +2090,6 @@ function build3D(){
     [-1, 1].forEach(sd => { const ys = 372, pts = [0, 50, 100, 150].map((d, k) => { const y = ys - d; return V(sd*(18 + k*7), y, .8*rB(y) + 9); });
       parts.push([taper(pts, 12, 6, 5.5, 5), I4, SH, [1, -150, -ys]]);
       const e = pts[3]; parts.push([new T.CylinderGeometry(8, 8, 26, 10), S4(e.x, e.y - 12, e.z, 1, 1, 1), '#d9d0f2', [1, -150, -ys]]); });
-    [.62, -.62, Math.PI - .62, Math.PI + .62].forEach(a => HEM.push(V(Math.cos(a)*150, 0, Math.sin(a)*120)));
     const m = spirit(std('#ffffff', { vertexColors: true, roughness: .92 })), sp = m.onBeforeCompile;
     m.onBeforeCompile = sh => { sp(sh); sh.uniforms.bT = balU.t;
       sh.vertexShader = 'attribute float sway; uniform float bT;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -2082,7 +2097,132 @@ function build3D(){
         transformed += objectNormal*bw; transformed.x += sin(bT*2.2 + position.y*0.01)*sway*22.0; transformed.z += cos(bT*1.8)*sway*12.0;`); };
     m.customProgramCacheKey = () => 'balloon';
     bal = new T.Mesh(bake(parts), m); bal.frustumCulled = false; bal.matrixAutoUpdate = false; chute.add(bal);
+    // the long stretchy sleeves, from the balloon's shoulders down to the ribbed cuffs in her hands
+    const sm = matte('#ffffff'), cm = matte('#efeaf8'), cg = new T.TorusGeometry(25, 10, 10, 24);
+    [0, 1].forEach(() => { const sl = liveTube(16, 8, sm); chute.add(sl); sleeves.push(sl); const c = new T.Mesh(cg, cm); chute.add(c); cuffs.push(c); });
   }
+  // trick 2: the flared hem, measured from her own hoodie at load (model units). cut hides the hoodie's skirt (between
+  // her waist and the hem, never her sleeves or hands) while the flare stands in for it, over her spirit legs
+  const FLARE = { k: 0, v: 0, on: false, grp: null, cut: { value: 0 }, NU: 56, NV: 16, WY: -5.5, HY: -27.4 };
+  function buildFlare(root, her){
+    const g = her.geometry, p = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, names = her.skeleton.bones.map(b => b.name);
+    const toModel = SG.rawToModel, v = V(0,0,0), cut = new Float32Array(p.count), waist = [], hem = [];
+    for (let i = 0; i < p.count; i++){ v.fromBufferAttribute(p, i).applyMatrix4(toModel);
+      const ws = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)], is = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)], arm = /arm|hand/.test(names[is[ws.indexOf(Math.max(...ws))]]);
+      if (arm) continue; if (v.y < FLARE.WY && v.y > FLARE.HY - .6) cut[i] = 1;
+      if (Math.abs(v.y - FLARE.WY) < 1) waist.push(v.clone()); if (v.y > -26.5 && v.y < -24.5) hem.push(v.clone()); }
+    const ring = l => { const xs = l.map(q => q.x), zs = l.map(q => q.z), x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs); return { cx: (x0 + x1)/2, cz: (z0 + z1)/2, rx: (x1 - x0)/2, rz: (z1 - z0)/2 }; };
+    if (waist.length < 8 || hem.length < 8) return; FLARE.wr = ring(waist); FLARE.hr = ring(hem);
+    g.setAttribute('cut', new T.BufferAttribute(cut, 1));
+    const hm = her.material; hm.onBeforeCompile = sh => { sh.uniforms.hemCut = FLARE.cut;
+      sh.vertexShader = 'attribute float cut; varying float vCut;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vCut = cut;');
+      sh.fragmentShader = 'uniform float hemCut; varying float vCut;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n if (hemCut > 0.5 && vCut > 0.02) discard;'); };
+    hm.customProgramCacheKey = () => 'hoodieCut'; hm.needsUpdate = true;
+    // the skirt: a grid from the waist ring down to the hem, re-shaped each frame between hanging and flared (hemShape)
+    const { NU, NV } = FLARE, sg = new T.BufferGeometry(), col = new Float32Array((NU + 1)*(NV + 1)*3), idx = [];
+    for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++){ const n = j*(NU + 1) + i, c = C(j/NV > .86 ? '#efeaf8' : '#ffffff'); col[n*3] = c.r; col[n*3 + 1] = c.g; col[n*3 + 2] = c.b;
+      if (i < NU && j < NV){ const a = n, b = n + NU + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); } }
+    sg.setAttribute('position', new T.BufferAttribute(new Float32Array((NU + 1)*(NV + 1)*3), 3)); sg.setAttribute('color', new T.BufferAttribute(col, 3)); sg.setIndex(idx);
+    FLARE.sg = sg; FLARE.rimPts = Array.from({ length: NU }, () => V(0,0,0));
+    const grp = FLARE.grp = new T.Group(), body = SG.b.body; grp.matrixAutoUpdate = false; grp.visible = false;
+    grp.matrix.copy(body.matrixWorld).invert().multiply(root.matrixWorld); body.add(grp); // carried by her hips, laid out in her model space
+    FLARE.carry = grp.matrix.clone(); FLARE.wc = V(FLARE.wr.cx, FLARE.WY, FLARE.wr.cz);
+    const skirt = new T.Mesh(sg, spirit(std('#ffffff', { vertexColors: true, roughness: .92, side: T.DoubleSide }))); skirt.frustumCulled = false; grp.add(skirt);
+    FLARE.rim = liveTube(112, 8, matte('#efeaf8'), true); grp.add(FLARE.rim);
+  }
+  // the skirt's shape: hanging (waist to hem, exactly her hoodie) blended into flared (out and up into a soft cup with
+  // gathered lobes, its rolled edge staying below her face so the camera always sees it)
+  const _fm = new T.Matrix4(), _fp = V(0,0,0), _fs = V(0,0,0), _fc = V(0,0,0), _fq = new T.Quaternion(), _fq0 = new T.Quaternion();
+  const bz = (a, b, c, d, u) => { const m = 1 - u; return m*m*m*a + 3*m*m*u*b + 3*m*u*u*c + u*u*u*d; };
+  function hemShape(t, k){ const { wr, hr, WY, HY, NU, NV } = FLARE, pos = FLARE.sg.attributes.position, e = clamp(k, 0, 1.25), sw = Math.sin(Math.min(e, 1)*Math.PI);
+    for (let j = 0; j <= NV; j++){ const u = j/NV;
+      for (let i = 0; i <= NU; i++){ const a = i/NU*Math.PI*2, ca = Math.cos(a), sa = Math.sin(a);
+        const hx = wr.cx + lerp(wr.rx*1.05, hr.rx*1.03, u)*ca, hz = wr.cz + lerp(wr.rz*1.05, hr.rz*1.03, u)*sa, hy = lerp(WY + .4, HY, u);
+        const lobe = Math.cos(a*6), wave = (lobe*4 + Math.sin(a*7 + t*2.4)*1.4 + Math.sin(a*3 - t*1.7)*1.1)*u*u;
+        const out = bz(0, 9, 32, 46, u) + wave, up = bz(0, 13, 25, 17, u) + (lobe*3 + Math.sin(a*5 + t*2.9)*1.3)*u*u;
+        const fx = wr.cx + (wr.rx*1.05 + out)*ca, fz = wr.cz + (wr.rz*1.05 + out*.92)*sa, fy = WY + .4 + up;
+        const mid = sw*u*14; // part way through, the fabric swings out past her legs rather than through them
+        const x = lerp(hx, fx, e) + mid*ca, y = lerp(hy, fy, e) + mid*.15, z = lerp(hz, fz, e) + mid*sa;
+        pos.setXYZ(j*(NU + 1) + i, x, y, z); if (j === NV && i < NU) FLARE.rimPts[i].set(x, y, z); } }
+    pos.needsUpdate = true; FLARE.sg.computeVertexNormals(); FLARE.sg.computeBoundingSphere();
+    FLARE.rim.userData.set(FLARE.rimPts, 2.1, 2.1); }
+
+  /* ================= SHIGOST'S SPIRIT BODY ================= */
+  // Under her hoodie, Shigost has a spirit body: white and matte, Womp-like, with her own arms, bare human-shaped feet,
+  // and a cute rounded cartoon butt. Alyssa hand-built the real one in VR; until it's rigged, a placeholder is built
+  // here from simple shapes skinned to her own skeleton, so her clips, gaze, and IK drive it just like her hoodie model.
+  // To swap in the real body: rig it on the same skeleton as assets/shigost.glb (same bone names, rest pose, and
+  // scale), export it as a .glb, and set SPIRIT_BODY to its path. The placeholder is then skipped (and comes back if
+  // the file ever fails to load).
+  const SPIRIT_BODY = ''; // for example 'assets/shigost-spirit.glb'
+  // legs: show only what's below her waist (under the flared hem); waist: that height in her model's units
+  const SPIRIT = { mesh: null, mats: [], legs: { value: 0 }, waist: { value: FLARE.WY } };
+  // the spirit material: matte, with the soft lavender rim (kept off the black eyes), and the legs-only cut
+  function spiritMat(m){ m.skinning = true; m.roughness = .92; m.metalness = 0;
+    m.onBeforeCompile = sh => { sh.uniforms.rimTint = RIM; sh.uniforms.legsOnly = SPIRIT.legs; sh.uniforms.waistY = SPIRIT.waist;
+      sh.vertexShader = 'varying float vBindY;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vBindY = position.y;');
+      sh.fragmentShader = 'uniform vec3 rimTint; uniform float legsOnly; uniform float waistY; varying float vBindY;\n' + sh.fragmentShader
+        .replace('void main() {', 'void main() {\n if (legsOnly > 0.5 && vBindY > waistY) discard;')
+        .replace(OUT_FRAG, '{ float eyeK = 1.0;\n#ifdef USE_COLOR\n eyeK = smoothstep(0.15, 0.4, vColor.r);\n#endif\n float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))); outgoingLight = mix(outgoingLight, rimTint*0.85, smoothstep(0.42, 0.98, rim)*0.5*eyeK); }\n' + OUT_FRAG); };
+    m.customProgramCacheKey = () => 'spiritBody'; m.needsUpdate = true; SPIRIT.mats.push(m); return m; }
+  function buildSpirit(root, her){ if (SPIRIT_BODY) spiritReal(root, her); else spiritPlaceholder(root, her); }
+  // the real body: its skinned meshes are re-bound to her bones by name, so everything that moves her moves it
+  function spiritReal(root, her){ fetch(SPIRIT_BODY).then(r => { if (!r.ok) throw new Error('missing spirit body'); return r.arrayBuffer(); })
+    .then(buf => new T.GLTFLoader().parse(buf, '', g => { const grp = g.scene; grp.visible = false; SG.body.add(grp);
+      grp.traverse(o => { if (!o.isSkinnedMesh) return; o.bind(new T.Skeleton(o.skeleton.bones.map(b => root.getObjectByName(b.name) || b), o.skeleton.boneInverses), o.bindMatrix);
+        o.frustumCulled = false; o.material = spiritMat(o.material); });
+      SPIRIT.mesh = grp; }, e => { throw e; }))
+    .catch(e => { console.warn('spirit body could not load, using the placeholder', e); spiritPlaceholder(root, her); }); }
+  // the placeholder: rounded shapes laid out on her skeleton in its rest pose and baked into one skinned mesh (one draw
+  // call), each shape following one bone (joints blend two, so elbows and knees bend softly)
+  function spiritPlaceholder(root, her){
+    const bones = her.skeleton.bones, bi = n => Math.max(0, bones.findIndex(b => b.name === n)), toModel = new T.Matrix4().copy(root.matrixWorld).invert();
+    const jp = n => { const b = root.getObjectByName(n); return b ? b.getWorldPosition(V(0,0,0)).applyMatrix4(toModel) : V(0,0,0); };
+    const P = [], WH = '#ffffff', EYE = '#0d0b12', Q0 = new T.Quaternion();
+    const add = (g, m, bn, hex = WH) => P.push([g, m, Array.isArray(bn) ? bn : [bn], hex]);
+    const ball = (c, r, bn, hex, q) => add(sph(16, 12), new T.Matrix4().compose(c, q || Q0, typeof r === 'number' ? V(r, r, r) : r), bn, hex);
+    const limb = (a, b, r0, r1, bn) => { const d = b.clone().sub(a), len = d.length(); add(new T.CylinderGeometry(r1, r0, len, 12, 1, true), new T.Matrix4().compose(a.clone().addScaledVector(d, .5), new T.Quaternion().setFromUnitVectors(V(0, 1, 0), d.normalize()), V(1, 1, 1)), bn); };
+    // a big round head with her big matte black eyes, a short neck, and a soft bean of a body
+    ball(V(.4, 26, 2.5), V(13.5, 12.8, 12.5), 'head');
+    [-1, 1].forEach(sd => ball(V(.4 + sd*5, 27, 13.6), V(3.1, 3.7, 1.6), 'head', EYE, new T.Quaternion().setFromEuler(new T.Euler(0, sd*.36, 0))));
+    limb(V(.4, 9, .8), V(.4, 17, 1.6), 5.2, 4.6, 'neck');
+    ball(V(.4, 6.5, .4), V(12.5, 8, 10.5), 'body_top2'); ball(V(.4, .5, .6), V(13, 8.5, 11), 'body_top0'); ball(V(.4, -5, .3), V(13, 7.5, 10.5), 'body');
+    [-1, 1].forEach(sd => ball(V(.4 + sd*5.2, -8, -6.2), V(7, 6.8, 6), 'body')); // the rounded cartoon butt
+    [['left', 1], ['right', -1]].forEach(([n, sd]) => {
+      // her own stubby arms, with small hands and a thumb
+      const at = jp(`arm_${n}_top`), ab = jp(`arm_${n}_bot`), ah = jp(`arm_${n}_hand`), dir = ah.clone().sub(ab).normalize();
+      ball(at, 4.2, [`shoulder_${n}`, `arm_${n}_top`]); limb(at, ab, 3.6, 3.1, `arm_${n}_top`); ball(ab, 3.1, [`arm_${n}_top`, `arm_${n}_bot`]);
+      limb(ab, ah, 3.1, 2.7, `arm_${n}_bot`); ball(ah.clone().addScaledVector(dir, 2.4), V(2.9, 3.6, 2.6), `arm_${n}_hand`); ball(ah.clone().addScaledVector(dir, 1.2).add(V(-sd*.7, 0, 2.2)), 1.3, `arm_${n}_hand`);
+      // legs down to bare, human-shaped feet: a sole, a heel, and five little toes (the big toe on the inside)
+      const lt = jp(`leg_${n}_top`), lb = jp(`leg_${n}_bot`), lf = jp(`leg_${n}_foot`), heel = V(lf.x, -37.6, lf.z);
+      ball(lt, 5.4, `leg_${n}_top`); limb(lt, lb, 5.2, 4.3, `leg_${n}_top`); ball(lb, 4.3, [`leg_${n}_top`, `leg_${n}_bot`]);
+      limb(lb, lf, 4.1, 3.2, `leg_${n}_bot`); ball(lf, 3.2, [`leg_${n}_bot`, `leg_${n}_foot`]); limb(lf, heel, 3.2, 3.1, `leg_${n}_foot`);
+      ball(V(lf.x, -38.9, lf.z + 2.6), V(3.4, 2.3, 6), `leg_${n}_foot`); ball(V(lf.x, -38.7, lf.z - 1.6), V(3, 2.6, 3), `leg_${n}_foot`);
+      [0, 1, 2, 3, 4].forEach(k => ball(V(lf.x - sd*(2.2 - k*1.15), -40, lf.z + 8.6 - Math.abs(k - 1)*.55 - k*.15), k ? 1.25 - k*.08 : 1.7, `leg_${n}_foot`)); });
+    // bake, in her mesh's own space, with each vertex skinned to its bone (or blended between two at a joint)
+    let nv = 0, ni = 0; P.forEach(([g]) => { nv += g.attributes.position.count; ni += g.index.count; });
+    const pos = new Float32Array(nv*3), nrm = new Float32Array(nv*3), col = new Float32Array(nv*3), sI = new Uint16Array(nv*4), sW = new Float32Array(nv*4), idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+    const toMesh = SG.rawToModel.clone().invert(), M = new T.Matrix4(), N3 = new T.Matrix3(), q = V(0,0,0); let vo = 0, io = 0;
+    P.forEach(([g, m, bn, hex]) => { M.multiplyMatrices(toMesh, m); N3.getNormalMatrix(M); const c = C(hex), b0 = bi(bn[0]), b1 = bi(bn[1] || bn[0]), w0 = bn.length > 1 ? .5 : 1, p = g.attributes.position, n = g.attributes.normal;
+      for (let i = 0; i < p.count; i++){ const k = vo + i; q.fromBufferAttribute(p, i).applyMatrix4(M); pos.set([q.x, q.y, q.z], k*3); q.fromBufferAttribute(n, i).applyMatrix3(N3).normalize(); nrm.set([q.x, q.y, q.z], k*3);
+        col.set([c.r, c.g, c.b], k*3); sI.set([b0, b1, 0, 0], k*4); sW.set([w0, 1 - w0, 0, 0], k*4); }
+      for (let i = 0; i < g.index.count; i++) idx[io + i] = g.index.getX(i) + vo; vo += p.count; io += g.index.count; g.dispose(); });
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('normal', new T.BufferAttribute(nrm, 3)); geo.setAttribute('color', new T.BufferAttribute(col, 3));
+    geo.setAttribute('skinIndex', new T.Uint16BufferAttribute(sI, 4)); geo.setAttribute('skinWeight', new T.BufferAttribute(sW, 4)); geo.setIndex(new T.BufferAttribute(idx, 1));
+    const mesh = new T.SkinnedMesh(geo, spiritMat(std('#ffffff', { vertexColors: true })));
+    mesh.position.copy(her.position); mesh.quaternion.copy(her.quaternion); mesh.scale.copy(her.scale); her.parent.add(mesh); mesh.bind(her.skeleton, her.bindMatrix);
+    mesh.frustumCulled = false; mesh.visible = false; SPIRIT.mesh = mesh; }
+  // which body shows: her hoodie model (mix 0) or her spirit body (mix 1); with the flared hem, the hoodie minus its
+  // skirt over her spirit legs. In between (reduced motion only) the two cross-fade.
+  function setBodies(mix, flare){ const her = SG.mesh, ho = 1 - mix, hm = her.material;
+    her.visible = ho > .01; hm.transparent = ho < .999; hm.opacity = ho; hm.depthWrite = ho > .5; FLARE.cut.value = flare ? 1 : 0;
+    const sp = SPIRIT.mesh; if (!sp) return; const so = flare ? 1 : mix; sp.visible = so > .01; SPIRIT.legs.value = flare && mix < .5 ? 1 : 0;
+    SPIRIT.mats.forEach(m => { m.transparent = so < .999; m.opacity = so; m.depthWrite = so > .5; }); }
+  function hoodieTricks(root){ let her = null; root.traverse(o => { if (o.isSkinnedMesh && !her) her = o; }); if (!her) return; SG.mesh = her;
+    // her mesh's own vertices to her model space (the rest pose's skinning, which here undoes a turn on the mesh node)
+    SG.wrap.updateMatrixWorld(true); const b0 = her.skeleton.bones[0], rest = new T.Matrix4().multiplyMatrices(b0.matrixWorld, her.skeleton.boneInverses[0]);
+    SG.rawToModel = new T.Matrix4().copy(root.matrixWorld).invert().multiply(her.matrixWorld).multiply(her.bindMatrixInverse).multiply(rest).multiply(her.bindMatrix);
+    buildFlare(root, her); buildSpirit(root, her); }
   // The bubble helmet: under water her hood puffs up into a clear bubble around her head. The hood's edge stays as a
   // soft fabric collar, with the hood's seam arching over the top and the drawstrings at the front, so it reads as the
   // same hoodie trick, and her matte black eyes show clearly through it. It deflates when she leaves the water.
@@ -2134,7 +2274,7 @@ function build3D(){
       tex.flipY = false; tex.encoding = T.sRGBEncoding; tex.anisotropy = 4;
       root.traverse(o => { if (o.isMesh){ o.material.map = tex; o.material.color.set(0xffffff); o.material.roughness = .96; o.material.metalness = 0; o.material.needsUpdate = true; o.frustumCulled = false; } });
       SG.b = {}; ['body','body_top0','neck','arm_left_top','arm_left_bot','arm_left_hand','arm_right_top','arm_right_bot','arm_right_hand','leg_left_top','leg_right_top','leg_left_bot','leg_right_bot'].forEach(n => SG.b[n] = root.getObjectByName(n));
-      SG.bind = []; root.traverse(o => { if (o.isBone) SG.bind.push([o, o.position.clone(), o.quaternion.clone()]); }); measureHead(root);
+      SG.bind = []; root.traverse(o => { if (o.isBone) SG.bind.push([o, o.position.clone(), o.quaternion.clone()]); }); measureHead(root); hoodieTricks(root);
       SGA.mixer = new T.AnimationMixer(root); SGA.add(gltf.animations, 'vb_'); SGA.load('space');
     }, err => console.warn('Shigost model failed to parse', err)))
     .catch(err => console.warn('Shigost model could not load, keeping the 2D Shigost in space', err));
@@ -2143,7 +2283,7 @@ function build3D(){
   // (assets/anims/shigost-moves-*.glb), each loaded as the journey gets near the chapters that use it. A small "brain"
   // picks her clip from the chapter, the scroll, idle time, and the toys; clips crossfade, and where a clip isn't
   // loaded yet the procedural pose shows. On top of any clip: her head follows the gaze, the portal gun arm aims, and
-  // her hands hold the parachute cords. Clips play in place; the journey moves her.
+  // her hands hold the balloon's sleeves. Clips play in place; the journey moves her.
   const SGA = {
     mixer: null, actions: {}, cur: null, curName: '', once: false, w: 0, snap: [], req: {},
     add(clips, prefix = ''){ if (!this.mixer) return []; return clips.map(c => { const clip = c.clone(); clip.name = prefix + c.name.split('|').pop();
@@ -2211,7 +2351,7 @@ function build3D(){
   }
   s3.cheerShigost = () => { BR.react = 1.4; };
   // ?debug: a read-only peek at her clip and gaze, for testing (the angle is how far her head points from the target)
-  if (/[?&]debug(&|=|$)/.test(location.search)) window.recklyssDebug = () => { const out = { clip: SGA.curName, posture: BR.posture, loaded: Object.keys(SGA.actions).length, spd: Math.round(BR.spd), zombie: BR.zombie, swim: +BR.swim.toFixed(2), helm: +helmK.toFixed(2), uw: +RIG.uw.toFixed(2) }; { const v = SG.wrap.getWorldPosition(V(0,0,0)).add(V(0, 130, 0)).project(camera), r = canvas.getBoundingClientRect(); out.sx = Math.round(r.left + (v.x + 1)/2*r.width); out.sy = Math.round(r.top + (1 - v.y)/2*r.height); }
+  if (/[?&]debug(&|=|$)/.test(location.search)) window.recklyssDebug = () => { const out = { clip: SGA.curName, posture: BR.posture, loaded: Object.keys(SGA.actions).length, spd: Math.round(BR.spd), zombie: BR.zombie, swim: +BR.swim.toFixed(2), helm: +helmK.toFixed(2), uw: +RIG.uw.toFixed(2), hoodieOff: HD.off, flare: +FLARE.k.toFixed(2), flareReady: !!FLARE.grp, spirit: !!SPIRIT.mesh }; { const v = SG.wrap.getWorldPosition(V(0,0,0)).add(V(0, 130, 0)).project(camera), r = canvas.getBoundingClientRect(); out.sx = Math.round(r.left + (v.x + 1)/2*r.width); out.sy = Math.round(r.top + (1 - v.y)/2*r.height); }
     if (SG.neckFwd && GZ.w){ SG.b.neck.getWorldPosition(_gh); _gn.copy(GZ.pt).sub(_gh).normalize(); SG.b.neck.getWorldQuaternion(_qw); _gb.copy(SG.neckFwd).applyQuaternion(_qw).normalize();
       out.gazeOff = +(Math.acos(clamp(_gb.dot(_gn), -1, 1))*57.3).toFixed(1); out.lookX = +_gb.x.toFixed(2); out.targetX = +_gn.x.toFixed(2); } return out; };
   const handL = V(0,0,0), handR = V(0,0,0), muzzle = V(0,0,0), portalW = W3(PORTAL.x, PORTAL.y, 0);
@@ -2278,15 +2418,17 @@ function build3D(){
       if (b.body) b.body.position.y += Math.abs(Math.cos(ph))*1.4*k;
       boneTurn(b.arm_left_top, -.4*k*sw, 0, 0); boneTurn(b.arm_right_top, .4*k*sw, 0, 0); }
     if (cw) SGA.mixIn(SG.bind, cw);
+    // wriggling back into her hoodie after it floats back down onto her
+    if (HD.wrig > 0){ HD.wrig = Math.max(0, HD.wrig - dt); const k = HD.wrig/.7*calm; boneTurn(b.body_top0, 0, Math.sin(t*26)*.22*k, Math.sin(t*19)*.12*k); boneTurn(b.neck, 0, 0, -Math.sin(t*26)*.1*k); }
     // the glide: a gentle flutter kick on top of whatever clip is playing (a real swim clip replaces it)
     if (BR.swim > .05 && SGA.curName !== SWIM.clip){ const kick = Math.sin(t*5.5)*.3*BR.swim*calm; boneTurn(b.leg_left_top, kick, 0, 0); boneTurn(b.leg_right_top, -kick, 0, 0); }
     w.updateMatrixWorld(true);
-    // layers on top of any clip: the portal gun arm, the parachute cords, a wave at a Womp, and the gaze
+    // layers on top of any clip: the portal gun arm, holding the balloon's sleeves, a wave at a Womp, and the gaze
     if (stand){ // portal gun in her left hand, aimed at the portal; she waves with the other when idle
       b.arm_left_top.getWorldPosition(_w); _v1.subVectors(portalW, _w).normalize();
       ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, SG.root.worldToLocal(_w.addScaledVector(_v1, 60*K)), poleL);
       if (idle && calm && !clipped){ _v2.set(-21 + Math.sin(t*14)*2.5, 8.5, 8 + Math.cos(t*14)*1.5); ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2, poleR); }
-    } else if (st === 'st-chute' || (air && !clipped)){ // arms up: holding the parachute lines (and, without clips, jumping or flailing)
+    } else if (st === 'st-chute' || (air && !clipped)){ // arms up: holding the balloon's sleeves (and, without clips, jumping or flailing)
       const f = st === 'st-fall' ? Math.sin(t*16)*4*calm : 0;
       ik2(b.arm_left_top, b.arm_left_bot, b.arm_left_hand, _v1.set(15 + f, 46, 3), poleL);
       ik2(b.arm_right_top, b.arm_right_bot, b.arm_right_hand, _v2.set(-15 - f, 46, 3), poleR);
@@ -2306,16 +2448,36 @@ function build3D(){
       const k = Math.min(1.15, helmK); helm.scale.setScalar(HEAD.r*(.86 + .14*k)); helmBub.scale.setScalar((.8 + .2*k)*(1 + Math.sin(t*3.1)*.015*calm)); helmM.opacity = clamp(k, 0, 1); }
     b.arm_left_hand.getWorldPosition(handL); b.arm_right_hand.getWorldPosition(handR);
     gun.visible = stand; if (stand){ gun.position.copy(handL); gun.lookAt(portalW); gun.updateMatrixWorld(); gun.localToWorld(muzzle.set(0, 0, 84)); }
-    // the hoodie balloon pops open with a stretchy overshoot and billows; on landing it deflates down into her hoodie
-    const open = st === 'st-chute'; if (open && !bal) hoodieBalloon();
-    if (open){ chuteV += (1 - chuteK)*70*dt; chuteV *= Math.exp(-6.5*dt); chuteK += chuteV*dt; } else { chuteV = 0; chuteK += (0 - chuteK)*Math.min(1, dt*4.5); }
-    chute.visible = !!bal && chuteK > .02;
-    if (chute.visible){ const k = Math.max(.02, chuteK), br = Math.sin(t*2.2)*.045*calm, sy = (1 + br)*Math.pow(k, .75), sx = Math.pow(k, 1.25)/Math.sqrt(1 + br);
-      bal.position.set(0, lerp(150, 420, Math.min(1, k)), 0); bal.rotation.set(.1 + br*.6, 0, Math.sin(t*1.3)*.05*calm); bal.scale.set(sx, sy, sx); bal.updateMatrix(); balU.t.value = t; }
-    const hl = w.worldToLocal(handL.clone()), hr = w.worldToLocal(handR.clone());
-    cords.forEach((c, k) => { c.visible = chute.visible; if (!c.visible) return;
-      const a = HEM[k].clone().applyMatrix4(bal.matrix), h = HEM[k].x > 0 ? hl : hr, d = _v1.subVectors(h, a), len = d.length();
-      c.position.copy(a).addScaledVector(d, .5); c.quaternion.setFromUnitVectors(_v2.set(0, 1, 0), d.normalize()); c.scale.set(1, len, 1); });
+    // trick 1, the hoodie flies off: at the pop she slips out of it under a poof and it inflates above her; on landing it
+    // deflates, floats back down onto her, and she wriggles back in under another poof (with reduced motion, simple fades)
+    const rm = !calm, open = st === 'st-chute'; if (open && !bal) hoodieBalloon();
+    const poof = () => { if (!rm && b.body_top2) burst(b.body_top2.getWorldPosition(V(0,0,0)), ['#ffffff', '#efeaff', '#c9bdf5', '#f6c9e6'], 24, 300, 260); };
+    if (open && !HD.off){ HD.off = true; chuteK = chuteV = 0; poof(); }
+    if (open){ if (rm){ chuteV = 0; chuteK += (1 - chuteK)*Math.min(1, dt*3); } else { chuteV += (1 - chuteK)*70*dt; chuteV *= Math.exp(-6.5*dt); chuteK += chuteV*dt; } }
+    else { chuteV = 0; chuteK += (0 - chuteK)*Math.min(1, dt*3.2); if (HD.off && chuteK < .05){ HD.off = false; HD.wrig = .7; chuteK = 0; poof(); } }
+    chute.visible = !!bal && HD.off;
+    if (chute.visible){ const k = Math.max(0, chuteK), kk = Math.min(1, k), br = Math.sin(t*2.2)*.045*calm;
+      // it grows from hoodie size, right where her hoodie was, up into the big balloon above her
+      const sy = lerp(.42, 1, Math.pow(k, .75))*(1 + br), sx = lerp(.42, 1, Math.pow(k, 1.25))/Math.sqrt(1 + br);
+      bal.position.set(0, lerp(30, 420, kk), 0); bal.rotation.set(.1*kk + br*.6, 0, Math.sin(t*1.3)*.05*calm); bal.scale.set(sx, sy, sx); bal.updateMatrix(); balU.t.value = calm ? t : 0;
+      const hl = w.worldToLocal(handL.clone()), hr = w.worldToLocal(handR.clone());
+      sleeves.forEach((sl, i) => { const sd = i ? 1 : -1, a = SLEEVE_AT[i].clone().applyMatrix4(bal.matrix), h = i ? hl : hr;
+        const m1 = a.clone().lerp(h, .3).add(_v2.set(sd*90*kk, 0, 10)), m2 = a.clone().lerp(h, .72).add(_v2.set(sd*50*kk, 0, 6)), e = h.clone().add(_v2.set(0, 18, 0));
+        sl.userData.set([a, m1, m2, e], 48*sx, 24*sx + 4);
+        cuffs[i].position.copy(e); cuffs[i].quaternion.setFromUnitVectors(_v2.set(0, 0, 1), m2.sub(e).normalize()); cuffs[i].scale.setScalar(Math.max(.45, sx)); }); }
+    // trick 2, the hem flares out: on short drops the bottom of her hoodie billows into a soft cup, and settles as she lands
+    const drop = !!s.d && st === 'st-jump' && !HD.off;
+    if (FLARE.grp){ if (drop){ if (rm){ FLARE.v = 0; FLARE.k += (1 - FLARE.k)*Math.min(1, dt*5); } else { FLARE.v += (1 - FLARE.k)*90*dt; FLARE.v *= Math.exp(-8*dt); FLARE.k += FLARE.v*dt; } }
+      else { FLARE.v = 0; FLARE.k += (0 - FLARE.k)*Math.min(1, dt*7); if (FLARE.k < .004) FLARE.k = 0; }
+      FLARE.on = drop || FLARE.k > 0; FLARE.grp.visible = FLARE.on;
+      if (FLARE.on){ hemShape(calm ? t : 0, FLARE.k);
+        // it follows her waist but mostly stays upright as she leans into the hop, so it always reads as catching the air
+        const D = _fm.copy(SG.root.matrixWorld).invert().multiply(b.body.matrixWorld).multiply(FLARE.carry); D.decompose(_fp, _fq, _fs); _fq.slerp(_fq0, .8);
+        const c = FLARE.wc, dc = _fc.copy(c).applyMatrix4(D); _fp.copy(dc).sub(_fs.copy(c).applyQuaternion(_fq)); _fs.set(1, 1, 1);
+        FLARE.grp.matrix.copy(b.body.matrixWorld).invert().multiply(SG.root.matrixWorld).multiply(_fm.compose(_fp, _fq, _fs)); } }
+    // which body shows (instant under the poofs; a short cross-fade with reduced motion)
+    HD.mix = rm ? HD.mix + ((HD.off ? 1 : 0) - HD.mix)*Math.min(1, dt*4) : (HD.off ? 1 : 0);
+    if (SG.mesh) setBodies(HD.mix, FLARE.on);
     sgShadow.visible = stand && !earth; if (stand && !earth){ sgShadow.position.set(s.x, ridge(s.x, 0) + 2, 60); }
   }
 
